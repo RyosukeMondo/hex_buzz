@@ -229,7 +229,7 @@
   - _Requirements: All model requirements_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer | Task: Create unit tests in test/domain/models/ for HexCell (neighbors, toPixel), HexEdge (canonical ordering, equality), Level (hasWall, getPassableNeighbors, computeHash determinism), GameState (copyWith, computed properties) | Restrictions: 80%+ coverage, test edge cases | Success: All tests pass, coverage meets target | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 6.2. Create unit tests for services
+- [x] 6.2. Create unit tests for services
   - Files: `test/domain/services/*_test.dart`
   - Test PathValidator, GameEngine, LevelValidator
   - Test wall blocking scenarios
