@@ -44,7 +44,7 @@
   - _Requirements: REQ-001, REQ-002_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer | Task: Create Level class in lib/domain/models/level.dart with id (hash), size, Map<(int,int), HexCell> cells, Set<HexEdge> walls, checkpointCount. Implement getCell(q,r), startCell/endCell getters, hasWall(), getPassableNeighbors(), computeHash() using SHA-256 of canonical representation, JSON serialization | Restrictions: No Flutter imports, computeHash must be deterministic | Success: Unit tests pass for cell access, wall detection, hash consistency | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 1.5. Create GameMode enum and GameState model
+- [x] 1.5. Create GameMode enum and GameState model
   - Files: `lib/domain/models/game_mode.dart`, `lib/domain/models/game_state.dart`
   - Implement GameMode enum (daily, practice)
   - Implement GameState with level, mode, path, nextCheckpoint, timing
