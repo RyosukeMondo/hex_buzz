@@ -128,7 +128,7 @@
   - _Requirements: REQ-009_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer | Task: Create validate command in lib/debug/cli/commands/validate_command.dart. Accept --level <json_string> or --file <path>. Use LevelValidator to check solvability. Output JSON: {valid: bool, solvable: bool, solution?: [...], error?: string} | Restrictions: JSON output only, handle malformed input gracefully | Success: CLI validates test level correctly, outputs structured JSON | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 4.3. Create REST API server
+- [x] 4.3. Create REST API server
   - File: `lib/debug/api/server.dart`
   - Set up shelf HTTP server
   - Configure CORS for local development
