@@ -97,7 +97,7 @@
   - _Requirements: REQ-010_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer | Task: Create Logger class in lib/core/logging/logger.dart with JSON output format containing timestamp (ISO8601), level (debug/info/warn/error), component (string), event (string), context (Map). Support log levels, stdout output. Create global logger instance | Restrictions: No Flutter imports, JSON format for AI parsing | Success: Logs are valid JSON, can filter by level, context is included | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 3.2. Create hardcoded test level
+- [x] 3.2. Create hardcoded test level
   - File: `lib/domain/data/test_level.dart`
   - Create a simple 4x4 solvable level with walls
   - Include 3 checkpoints
