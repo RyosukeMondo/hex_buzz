@@ -65,7 +65,7 @@
   - _Requirements: REQ-004, REQ-007_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer | Task: Create PathValidator in lib/domain/services/path_validator.dart with pure functions: isAdjacent(HexCell a, HexCell b), isPassable(Level, HexCell from, HexCell to) checking walls, isValidMove(GameState, HexCell target) checking adjacency + walls + visited + checkpoint order, checkWinCondition(GameState) checking all cells visited + correct checkpoint order | Restrictions: No Flutter imports, pure functions only, no side effects | Success: Unit tests cover all validation cases including wall blocking | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 2.2. Create GameEngine service
+- [x] 2.2. Create GameEngine service
   - File: `lib/domain/services/game_engine.dart`
   - Implement state getter, tryMove(), undo(), reset()
   - Use PathValidator for move validation
