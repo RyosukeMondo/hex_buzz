@@ -138,7 +138,7 @@
   - _Requirements: REQ-008_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer | Task: Create HTTP server in lib/debug/api/server.dart using shelf package. Configure CORS for localhost, JSON content type. Create startServer(int port, GameEngine engine) function. Add graceful shutdown | Restrictions: Localhost only for MVP, JSON responses | Success: Server starts on specified port, responds to requests | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 4.4. Implement REST API game endpoints
+- [x] 4.4. Implement REST API game endpoints
   - File: `lib/debug/api/routes/game_routes.dart`
   - GET /api/game/state - returns GameStateResponse
   - POST /api/game/move - executes move
