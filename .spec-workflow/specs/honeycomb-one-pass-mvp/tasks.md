@@ -238,7 +238,7 @@
   - _Requirements: REQ-004, REQ-007, REQ-009_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer | Task: Create unit tests in test/domain/services/ for PathValidator (adjacency, wall blocking, checkpoint order), GameEngine (move, undo, reset, win detection), LevelValidator (solvable levels, unsolvable levels, solution correctness) | Restrictions: 80%+ coverage, test all validation rules | Success: All tests pass, all game rules verified | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 6.3. Create API integration tests
+- [-] 6.3. Create API integration tests
   - File: `test/debug/api/server_test.dart`
   - Test all REST endpoints
   - Test error responses
