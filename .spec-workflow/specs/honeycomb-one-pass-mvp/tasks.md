@@ -75,7 +75,7 @@
   - _Requirements: REQ-003, REQ-004, REQ-005, REQ-006, REQ-007_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer | Task: Create GameEngine class in lib/domain/services/game_engine.dart with GameState state getter, tryMove(HexCell) returning bool (uses PathValidator), undo() removing last path segment, reset() clearing path. Start timer on first move, record endTime on win | Restrictions: No Flutter imports, use PathValidator for all validation, emit state changes | Success: Unit tests pass for move/undo/reset, timing is accurate | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 2.3. Create LevelValidator service
+- [x] 2.3. Create LevelValidator service
   - File: `lib/domain/services/level_validator.dart`
   - Implement validate() checking solvability
   - Implement findSolution() using DFS/backtracking
