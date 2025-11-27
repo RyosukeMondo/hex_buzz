@@ -109,7 +109,7 @@
 
 ## Phase 4: Debug Layer (AI Agent Interface)
 
-- [ ] 4.1. Create CLI runner framework
+- [x] 4.1. Create CLI runner framework
   - Files: `lib/debug/cli/cli_runner.dart`, `bin/cli.dart`
   - Set up args package for command parsing
   - Create CLI entry point
