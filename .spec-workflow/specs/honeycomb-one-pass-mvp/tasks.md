@@ -178,7 +178,7 @@
   - _Requirements: REQ-001, REQ-002_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Developer | Task: Create HexCellWidget in lib/presentation/widgets/hex_grid/hex_cell_widget.dart using CustomPainter. Draw hexagon shape, fill based on visited state (gray=unvisited, colored=visited), show checkpoint number centered if present. Highlight start (green border) and end (red border) checkpoints | Restrictions: Use CustomPaint for performance, no external packages | Success: Cells render correctly with all visual states | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 5.3. Create WallPainter
+- [x] 5.3. Create WallPainter
   - File: `lib/presentation/widgets/hex_grid/wall_painter.dart`
   - Render walls as thick lines on cell edges
   - Calculate wall positions from HexEdge data
