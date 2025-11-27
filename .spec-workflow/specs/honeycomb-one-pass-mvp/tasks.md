@@ -168,7 +168,7 @@
   - _Requirements: REQ-001_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Developer with geometry knowledge | Task: Create hex utilities in lib/presentation/utils/hex_utils.dart. Implement pixelToAxial(Offset, cellSize), axialToPixel(q, r, cellSize), getHexVertices(center, size) returning 6 points for flat-top hexagon | Restrictions: Use pointy-top or flat-top consistently, accurate math | Success: Coordinates convert correctly in both directions | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 5.2. Create HexCellWidget
+- [x] 5.2. Create HexCellWidget
   - File: `lib/presentation/widgets/hex_grid/hex_cell_widget.dart`
   - Render single hexagonal cell using CustomPaint
   - Show checkpoint number if present
