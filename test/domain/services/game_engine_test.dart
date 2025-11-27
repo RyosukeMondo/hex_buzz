@@ -282,7 +282,10 @@ void main() {
         await Future.delayed(const Duration(milliseconds: 10));
 
         expect(engine.state.elapsedTime, isNotNull);
-        expect(engine.state.elapsedTime!.inMilliseconds, greaterThanOrEqualTo(0));
+        expect(
+          engine.state.elapsedTime.inMilliseconds,
+          greaterThanOrEqualTo(0),
+        );
       });
     });
 
@@ -551,17 +554,20 @@ void main() {
         expect(results.last.isWin, true);
       });
 
-      test('handles move with only coordinates (gets full cell from level)', () {
-        final level = createSimpleLevel();
-        final engine = GameEngine(level: level, mode: GameMode.practice);
+      test(
+        'handles move with only coordinates (gets full cell from level)',
+        () {
+          final level = createSimpleLevel();
+          final engine = GameEngine(level: level, mode: GameMode.practice);
 
-        // Move with minimal cell info (no checkpoint info)
-        final result = engine.tryMove(const HexCell(q: 0, r: 0));
+          // Move with minimal cell info (no checkpoint info)
+          final result = engine.tryMove(const HexCell(q: 0, r: 0));
 
-        expect(result.success, true);
-        // The engine should get the full cell info from the level
-        expect(engine.state.path.first.checkpoint, 1);
-      });
+          expect(result.success, true);
+          // The engine should get the full cell info from the level
+          expect(engine.state.path.first.checkpoint, 1);
+        },
+      );
 
       test('undo and redo path', () {
         final level = createSimpleLevel();

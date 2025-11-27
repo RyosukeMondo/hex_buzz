@@ -1,0 +1,53 @@
+#!/bin/bash
+# Pre-commit hook for honeycomb-one-pass
+# Enforces code quality: formatting, static analysis, LOC limits, and tests
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# Get the project root directory
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+cd "$PROJECT_ROOT"
+
+# Step 1: Check dart format
+echo ""
+echo "==> Checking dart format..."
+if ! dart format --set-exit-if-changed lib test bin scripts 2>/dev/null; then
+    echo "✗ Code is not properly formatted."
+    echo "  Run 'dart format lib test bin scripts' to fix."
+    exit 1
+fi
+echo "✓ Code formatting OK"
+
+# Step 2: Run dart analyze
+echo ""
+echo "==> Running dart analyze..."
+if ! dart analyze --fatal-infos; then
+    echo "✗ Static analysis found issues."
+    echo "  Please fix the issues reported above."
+    exit 1
+fi
+echo "✓ Static analysis OK"
+
+# Step 3: Run LOC checks (file and function size)
+echo ""
+echo "==> Checking code metrics (LOC limits)..."
+if ! dart run scripts/pre_commit.dart; then
+    exit 1
+fi
+
+# Step 4: Run tests
+echo ""
+echo "==> Running tests..."
+if ! flutter test; then
+    echo "✗ Tests failed."
+    echo "  Please fix failing tests before committing."
+    exit 1
+fi
+echo "✓ Tests passed"
+
+echo ""
+echo "================================================"
+echo "✓ All pre-commit checks passed!"
+echo "================================================"

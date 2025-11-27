@@ -257,7 +257,7 @@
   - _Requirements: All_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Developer | Task: Update lib/main.dart to initialize Riverpod, load test level, optionally start debug API server (port 8080) when in debug mode, launch MaterialApp with GameScreen. Add command line flag --api to enable API server | Restrictions: API server only in debug mode, clean startup | Success: `flutter run -d chrome` shows playable game, API responds to curl | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 6.5. Setup pre-commit hooks
+- [x] 6.5. Setup pre-commit hooks
   - Files: `scripts/pre_commit.dart`, `.githooks/pre-commit`
   - Implement file size check (500 lines)
   - Implement function size check (50 lines)
