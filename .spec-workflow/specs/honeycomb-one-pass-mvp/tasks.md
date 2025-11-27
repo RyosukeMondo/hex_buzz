@@ -148,7 +148,7 @@
   - _Requirements: REQ-008_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer | Task: Create game routes in lib/debug/api/routes/game_routes.dart. Implement GET /api/game/state returning full game state JSON, POST /api/game/move accepting {q, r} and returning success/error + new state, POST /api/game/reset returning fresh state. Use GameEngine | Restrictions: Return proper HTTP status codes (200, 400), structured error responses | Success: curl commands successfully interact with game state | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 4.5. Implement REST API level endpoints
+- [x] 4.5. Implement REST API level endpoints
   - File: `lib/debug/api/routes/level_routes.dart`
   - POST /api/level/validate - validates level JSON
   - Purpose: AI agent can validate levels via API
