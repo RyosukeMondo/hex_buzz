@@ -8,6 +8,7 @@ import 'package:shelf_router/shelf_router.dart';
 
 import '../../core/logging/logger.dart';
 import '../../domain/services/game_engine.dart';
+import 'routes/game_routes.dart';
 
 /// Debug REST API server for AI agent interaction.
 ///
@@ -68,10 +69,9 @@ class DebugApiServer {
     // Health check endpoint
     router.get('/api/health', _handleHealth);
 
-    // Placeholder for game routes (to be added in task 4.4)
-    router.get('/api/game/state', _placeholderHandler);
-    router.post('/api/game/move', _placeholderHandler);
-    router.post('/api/game/reset', _placeholderHandler);
+    // Game routes
+    final gameRoutes = GameRoutes(engine: engine);
+    router.mount('/api/game/', gameRoutes.router.call);
 
     // Placeholder for level routes (to be added in task 4.5)
     router.post('/api/level/validate', _placeholderHandler);
