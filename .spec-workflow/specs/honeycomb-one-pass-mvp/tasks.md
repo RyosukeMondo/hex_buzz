@@ -207,7 +207,7 @@
   - _Requirements: REQ-001, REQ-002, REQ-003_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Developer | Task: Create HexGridWidget in lib/presentation/widgets/hex_grid/hex_grid_widget.dart. Use GestureDetector for pan gestures. Render all cells, walls overlay, path overlay. On drag, convert position to cell coords, call onCellEntered callback. Handle drag start/end | Restrictions: Efficient rendering (RepaintBoundary), responsive to all screen sizes | Success: Grid renders correctly, drag interactions detected accurately | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 5.6. Create GameScreen with state management
+- [x] 5.6. Create GameScreen with state management
   - File: `lib/presentation/screens/game/game_screen.dart`
   - Integrate HexGridWidget with GameEngine
   - Add reset button
