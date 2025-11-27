@@ -220,7 +220,7 @@
 
 ## Phase 6: Integration & Testing
 
-- [ ] 6.1. Create unit tests for models
+- [x] 6.1. Create unit tests for models
   - Files: `test/domain/models/*_test.dart`
   - Test HexCell, HexEdge, Level, GameState
   - Test hash consistency for Level
