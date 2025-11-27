@@ -187,7 +187,7 @@
   - _Requirements: REQ-001_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Developer | Task: Create WallPainter in lib/presentation/widgets/hex_grid/wall_painter.dart as CustomPainter. Given Set<HexEdge> walls and cell size, draw thick dark lines on shared edges between cells. Calculate edge midpoints from cell centers | Restrictions: Walls must align exactly with hex edges | Success: Walls render on correct edges, visually distinct | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 5.4. Create PathPainter
+- [x] 5.4. Create PathPainter
   - File: `lib/presentation/widgets/hex_grid/path_painter.dart`
   - Draw path as connected line through cell centers
   - Implement color gradient based on path length
@@ -196,7 +196,7 @@
   - _Requirements: REQ-003_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Developer | Task: Create PathPainter in lib/presentation/widgets/hex_grid/path_painter.dart as CustomPainter. Draw path as thick line connecting cell centers. Implement gradient from blue to purple to red based on path progress (0% to 100% of total cells) | Restrictions: Smooth line rendering, gradient must be visible | Success: Path renders with color gradient, updates smoothly | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 5.5. Create HexGridWidget
+- [x] 5.5. Create HexGridWidget
   - File: `lib/presentation/widgets/hex_grid/hex_grid_widget.dart`
   - Compose cells, walls, path painters
   - Handle touch/mouse drag input
