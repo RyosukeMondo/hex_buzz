@@ -158,7 +158,7 @@
 
 ## Phase 5: Presentation Layer (UI)
 
-- [ ] 5.1. Create hex grid coordinate utilities
+- [x] 5.1. Create hex grid coordinate utilities
   - File: `lib/presentation/utils/hex_utils.dart`
   - Implement pixel-to-axial coordinate conversion
   - Implement axial-to-pixel conversion
