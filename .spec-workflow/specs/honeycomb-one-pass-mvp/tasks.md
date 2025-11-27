@@ -12,7 +12,7 @@
   - _Requirements: All_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Developer | Task: Initialize Flutter project with web support, create directory structure (lib/core, lib/domain, lib/presentation, lib/debug, bin, test), configure pubspec.yaml with dependencies (shelf, args, crypto, flutter_riverpod, logging). Follow structure.md conventions. | Restrictions: Do not add unnecessary dependencies, keep it minimal for MVP | Success: `flutter run -d chrome` launches without errors, directory structure matches structure.md | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 1.2. Create HexCell model
+- [x] 1.2. Create HexCell model
   - File: `lib/domain/models/hex_cell.dart`
   - Implement HexCell class with axial coordinates (q, r)
   - Add checkpoint property, visited flag
