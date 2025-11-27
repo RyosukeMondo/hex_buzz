@@ -247,7 +247,7 @@
   - _Requirements: REQ-008_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer | Task: Create integration tests in test/debug/api/server_test.dart. Start test server, test GET /api/game/state, POST /api/game/move (valid and invalid), POST /api/game/reset, POST /api/level/validate. Verify JSON responses | Restrictions: Clean up server after tests, test error cases | Success: All API endpoints work correctly, error responses are structured | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 6.4. Wire up main.dart and test full flow
+- [x] 6.4. Wire up main.dart and test full flow
   - File: `lib/main.dart`
   - Initialize app with test level
   - Start debug API server in debug mode
