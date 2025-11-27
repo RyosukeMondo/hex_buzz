@@ -2,7 +2,7 @@
 
 ## Phase 1: Project Setup & Core Models
 
-- [-] 1.1. Initialize Flutter project with directory structure
+- [x] 1.1. Initialize Flutter project with directory structure
   - Files: `pubspec.yaml`, `lib/main.dart`, directory structure
   - Create Flutter project with web support
   - Set up directory structure per structure.md (lib/core, lib/domain, lib/presentation, lib/debug)
