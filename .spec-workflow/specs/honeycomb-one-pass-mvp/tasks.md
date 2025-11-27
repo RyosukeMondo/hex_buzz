@@ -118,7 +118,7 @@
   - _Requirements: REQ-009_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer | Task: Create CLI framework in lib/debug/cli/cli_runner.dart using args package. Set up bin/cli.dart as entry point. Support --help, subcommands structure. Output JSON for AI parsing | Restrictions: JSON output format, clear error messages | Success: `dart run bin/cli.dart --help` shows usage, subcommand structure works | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 4.2. Implement CLI validate command
+- [x] 4.2. Implement CLI validate command
   - File: `lib/debug/cli/commands/validate_command.dart`
   - Add validate command accepting level JSON
   - Output validation result as JSON
