@@ -9,6 +9,7 @@ import 'package:shelf_router/shelf_router.dart';
 import '../../core/logging/logger.dart';
 import '../../domain/services/game_engine.dart';
 import 'routes/game_routes.dart';
+import 'routes/level_routes.dart';
 
 /// Debug REST API server for AI agent interaction.
 ///
@@ -73,8 +74,9 @@ class DebugApiServer {
     final gameRoutes = GameRoutes(engine: engine);
     router.mount('/api/game/', gameRoutes.router.call);
 
-    // Placeholder for level routes (to be added in task 4.5)
-    router.post('/api/level/validate', _placeholderHandler);
+    // Level routes
+    final levelRoutes = LevelRoutes();
+    router.mount('/api/level/', levelRoutes.router.call);
 
     final pipeline = const Pipeline()
         .addMiddleware(_corsMiddleware())
@@ -90,13 +92,6 @@ class DebugApiServer {
       'status': 'ok',
       'timestamp': DateTime.now().toUtc().toIso8601String(),
     });
-  }
-
-  Response _placeholderHandler(Request request) {
-    return _jsonResponse({
-      'error': 'not_implemented',
-      'message': 'This endpoint is not yet implemented',
-    }, statusCode: 501);
   }
 
   /// Creates a JSON response with proper content type.
