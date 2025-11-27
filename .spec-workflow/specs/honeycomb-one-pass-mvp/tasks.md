@@ -23,7 +23,7 @@
   - _Requirements: REQ-001, REQ-002_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer | Task: Create HexCell class in lib/domain/models/hex_cell.dart with axial coordinates (q, r), optional checkpoint number, visited flag, toPixel(cellSize) method, neighbors getter returning 6 adjacent coordinates, JSON serialization | Restrictions: No Flutter imports (pure Dart), max 50 lines per function, immutable where possible | Success: Unit tests pass for coordinate conversion, neighbor calculation, JSON round-trip | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 1.3. Create HexEdge model (walls)
+- [x] 1.3. Create HexEdge model (walls)
   - File: `lib/domain/models/hex_edge.dart`
   - Implement HexEdge class for walls between cells
   - Use canonical ordering for equality
@@ -33,7 +33,7 @@
   - _Requirements: REQ-004_
   - _Prompt: Implement the task for spec honeycomb-one-pass-mvp, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer | Task: Create HexEdge class in lib/domain/models/hex_edge.dart representing a wall between two adjacent cells. Implement canonical ordering (cell1 < cell2) for consistent equality/hashing, connects() method, JSON serialization | Restrictions: No Flutter imports, ensure HexEdge(A,B) == HexEdge(B,A) | Success: Unit tests pass for equality, canonical ordering, connects() logic | After completing: Mark task [-] as in-progress before starting, use log-implementation tool to record what was created, then mark [x] complete_
 
-- [ ] 1.4. Create Level model
+- [x] 1.4. Create Level model
   - File: `lib/domain/models/level.dart`
   - Implement Level class with size, cells map, walls set
   - Add getCell(), startCell, endCell, hasWall(), getPassableNeighbors()
