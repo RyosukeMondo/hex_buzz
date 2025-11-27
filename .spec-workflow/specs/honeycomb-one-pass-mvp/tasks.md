@@ -56,7 +56,7 @@
 
 ## Phase 2: Core Services (Domain Logic)
 
-- [ ] 2.1. Create PathValidator service
+- [x] 2.1. Create PathValidator service
   - File: `lib/domain/services/path_validator.dart`
   - Implement isAdjacent(), isPassable() (wall check), isValidMove()
   - Implement checkWinCondition()
