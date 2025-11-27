@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 
+import 'commands/validate_command.dart';
+
 /// Base class for CLI commands that output JSON responses.
 ///
 /// Provides structured JSON output for AI agent parsing.
@@ -57,6 +59,8 @@ class CliRunner extends CommandRunner<int> {
       negatable: false,
       help: 'Show version information',
     );
+
+    addCommand(ValidateCommand());
   }
 
   /// Runs the CLI with the given arguments.
