@@ -8,19 +8,28 @@ import 'package:shelf_router/shelf_router.dart';
 
 import '../../core/logging/logger.dart';
 import '../../domain/services/game_engine.dart';
+import '../../domain/services/progress_repository.dart';
 import 'routes/game_routes.dart';
 import 'routes/level_routes.dart';
+import 'routes/progress_routes.dart';
 
 /// Debug REST API server for AI agent interaction.
 ///
 /// Provides HTTP endpoints for game state management and level validation.
 /// Intended for localhost development use only.
 class DebugApiServer {
-  DebugApiServer({required this.engine, this.port = 8080, Logger? logger})
-    : _logger = logger ?? LoggerFactory.create('api-server');
+  DebugApiServer({
+    required this.engine,
+    this.progressRepository,
+    this.port = 8080,
+    Logger? logger,
+  }) : _logger = logger ?? LoggerFactory.create('api-server');
 
   /// The game engine to expose via API.
   final GameEngine engine;
+
+  /// Optional progress repository for progress API endpoints.
+  final ProgressRepository? progressRepository;
 
   /// The port to listen on.
   final int port;
@@ -77,6 +86,12 @@ class DebugApiServer {
     // Level routes
     final levelRoutes = LevelRoutes();
     router.mount('/api/level/', levelRoutes.router.call);
+
+    // Progress routes (if repository is available)
+    if (progressRepository != null) {
+      final progressRoutes = ProgressRoutes(repository: progressRepository!);
+      router.mount('/api/progress/', progressRoutes.router.call);
+    }
 
     final pipeline = const Pipeline()
         .addMiddleware(_corsMiddleware())
@@ -173,9 +188,19 @@ class DebugApiServer {
 
 /// Starts the debug API server with the given engine.
 ///
+/// Optionally accepts a [ProgressRepository] to enable progress API endpoints.
+///
 /// Returns a [DebugApiServer] instance that can be used to stop the server.
-Future<DebugApiServer> startServer(int port, GameEngine engine) async {
-  final server = DebugApiServer(engine: engine, port: port);
+Future<DebugApiServer> startServer(
+  int port,
+  GameEngine engine, {
+  ProgressRepository? progressRepository,
+}) async {
+  final server = DebugApiServer(
+    engine: engine,
+    port: port,
+    progressRepository: progressRepository,
+  );
   await server.start();
   return server;
 }
