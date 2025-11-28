@@ -7,6 +7,7 @@ import '../../domain/models/level.dart';
 import '../../domain/services/game_engine.dart';
 import '../../domain/services/level_generator.dart';
 import '../../domain/services/level_repository.dart';
+import 'progress_provider.dart';
 
 /// Configuration for creating a game.
 class GameConfig {
@@ -49,6 +50,7 @@ class GameNotifier extends Notifier<GameState> {
   late int _edgeSize;
   bool _isGenerating = false;
   bool _repositoryLoaded = false;
+  int? _currentLevelIndex;
 
   @override
   GameState build() {
@@ -75,6 +77,9 @@ class GameNotifier extends Notifier<GameState> {
 
   /// Whether the level repository is loaded.
   bool get isRepositoryLoaded => _repositoryLoaded;
+
+  /// Current level index being played (null for practice/random levels).
+  int? get currentLevelIndex => _currentLevelIndex;
 
   /// Loads the pre-generated levels repository.
   ///
@@ -109,10 +114,28 @@ class GameNotifier extends Notifier<GameState> {
   /// Attempts to move to the target cell.
   ///
   /// Returns true if the move was successful.
+  /// Automatically triggers progress update on game completion.
   bool tryMove(HexCell target) {
+    final wasComplete = _engine.state.isComplete;
     final result = _engine.tryMove(target);
     state = _engine.state;
+
+    // Trigger progress update on completion
+    if (!wasComplete && state.isComplete && _currentLevelIndex != null) {
+      _onLevelComplete();
+    }
+
     return result.success;
+  }
+
+  /// Called when a level is completed to update progress.
+  void _onLevelComplete() {
+    if (_currentLevelIndex == null) return;
+
+    final completionTime = state.elapsedTime;
+    ref
+        .read(progressProvider.notifier)
+        .completeLevel(_currentLevelIndex!, completionTime);
   }
 
   /// Undoes the last move.
@@ -135,11 +158,13 @@ class GameNotifier extends Notifier<GameState> {
   /// Generates a new level and starts a new game.
   ///
   /// Uses pre-generated levels if available, falls back to generation.
+  /// Clears the level index since random levels are not tracked for progress.
   /// Returns true if successful.
   bool generateNewLevel({int? newEdgeSize}) {
     if (_isGenerating) return false;
 
     _isGenerating = true;
+    _currentLevelIndex = null; // Random levels don't track progress
 
     try {
       if (newEdgeSize != null) {
@@ -177,6 +202,28 @@ class GameNotifier extends Notifier<GameState> {
     if (size >= 2 && size <= 6) {
       _edgeSize = size;
     }
+  }
+
+  /// Loads a specific level by its index and starts a new game.
+  ///
+  /// Sets [currentLevelIndex] to track which level is being played.
+  /// Returns true if successful, false if level not found.
+  bool loadLevelByIndex(int levelIndex) {
+    if (!_repositoryLoaded) return false;
+
+    final level = _repository.getLevelByIndex(levelIndex);
+    if (level == null) return false;
+
+    _currentLevelIndex = levelIndex;
+    _edgeSize = level.size;
+    _engine = GameEngine(level: level, mode: _engine.state.mode);
+    state = _engine.state;
+    return true;
+  }
+
+  /// Clears the current level index (for practice/random modes).
+  void clearLevelIndex() {
+    _currentLevelIndex = null;
   }
 }
 

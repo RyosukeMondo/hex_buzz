@@ -105,6 +105,35 @@ class LevelRepository {
     return null;
   }
 
+  /// Gets all levels as a flat list ordered by size then index.
+  ///
+  /// Returns an empty list if not loaded.
+  List<Level> getAllLevels() {
+    if (_levelsBySize == null) return [];
+
+    final allLevels = <Level>[];
+    final sortedSizes = _levelsBySize!.keys.toList()..sort();
+    for (final size in sortedSizes) {
+      allLevels.addAll(_levelsBySize![size]!);
+    }
+    return allLevels;
+  }
+
+  /// Gets a level by its index in the flattened list.
+  ///
+  /// Returns null if index is out of bounds or not loaded.
+  Level? getLevelByIndex(int index) {
+    final allLevels = getAllLevels();
+    if (index < 0 || index >= allLevels.length) return null;
+    return allLevels[index];
+  }
+
+  /// Gets the total count of all levels across all sizes.
+  int get totalLevelCount {
+    if (_levelsBySize == null) return 0;
+    return _levelsBySize!.values.fold(0, (sum, list) => sum + list.length);
+  }
+
   /// Resets the used level tracking, allowing all levels to be selected again.
   void resetUsedTracking() {
     _usedLevelIds.clear();
