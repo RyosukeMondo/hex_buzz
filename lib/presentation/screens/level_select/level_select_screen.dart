@@ -168,35 +168,39 @@ class LevelSelectScreen extends ConsumerWidget {
     int totalStars,
     int maxStars,
   ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: HoneyTheme.spacingLg,
-        vertical: HoneyTheme.spacingSm,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(HoneyTheme.radiusXl),
-        border: Border.all(
-          color: HoneyTheme.honeyGoldDark.withValues(alpha: 0.3),
+    return Semantics(
+      label: '$totalStars of $maxStars stars collected',
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: HoneyTheme.spacingLg,
+          vertical: HoneyTheme.spacingSm,
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.star,
-            color: HoneyTheme.starFilled,
-            size: HoneyTheme.iconSizeMd,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(HoneyTheme.radiusXl),
+          border: Border.all(
+            color: HoneyTheme.honeyGoldDark.withValues(alpha: 0.3),
           ),
-          const SizedBox(width: HoneyTheme.spacingSm),
-          Text(
-            '$totalStars / $maxStars',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: HoneyTheme.textPrimary,
-              fontWeight: FontWeight.bold,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.star,
+              color: HoneyTheme.starFilled,
+              size: HoneyTheme.iconSizeMd,
+              semanticLabel: 'Star',
             ),
-          ),
-        ],
+            const SizedBox(width: HoneyTheme.spacingSm),
+            Text(
+              '$totalStars / $maxStars',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: HoneyTheme.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

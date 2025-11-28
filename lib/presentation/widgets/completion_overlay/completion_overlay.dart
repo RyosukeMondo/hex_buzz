@@ -248,33 +248,39 @@ class _CompletionOverlayState extends State<CompletionOverlay>
   }
 
   Widget _buildStarsRow() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      decoration: HoneycombDecorations.starContainer(),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(3, (index) {
-          final isFilled = index < widget.stars;
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: AnimatedBuilder(
-              animation: _starScales[index],
-              builder: (context, child) {
-                final scale = isFilled ? _starScales[index].value : 1.0;
-                return Transform.scale(
-                  scale: scale == 0.0 ? 1.0 : scale,
-                  child: Icon(
-                    isFilled ? Icons.star : Icons.star_border,
-                    color: isFilled
-                        ? HoneyTheme.starFilled
-                        : HoneyTheme.starEmpty,
-                    size: 48,
-                  ),
-                );
-              },
-            ),
-          );
-        }),
+    return Semantics(
+      label: '${widget.stars} of 3 stars earned',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: HoneycombDecorations.starContainer(),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (index) {
+            final isFilled = index < widget.stars;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: AnimatedBuilder(
+                animation: _starScales[index],
+                builder: (context, child) {
+                  final scale = isFilled ? _starScales[index].value : 1.0;
+                  return Transform.scale(
+                    scale: scale == 0.0 ? 1.0 : scale,
+                    child: Icon(
+                      isFilled ? Icons.star : Icons.star_border,
+                      color: isFilled
+                          ? HoneyTheme.starFilled
+                          : HoneyTheme.starEmpty,
+                      size: 48,
+                      semanticLabel: isFilled
+                          ? 'Star earned'
+                          : 'Star not earned',
+                    ),
+                  );
+                },
+              ),
+            );
+          }),
+        ),
       ),
     );
   }

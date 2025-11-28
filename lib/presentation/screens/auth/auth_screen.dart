@@ -276,36 +276,42 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       icon: Icon(
         obscure ? Icons.visibility_off : Icons.visibility,
         color: HoneyTheme.textSecondary,
+        semanticLabel: obscure ? 'Show password' : 'Hide password',
       ),
       onPressed: onToggle,
+      tooltip: obscure ? 'Show password' : 'Hide password',
     );
   }
 
   Widget _buildErrorMessage() {
-    return Padding(
-      padding: const EdgeInsets.only(top: HoneyTheme.spacingLg),
-      child: Container(
-        padding: const EdgeInsets.all(HoneyTheme.spacingMd),
-        decoration: BoxDecoration(
-          color: Colors.red.shade50,
-          borderRadius: BorderRadius.circular(HoneyTheme.radiusSm),
-          border: Border.all(color: Colors.red.shade200),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.error_outline,
-              color: Colors.red.shade700,
-              size: HoneyTheme.iconSizeSm,
-            ),
-            const SizedBox(width: HoneyTheme.spacingSm),
-            Expanded(
-              child: Text(
-                _errorMessage!,
-                style: TextStyle(color: Colors.red.shade700),
+    return Semantics(
+      liveRegion: true,
+      child: Padding(
+        padding: const EdgeInsets.only(top: HoneyTheme.spacingLg),
+        child: Container(
+          padding: const EdgeInsets.all(HoneyTheme.spacingMd),
+          decoration: BoxDecoration(
+            color: Colors.red.shade50,
+            borderRadius: BorderRadius.circular(HoneyTheme.radiusSm),
+            border: Border.all(color: Colors.red.shade200),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.red.shade700,
+                size: HoneyTheme.iconSizeSm,
+                semanticLabel: 'Error',
               ),
-            ),
-          ],
+              const SizedBox(width: HoneyTheme.spacingSm),
+              Expanded(
+                child: Text(
+                  _errorMessage!,
+                  style: TextStyle(color: Colors.red.shade700),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
