@@ -111,7 +111,7 @@
 
 ## Phase 4: Presentation Layer - State Management
 
-- [ ] 4.1 Create ProgressNotifier provider
+- [x] 4.1 Create ProgressNotifier provider
   - File: `lib/presentation/providers/progress_provider.dart`
   - Implement `AsyncNotifier<ProgressState>` with `completeLevel()`, `resetProgress()`
   - Wire to `ProgressRepository` and `StarCalculator`
