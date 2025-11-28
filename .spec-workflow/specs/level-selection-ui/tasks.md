@@ -101,7 +101,7 @@
   - _Requirements: 6.4_
   - _Prompt: Implement the task for spec level-selection-ui, first run spec-workflow-guide to get the workflow guide then implement the task: Role: API Developer | Task: Register progress routes in debug server | Restrictions: Follow existing mount pattern | Success: API endpoints accessible | Instructions: Set task 3.4 to in-progress in tasks.md before starting, use log-implementation tool after completion with artifacts, then mark as complete_
 
-- [ ] 3.5 Write CLI and API tests
+- [x] 3.5 Write CLI and API tests
   - Files: `test/debug/cli/progress_command_test.dart`, `test/debug/api/progress_routes_test.dart`
   - Test all CLI subcommands and API endpoints
   - Purpose: Ensure debug interfaces work correctly
