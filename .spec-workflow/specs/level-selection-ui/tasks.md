@@ -243,7 +243,7 @@
 
 ## Phase 8: Integration & Polish
 
-- [ ] 8.1 Add level select header with title and total stars
+- [x] 8.1 Add level select header with title and total stars
   - File: `lib/presentation/screens/level_select/level_select_screen.dart` (modify)
   - Add "Honeycomb One Pass" title with honey styling
   - Display total stars collected
