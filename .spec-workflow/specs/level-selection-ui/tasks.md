@@ -68,7 +68,7 @@
 
 ## Phase 3: Debug Layer (AI Agent-First)
 
-- [ ] 3.1 Create progress CLI command
+- [-] 3.1 Create progress CLI command
   - File: `lib/debug/cli/commands/progress_command.dart`
   - Implement subcommands: `get`, `set --level N --stars S`, `reset`
   - Output JSON for AI agent parsing
