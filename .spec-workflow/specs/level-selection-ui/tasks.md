@@ -120,7 +120,7 @@
   - _Requirements: 2.1, 2.2, 2.3, 3.1, 3.2, 3.3_
   - _Prompt: Implement the task for spec level-selection-ui, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Developer specializing in Riverpod | Task: Create ProgressNotifier with async state management, integrating StarCalculator and ProgressRepository | Restrictions: Follow existing provider patterns, handle loading/error states | Success: Provider compiles, state updates correctly on level completion | Instructions: Set task 4.1 to in-progress in tasks.md before starting, use log-implementation tool after completion with artifacts, then mark as complete_
 
-- [ ] 4.2 Integrate progress provider with game flow
+- [x] 4.2 Integrate progress provider with game flow
   - File: `lib/presentation/providers/game_provider.dart` (modify)
   - Add `currentLevelIndex` tracking
   - Call `progressProvider.completeLevel()` on game completion
