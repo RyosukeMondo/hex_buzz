@@ -21,7 +21,7 @@
   - _Requirements: REQ-6, REQ-9_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter UI Developer | Task: Update HoneyTheme color palette per REQ-6 design spec. Replace any blue/purple colors with honeybee amber/orange palette. Path gradient should be #FFC107 → #FFB300 → #FF8F00. Add contrast utility methods for accessibility | Restrictions: Maintain existing color constant names for compatibility. Do not break existing widget references | Success: All game colors follow honeybee theme, no blue/purple visible, contrast ratios meet WCAG AA | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 3. Fix render layer ordering in HexGridPainter
+- [x] 3. Fix render layer ordering in HexGridPainter
   - File: `lib/presentation/widgets/hex_grid/hex_grid_widget.dart`
   - Reorder paint operations: cells → borders → visited → path → walls → checkpoints
   - Ensure checkpoint numbers render above path line
