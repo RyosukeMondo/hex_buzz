@@ -15,12 +15,20 @@ class HoneyTheme {
   // Primary honey gold colors
   static const Color honeyGold = Color(0xFFFFC107);
   static const Color honeyGoldLight = Color(0xFFFFD54F);
-  static const Color honeyGoldDark = Color(0xFFFFB300);
+  // Darker for better contrast on light backgrounds (used for large text)
+  static const Color honeyGoldDark = Color(
+    0xFFE65100,
+  ); // Deep orange for 3:1+ contrast
 
   // Secondary deep honey/orange colors
-  static const Color deepHoney = Color(0xFFFF8F00);
-  static const Color deepHoneyLight = Color(0xFFFFA000);
-  static const Color deepHoneyDark = Color(0xFFFF6F00);
+  // Using darker shades for better contrast on light backgrounds
+  static const Color deepHoney = Color(
+    0xFFE65100,
+  ); // Darker orange for 3:1+ contrast
+  static const Color deepHoneyLight = Color(0xFFF57C00);
+  static const Color deepHoneyDark = Color(
+    0xFFBF360C,
+  ); // Even darker for emphasis
 
   // Background warm cream colors
   static const Color warmCream = Color(0xFFFFF8E1);
@@ -48,8 +56,8 @@ class HoneyTheme {
   static const Color textSecondary = Color(0xFF5D4037);
   static const Color textOnPrimary = Color(0xFF3E2723);
 
-  // Lock icon color
-  static const Color lockColor = Color(0xFF9E9E9E);
+  // Lock icon color - darkened for better contrast on cream backgrounds
+  static const Color lockColor = Color(0xFF757575);
 
   // ============================================
   // Spacing Constants
