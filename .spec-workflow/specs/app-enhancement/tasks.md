@@ -32,7 +32,7 @@
 
 ## Phase 2: User Authentication
 
-- [ ] 4. Create User and AuthResult domain models
+- [x] 4. Create User and AuthResult domain models
   - File: `lib/domain/models/user.dart`, `lib/domain/models/auth_result.dart`
   - Define User class with id, username, createdAt, isGuest
   - Define AuthResult class with success, user, errorMessage
