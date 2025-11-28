@@ -116,7 +116,7 @@
 
 ## Phase 4: Level Selection Enhancement
 
-- [ ] 12. Add time display to LevelCellWidget
+- [x] 12. Add time display to LevelCellWidget
   - File: `lib/presentation/widgets/level_cell/level_cell_widget.dart`
   - Display best completion time below stars
   - Format as MM:SS or SS.ss based on duration
