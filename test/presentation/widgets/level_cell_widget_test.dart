@@ -61,16 +61,33 @@ void main() {
     });
 
     group('Stars display', () {
+      // Helper to count filled stars (Container with shadow that contains an Icon child)
+      Finder findFilledStars() => find.byWidgetPredicate(
+        (widget) =>
+            widget is Container &&
+            widget.child is Icon &&
+            widget.decoration is BoxDecoration &&
+            (widget.decoration as BoxDecoration).boxShadow != null &&
+            (widget.decoration as BoxDecoration).boxShadow!.isNotEmpty &&
+            (widget.decoration as BoxDecoration).shape == BoxShape.circle,
+      );
+
+      // Helper to count empty stars (wrapped in Stack with outline effect)
+      Finder findEmptyStarStacks() => find.byWidgetPredicate(
+        (widget) =>
+            widget is Stack &&
+            widget.children.length == 2 &&
+            widget.children[0] is Icon &&
+            widget.children[1] is Icon,
+      );
+
       testWidgets('displays 0 filled stars when stars is 0', (tester) async {
         await tester.pumpWidget(
           createTestWidget(levelNumber: 1, stars: 0, isUnlocked: true),
         );
 
-        final starIcons = find.byIcon(Icons.star);
-        final emptyStarIcons = find.byIcon(Icons.star_border);
-
-        expect(starIcons, findsNothing);
-        expect(emptyStarIcons, findsNWidgets(3));
+        expect(findFilledStars(), findsNothing);
+        expect(findEmptyStarStacks(), findsNWidgets(3));
       });
 
       testWidgets('displays 1 filled star when stars is 1', (tester) async {
@@ -78,11 +95,8 @@ void main() {
           createTestWidget(levelNumber: 1, stars: 1, isUnlocked: true),
         );
 
-        final starIcons = find.byIcon(Icons.star);
-        final emptyStarIcons = find.byIcon(Icons.star_border);
-
-        expect(starIcons, findsOneWidget);
-        expect(emptyStarIcons, findsNWidgets(2));
+        expect(findFilledStars(), findsOneWidget);
+        expect(findEmptyStarStacks(), findsNWidgets(2));
       });
 
       testWidgets('displays 2 filled stars when stars is 2', (tester) async {
@@ -90,11 +104,8 @@ void main() {
           createTestWidget(levelNumber: 1, stars: 2, isUnlocked: true),
         );
 
-        final starIcons = find.byIcon(Icons.star);
-        final emptyStarIcons = find.byIcon(Icons.star_border);
-
-        expect(starIcons, findsNWidgets(2));
-        expect(emptyStarIcons, findsOneWidget);
+        expect(findFilledStars(), findsNWidgets(2));
+        expect(findEmptyStarStacks(), findsOneWidget);
       });
 
       testWidgets('displays 3 filled stars when stars is 3', (tester) async {
@@ -102,11 +113,8 @@ void main() {
           createTestWidget(levelNumber: 1, stars: 3, isUnlocked: true),
         );
 
-        final starIcons = find.byIcon(Icons.star);
-        final emptyStarIcons = find.byIcon(Icons.star_border);
-
-        expect(starIcons, findsNWidgets(3));
-        expect(emptyStarIcons, findsNothing);
+        expect(findFilledStars(), findsNWidgets(3));
+        expect(findEmptyStarStacks(), findsNothing);
       });
 
       testWidgets('filled stars have correct color', (tester) async {
@@ -114,19 +122,30 @@ void main() {
           createTestWidget(levelNumber: 1, stars: 2, isUnlocked: true),
         );
 
-        final starIcon = tester.widget<Icon>(find.byIcon(Icons.star).first);
-        expect(starIcon.color, equals(HoneyTheme.starFilled));
+        // Find filled star icon (inside Container with shadow)
+        final containers = tester.widgetList<Container>(findFilledStars());
+        expect(containers.isNotEmpty, isTrue);
+        final container = containers.first;
+        final icon = (container.child as Icon);
+        expect(icon.color, equals(HoneyTheme.starFilled));
       });
 
-      testWidgets('empty stars have correct color', (tester) async {
+      testWidgets('empty stars have outline for visibility', (tester) async {
         await tester.pumpWidget(
           createTestWidget(levelNumber: 1, stars: 1, isUnlocked: true),
         );
 
-        final emptyIcon = tester.widget<Icon>(
-          find.byIcon(Icons.star_border).first,
-        );
-        expect(emptyIcon.color, equals(HoneyTheme.starEmpty));
+        // Empty stars use stack with outline layer and inner fill
+        final stacks = tester.widgetList<Stack>(findEmptyStarStacks());
+        expect(stacks.isNotEmpty, isTrue);
+        final stack = stacks.first;
+        final outlineIcon = stack.children[0] as Icon;
+        final fillIcon = stack.children[1] as Icon;
+
+        // Outline uses darker color for contrast
+        expect(outlineIcon.color, equals(HoneyTheme.starEmptyOutline));
+        // Inner fill uses lighter color
+        expect(fillIcon.color, equals(HoneyTheme.starEmpty));
       });
 
       testWidgets('does not display stars for locked level', (tester) async {
@@ -134,8 +153,8 @@ void main() {
           createTestWidget(levelNumber: 1, stars: 0, isUnlocked: false),
         );
 
-        expect(find.byIcon(Icons.star), findsNothing);
-        expect(find.byIcon(Icons.star_border), findsNothing);
+        expect(findFilledStars(), findsNothing);
+        expect(findEmptyStarStacks(), findsNothing);
       });
     });
 

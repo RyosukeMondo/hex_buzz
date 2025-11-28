@@ -186,17 +186,45 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
   }
 
   Widget _buildStarsRow() {
+    final starSize = widget.size * 0.18;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: List.generate(3, (index) {
         final isFilled = index < widget.stars;
-        return Icon(
-          isFilled ? Icons.star : Icons.star_border,
-          color: isFilled ? HoneyTheme.starFilled : HoneyTheme.starEmpty,
-          size: widget.size * 0.18,
-        );
+        return isFilled
+            ? _buildFilledStar(starSize)
+            : _buildEmptyStar(starSize);
       }),
+    );
+  }
+
+  Widget _buildFilledStar(double size) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: HoneyTheme.starFilled.withValues(alpha: 0.4),
+            blurRadius: 2,
+            spreadRadius: 0,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Icon(Icons.star, color: HoneyTheme.starFilled, size: size),
+    );
+  }
+
+  Widget _buildEmptyStar(double size) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Outline/stroke layer
+        Icon(Icons.star, color: HoneyTheme.starEmptyOutline, size: size),
+        // Inner fill slightly smaller to create stroke effect
+        Icon(Icons.star, color: HoneyTheme.starEmpty, size: size * 0.85),
+      ],
     );
   }
 }
