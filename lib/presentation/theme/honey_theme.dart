@@ -48,6 +48,89 @@ class HoneyTheme {
   // Lock icon color
   static const Color lockColor = Color(0xFF9E9E9E);
 
+  // ============================================
+  // Spacing Constants
+  // ============================================
+
+  /// Extra small spacing (4.0)
+  static const double spacingXs = 4.0;
+
+  /// Small spacing (8.0)
+  static const double spacingSm = 8.0;
+
+  /// Medium spacing (12.0)
+  static const double spacingMd = 12.0;
+
+  /// Large spacing (16.0)
+  static const double spacingLg = 16.0;
+
+  /// Extra large spacing (24.0)
+  static const double spacingXl = 24.0;
+
+  /// Extra extra large spacing (32.0)
+  static const double spacingXxl = 32.0;
+
+  // ============================================
+  // Sizing Constants
+  // ============================================
+
+  /// Default level cell size
+  static const double levelCellSize = 80.0;
+
+  /// Default icon size small
+  static const double iconSizeSm = 16.0;
+
+  /// Default icon size medium
+  static const double iconSizeMd = 24.0;
+
+  /// Default icon size large
+  static const double iconSizeLg = 48.0;
+
+  /// Default icon size extra large
+  static const double iconSizeXl = 64.0;
+
+  // ============================================
+  // Border Radius Constants
+  // ============================================
+
+  /// Small border radius (8.0)
+  static const double radiusSm = 8.0;
+
+  /// Medium border radius (12.0)
+  static const double radiusMd = 12.0;
+
+  /// Large border radius (16.0)
+  static const double radiusLg = 16.0;
+
+  /// Extra large border radius (20.0)
+  static const double radiusXl = 20.0;
+
+  /// Circular border radius (24.0)
+  static const double radiusCircular = 24.0;
+
+  // ============================================
+  // Border Width Constants
+  // ============================================
+
+  /// Thin border width (1.0)
+  static const double borderThin = 1.0;
+
+  /// Normal border width (2.0)
+  static const double borderNormal = 2.0;
+
+  /// Thick border width (3.0)
+  static const double borderThick = 3.0;
+
+  // ============================================
+  // Grid Constants
+  // ============================================
+
+  /// Number of columns in level selection grid
+  static const int gridColumns = 3;
+
+  /// Grid spacing between cells
+  static const double gridSpacing = 16.0;
+
   /// Light theme for the app.
   static ThemeData get lightTheme {
     return ThemeData(
