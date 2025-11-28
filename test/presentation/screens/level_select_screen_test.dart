@@ -116,12 +116,11 @@ void main() {
     }
 
     group('Screen structure', () {
-      testWidgets('displays app bar with title', (tester) async {
+      testWidgets('displays header with title', (tester) async {
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
         expect(find.text('Honeycomb One Pass'), findsOneWidget);
-        expect(find.byType(AppBar), findsOneWidget);
       });
 
       testWidgets('displays scaffold with body', (tester) async {
@@ -129,6 +128,21 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(Scaffold), findsOneWidget);
+      });
+
+      testWidgets('displays total stars in header', (tester) async {
+        final progressState = const ProgressState(
+          levels: {
+            0: LevelProgress(completed: true, stars: 3),
+            1: LevelProgress(completed: true, stars: 2),
+          },
+        );
+
+        await tester.pumpWidget(createTestWidget(progressState: progressState));
+        await tester.pumpAndSettle();
+
+        // Total: 3 + 2 = 5 stars, Max: 5 levels * 3 = 15 stars
+        expect(find.text('5 / 15'), findsOneWidget);
       });
     });
 
@@ -461,13 +475,25 @@ void main() {
       });
     });
 
-    group('App bar styling', () {
-      testWidgets('app bar uses honey gold color', (tester) async {
+    group('Header styling', () {
+      testWidgets('header displays star icon', (tester) async {
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        final appBar = tester.widget<AppBar>(find.byType(AppBar));
-        expect(appBar.backgroundColor, HoneyTheme.honeyGold);
+        // Should have a star icon in the header for total stars display
+        expect(find.byIcon(Icons.star), findsWidgets);
+      });
+
+      testWidgets('header displays zero stars when no progress', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          createTestWidget(progressState: const ProgressState.empty()),
+        );
+        await tester.pumpAndSettle();
+
+        // 5 levels * 3 stars = 15 max, 0 collected
+        expect(find.text('0 / 15'), findsOneWidget);
       });
     });
 

@@ -21,29 +21,110 @@ class LevelSelectScreen extends ConsumerWidget {
     final totalLevels = levelRepository.totalLevelCount;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Honeycomb One Pass'),
-        backgroundColor: HoneyTheme.honeyGold,
-      ),
-      body: progressAsync.when(
-        data: (progressState) =>
-            _buildLevelGrid(context, ref, progressState, totalLevels),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Error loading progress: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(progressProvider),
-                child: const Text('Retry'),
-              ),
-            ],
+      body: SafeArea(
+        child: progressAsync.when(
+          data: (progressState) =>
+              _buildContent(context, ref, progressState, totalLevels),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stack) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text('Error loading progress: $error'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => ref.invalidate(progressProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    WidgetRef ref,
+    dynamic progressState,
+    int totalLevels,
+  ) {
+    return Column(
+      children: [
+        _buildHeader(context, progressState, totalLevels),
+        Expanded(
+          child: _buildLevelGrid(context, ref, progressState, totalLevels),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeader(
+    BuildContext context,
+    dynamic progressState,
+    int totalLevels,
+  ) {
+    final totalStars = progressState.totalStars;
+    final maxStars = totalLevels * 3;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            HoneyTheme.honeyGold,
+            HoneyTheme.honeyGoldLight.withValues(alpha: 0.8),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: HoneyTheme.brownAccent.withValues(alpha: 0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Honeycomb One Pass',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: HoneyTheme.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: HoneyTheme.honeyGoldDark.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.star, color: HoneyTheme.starFilled, size: 24),
+                const SizedBox(width: 8),
+                Text(
+                  '$totalStars / $maxStars',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: HoneyTheme.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
