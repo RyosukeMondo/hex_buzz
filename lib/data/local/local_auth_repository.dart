@@ -113,10 +113,7 @@ class LocalAuthRepository implements AuthRepository {
   @override
   Stream<User?> authStateChanges() => _authStateController.stream;
 
-  /// Creates a guest user for local-only play.
-  ///
-  /// Guest users can play the game but their progress is only stored locally
-  /// and not associated with a registered account.
+  @override
   Future<AuthResult> loginAsGuest() async {
     final user = User.guest();
     await _setCurrentUser(user);

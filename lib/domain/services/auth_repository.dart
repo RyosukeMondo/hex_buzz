@@ -37,4 +37,10 @@ abstract class AuthRepository {
   /// Emits the current user when a user logs in or registers,
   /// and emits null when the user logs out.
   Stream<User?> authStateChanges();
+
+  /// Creates a guest user for local-only play.
+  ///
+  /// Guest users can play the game but their progress is only stored locally
+  /// and not associated with a registered account.
+  Future<AuthResult> loginAsGuest();
 }
