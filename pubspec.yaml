@@ -38,6 +38,9 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
 
+  # Mocking for tests
+  mocktail: ^1.0.4
+
   # Integration testing
   integration_test:
     sdk: flutter
