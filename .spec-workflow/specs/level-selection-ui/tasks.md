@@ -217,7 +217,7 @@
 
 ## Phase 7: Widget Tests
 
-- [ ] 7.1 Write widget tests for LevelCellWidget
+- [x] 7.1 Write widget tests for LevelCellWidget
   - File: `test/presentation/widgets/level_cell_widget_test.dart`
   - Test: displays level number, stars, lock icon, tap behavior
   - Purpose: Ensure widget renders correctly
