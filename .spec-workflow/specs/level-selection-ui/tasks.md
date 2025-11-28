@@ -85,7 +85,7 @@
   - _Requirements: 6.1_
   - _Prompt: Implement the task for spec level-selection-ui, first run spec-workflow-guide to get the workflow guide then implement the task: Role: CLI Developer | Task: Register ProgressCommand in CliRunner | Restrictions: Follow existing pattern, minimal changes | Success: `honeycomb-cli progress` works | Instructions: Set task 3.2 to in-progress in tasks.md before starting, use log-implementation tool after completion with artifacts, then mark as complete_
 
-- [ ] 3.3 Create progress REST API routes
+- [x] 3.3 Create progress REST API routes
   - File: `lib/debug/api/routes/progress_routes.dart`
   - Implement: `GET /api/progress`, `POST /api/progress/complete`, `POST /api/progress/reset`
   - Purpose: Enable REST API-based progress management for AI agents
