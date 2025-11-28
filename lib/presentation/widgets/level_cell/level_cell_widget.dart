@@ -39,7 +39,7 @@ class LevelCellWidget extends StatefulWidget {
     this.isUnlocked = true,
     this.isCompleted = false,
     this.onTap,
-    this.size = 80,
+    this.size = HoneyTheme.levelCellSize,
   }) : assert(stars >= 0 && stars <= 3, 'Stars must be between 0 and 3');
 
   @override
@@ -128,7 +128,7 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: HoneyTheme.spacingXs),
         _buildStarsRow(),
       ],
     );
@@ -139,7 +139,7 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(Icons.lock, color: HoneyTheme.lockColor, size: widget.size * 0.35),
-        const SizedBox(height: 4),
+        const SizedBox(height: HoneyTheme.spacingXs),
         Text(
           widget.levelNumber.toString(),
           style: TextStyle(

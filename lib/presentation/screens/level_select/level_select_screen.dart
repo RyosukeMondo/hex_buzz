@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../domain/models/progress_state.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/progress_provider.dart';
 import '../../theme/honey_theme.dart';
@@ -30,10 +31,14 @@ class LevelSelectScreen extends ConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                const SizedBox(height: 16),
+                const Icon(
+                  Icons.error_outline,
+                  size: HoneyTheme.iconSizeLg,
+                  color: Colors.red,
+                ),
+                const SizedBox(height: HoneyTheme.spacingLg),
                 Text('Error loading progress: $error'),
-                const SizedBox(height: 16),
+                const SizedBox(height: HoneyTheme.spacingLg),
                 ElevatedButton(
                   onPressed: () => ref.invalidate(progressProvider),
                   child: const Text('Retry'),
@@ -49,7 +54,7 @@ class LevelSelectScreen extends ConsumerWidget {
   Widget _buildContent(
     BuildContext context,
     WidgetRef ref,
-    dynamic progressState,
+    ProgressState progressState,
     int totalLevels,
   ) {
     return Column(
@@ -64,7 +69,7 @@ class LevelSelectScreen extends ConsumerWidget {
 
   Widget _buildHeader(
     BuildContext context,
-    dynamic progressState,
+    ProgressState progressState,
     int totalLevels,
   ) {
     final totalStars = progressState.totalStars;
@@ -72,7 +77,10 @@ class LevelSelectScreen extends ConsumerWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      padding: const EdgeInsets.symmetric(
+        horizontal: HoneyTheme.spacingXl,
+        vertical: HoneyTheme.spacingXl - 4,
+      ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -99,12 +107,15 @@ class LevelSelectScreen extends ConsumerWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: HoneyTheme.spacingMd),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: HoneyTheme.spacingLg,
+              vertical: HoneyTheme.spacingSm,
+            ),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(HoneyTheme.radiusXl),
               border: Border.all(
                 color: HoneyTheme.honeyGoldDark.withValues(alpha: 0.3),
               ),
@@ -112,8 +123,12 @@ class LevelSelectScreen extends ConsumerWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.star, color: HoneyTheme.starFilled, size: 24),
-                const SizedBox(width: 8),
+                const Icon(
+                  Icons.star,
+                  color: HoneyTheme.starFilled,
+                  size: HoneyTheme.iconSizeMd,
+                ),
+                const SizedBox(width: HoneyTheme.spacingSm),
                 Text(
                   '$totalStars / $maxStars',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -132,7 +147,7 @@ class LevelSelectScreen extends ConsumerWidget {
   Widget _buildLevelGrid(
     BuildContext context,
     WidgetRef ref,
-    dynamic progressState,
+    ProgressState progressState,
     int totalLevels,
   ) {
     if (totalLevels == 0) {
@@ -140,12 +155,12 @@ class LevelSelectScreen extends ConsumerWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(HoneyTheme.spacingLg),
       child: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
+          crossAxisCount: HoneyTheme.gridColumns,
+          mainAxisSpacing: HoneyTheme.gridSpacing,
+          crossAxisSpacing: HoneyTheme.gridSpacing,
           childAspectRatio: 1,
         ),
         itemCount: totalLevels,
