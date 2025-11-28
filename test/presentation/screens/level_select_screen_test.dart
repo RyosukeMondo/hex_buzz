@@ -11,6 +11,7 @@ import 'package:hex_buzz/domain/models/user.dart';
 import 'package:hex_buzz/domain/services/auth_repository.dart';
 import 'package:hex_buzz/domain/services/level_repository.dart';
 import 'package:hex_buzz/domain/services/progress_repository.dart';
+import 'package:hex_buzz/main.dart';
 import 'package:hex_buzz/presentation/providers/auth_provider.dart';
 import 'package:hex_buzz/presentation/providers/game_provider.dart';
 import 'package:hex_buzz/presentation/providers/progress_provider.dart';
@@ -156,6 +157,16 @@ void main() {
         child: MaterialApp(
           theme: HoneyTheme.lightTheme,
           home: const LevelSelectScreen(),
+          onGenerateRoute: (settings) {
+            if (settings.name == AppRoutes.game) {
+              final levelIndex = settings.arguments as int?;
+              return MaterialPageRoute(
+                builder: (_) => GameScreen(levelIndex: levelIndex),
+                settings: settings,
+              );
+            }
+            return null;
+          },
         ),
       );
     }

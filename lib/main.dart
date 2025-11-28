@@ -11,8 +11,21 @@ import 'domain/services/game_engine.dart';
 import 'domain/services/level_repository.dart';
 import 'presentation/providers/game_provider.dart';
 import 'presentation/providers/progress_provider.dart';
+import 'presentation/screens/auth/auth_screen.dart';
+import 'presentation/screens/front/front_screen.dart';
+import 'presentation/screens/game/game_screen.dart';
 import 'presentation/screens/level_select/level_select_screen.dart';
 import 'presentation/theme/honey_theme.dart';
+
+/// Route names for navigation.
+class AppRoutes {
+  static const String front = '/';
+  static const String auth = '/auth';
+  static const String levels = '/levels';
+  static const String game = '/game';
+
+  AppRoutes._();
+}
 
 /// Whether to enable the debug API server.
 ///
@@ -104,7 +117,83 @@ class HexBuzzApp extends StatelessWidget {
     return MaterialApp(
       title: 'HexBuzz',
       theme: HoneyTheme.lightTheme,
-      home: const LevelSelectScreen(),
+      initialRoute: AppRoutes.front,
+      onGenerateRoute: _generateRoute,
+    );
+  }
+
+  Route<dynamic>? _generateRoute(RouteSettings settings) {
+    final uri = Uri.parse(settings.name ?? '/');
+    final path = uri.path;
+
+    // Determine if this is a forward or backward navigation
+    // Forward: slides left, Back: slides right
+    final isForward = !_isBackNavigation(settings);
+
+    switch (path) {
+      case AppRoutes.front:
+        return _buildRoute(const FrontScreen(), settings, isForward);
+
+      case AppRoutes.auth:
+        return _buildRoute(const AuthScreen(), settings, isForward);
+
+      case AppRoutes.levels:
+        return _buildRoute(const LevelSelectScreen(), settings, isForward);
+
+      case AppRoutes.game:
+        final levelIndex = settings.arguments as int?;
+        return _buildRoute(
+          GameScreen(levelIndex: levelIndex),
+          settings,
+          isForward,
+        );
+
+      default:
+        return _buildRoute(const FrontScreen(), settings, isForward);
+    }
+  }
+
+  bool _isBackNavigation(RouteSettings settings) {
+    // Back navigation occurs when returning to front or levels from deeper screens
+    final name = settings.name ?? '';
+    return name == AppRoutes.front ||
+        (name == AppRoutes.levels && settings.arguments == 'back');
+  }
+
+  Route<T> _buildRoute<T>(Widget page, RouteSettings settings, bool isForward) {
+    return PageRouteBuilder<T>(
+      settings: settings,
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionDuration: const Duration(milliseconds: 300),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        // Slide direction: forward slides left (offset from right)
+        // backward slides right (offset from left)
+        final begin = isForward
+            ? const Offset(1.0, 0.0)
+            : const Offset(-1.0, 0.0);
+        const end = Offset.zero;
+
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeInOut,
+        );
+
+        final slideAnimation = Tween<Offset>(
+          begin: begin,
+          end: end,
+        ).animate(curvedAnimation);
+
+        final fadeAnimation = Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).animate(curvedAnimation);
+
+        return FadeTransition(
+          opacity: fadeAnimation,
+          child: SlideTransition(position: slideAnimation, child: child),
+        );
+      },
     );
   }
 }

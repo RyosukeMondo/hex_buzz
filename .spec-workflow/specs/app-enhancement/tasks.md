@@ -104,7 +104,7 @@
   - _Requirements: REQ-3_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter UI Developer | Task: Create FrontScreen with centered HexBuzz title, honeycomb background, and animated "Tap to Start" text (pulsing opacity). GestureDetector on entire screen. Check auth state: if logged in go to LevelSelectScreen, else go to AuthScreen | Restrictions: Use HoneyTheme. Keep it simple and performant. Dispose animations properly | Success: Tapping navigates correctly based on auth state. Looks polished with honeybee theme | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 11. Update app navigation flow
+- [x] 11. Update app navigation flow
   - File: `lib/main.dart`
   - Set FrontScreen as initial route
   - Add named routes for auth, levels, game screens

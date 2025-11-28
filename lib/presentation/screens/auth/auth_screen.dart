@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../main.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/honey_theme.dart';
-import '../level_select/level_select_screen.dart';
 
 /// Authentication mode for the form.
 enum AuthMode { login, register }
@@ -120,9 +120,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   void _navigateToLevels() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const LevelSelectScreen()),
-    );
+    Navigator.of(context).pushReplacementNamed(AppRoutes.levels);
   }
 
   @override

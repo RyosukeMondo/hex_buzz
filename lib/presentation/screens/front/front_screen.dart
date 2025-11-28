@@ -3,10 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../main.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/honey_theme.dart';
-import '../auth/auth_screen.dart';
-import '../level_select/level_select_screen.dart';
 
 /// Front screen with HexBuzz branding and animated "Tap to Start" prompt.
 ///
@@ -49,11 +48,9 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
     final authState = ref.read(authProvider);
     final isLoggedIn = authState.valueOrNull != null;
 
-    final screen = isLoggedIn ? const LevelSelectScreen() : const AuthScreen();
+    final route = isLoggedIn ? AppRoutes.levels : AppRoutes.auth;
 
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (context) => screen));
+    Navigator.of(context).pushReplacementNamed(route);
   }
 
   @override

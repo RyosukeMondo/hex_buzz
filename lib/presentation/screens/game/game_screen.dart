@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/hex_cell.dart';
 import '../../../domain/services/star_calculator.dart';
+import '../../../main.dart';
 import '../../providers/game_provider.dart';
 import '../../widgets/completion_overlay/completion_overlay.dart';
 import '../../widgets/hex_grid/hex_grid_widget.dart';
@@ -226,18 +227,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (widget.levelIndex == null) return;
 
     final nextIndex = widget.levelIndex! + 1;
-    Navigator.pushReplacement(
+    Navigator.of(
       context,
-      MaterialPageRoute(
-        builder: (context) => GameScreen(levelIndex: nextIndex),
-      ),
-    );
+    ).pushReplacementNamed(AppRoutes.game, arguments: nextIndex);
   }
 
   void _navigateToLevelSelect(BuildContext context) {
     // Pop back to level select if we were navigated here
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
+    } else {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.levels);
     }
   }
 }

@@ -106,9 +106,7 @@ class _MockLevelRepository extends LevelRepository {
 }
 
 void main() {
-  testWidgets('App launches with level select screen', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('App launches with front screen', (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -122,14 +120,14 @@ void main() {
       ),
     );
 
-    // Allow async providers to settle
-    await tester.pumpAndSettle();
+    // Pump a few frames to let animations initialize (FrontScreen has pulse animation)
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
-    // Verify app title is displayed
+    // Verify app title is displayed on front screen
     expect(find.text('HexBuzz'), findsOneWidget);
 
-    // Verify level select screen is shown (grid of level cells)
-    // The level select screen doesn't have a reset button - that's on GameScreen
-    // Instead verify we're on level select by checking for level grid presence
+    // Verify "Tap to Start" prompt is visible
+    expect(find.text('Tap to Start'), findsOneWidget);
   });
 }

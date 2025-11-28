@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/progress_state.dart';
+import '../../../main.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/progress_provider.dart';
 import '../../theme/honey_theme.dart';
 import '../../widgets/level_cell/level_cell_widget.dart';
-import '../game/game_screen.dart';
 
 /// Main level selection screen displaying a scrollable grid of levels.
 ///
@@ -187,10 +187,6 @@ class LevelSelectScreen extends ConsumerWidget {
 
     if (!success) return;
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => GameScreen(levelIndex: levelIndex),
-      ),
-    );
+    Navigator.of(context).pushNamed(AppRoutes.game, arguments: levelIndex);
   }
 }
