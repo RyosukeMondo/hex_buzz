@@ -6,6 +6,7 @@ import '../../../domain/models/hex_cell.dart';
 import '../../../domain/models/level.dart';
 import '../../theme/honey_theme.dart';
 import '../../utils/hex_utils.dart';
+import '../animations/animated_cell_paint.dart';
 import 'hex_cell_widget.dart';
 import 'path_painter.dart';
 import 'wall_painter.dart';
@@ -47,6 +48,20 @@ class _HexGridWidgetState extends State<HexGridWidget> {
   HexCell? _lastEnteredCell;
   bool _isDragging = false;
 
+  /// Tracks cells that have already had their animation triggered.
+  /// This prevents re-triggering animations on widget rebuilds.
+  final Set<String> _animatedCellKeys = {};
+
+  @override
+  void didUpdateWidget(HexGridWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Reset animated cells when starting a new path (empty visited cells).
+    if (widget.visitedCells.isEmpty && oldWidget.visitedCells.isNotEmpty) {
+      _animatedCellKeys.clear();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -61,21 +76,97 @@ class _HexGridWidgetState extends State<HexGridWidget> {
               _handleDragUpdate(details, cellSize, origin),
           onPanEnd: (_) => _handleDragEnd(),
           onTapDown: (details) => _handleTap(details, cellSize, origin),
-          child: RepaintBoundary(
-            child: CustomPaint(
-              size: Size(constraints.maxWidth, constraints.maxHeight),
-              painter: _HexGridPainter(
-                level: widget.level,
-                path: widget.path,
-                visitedCells: widget.visitedCells,
-                cellSize: cellSize,
-                origin: origin,
+          child: Stack(
+            children: [
+              // Base layer: the grid painted via CustomPainter.
+              RepaintBoundary(
+                child: CustomPaint(
+                  size: Size(constraints.maxWidth, constraints.maxHeight),
+                  painter: _HexGridPainter(
+                    level: widget.level,
+                    path: widget.path,
+                    visitedCells: widget.visitedCells,
+                    cellSize: cellSize,
+                    origin: origin,
+                  ),
+                ),
               ),
-            ),
+              // Animation overlay: positioned AnimatedCellPaint widgets.
+              ..._buildCellAnimationOverlays(cellSize, origin, constraints),
+            ],
           ),
         );
       },
     );
+  }
+
+  /// Builds positioned AnimatedCellPaint widgets for each visited cell.
+  List<Widget> _buildCellAnimationOverlays(
+    double cellSize,
+    Offset origin,
+    BoxConstraints constraints,
+  ) {
+    final overlays = <Widget>[];
+    final hexWidth = HexUtils.hexWidth(cellSize);
+    final hexHeight = HexUtils.hexHeight(cellSize);
+
+    for (final cell in widget.visitedCells) {
+      final cellKey = '${cell.q},${cell.r}';
+      final isNewlyVisited = !_animatedCellKeys.contains(cellKey);
+
+      // Mark cell as animated.
+      _animatedCellKeys.add(cellKey);
+
+      final center = HexUtils.axialToPixel(cell.q, cell.r, cellSize, origin);
+      final left = center.dx - hexWidth / 2;
+      final top = center.dy - hexHeight / 2;
+
+      // Get the color for this cell based on path position.
+      final pathIndex = widget.path.indexOf(cell);
+      final progress = widget.level.cells.length > 1
+          ? pathIndex / (widget.level.cells.length - 1)
+          : 0.0;
+      final visitedColor = _colorForProgress(progress.clamp(0.0, 1.0));
+
+      overlays.add(
+        Positioned(
+          left: left,
+          top: top,
+          width: hexWidth,
+          height: hexHeight,
+          child: AnimatedCellPaint(
+            // For newly visited cells, start animation. For already animated, show final state.
+            key: ValueKey(cellKey),
+            isVisited: true,
+            child: CustomPaint(
+              size: Size(hexWidth, hexHeight),
+              painter: _AnimatedCellOverlayPainter(
+                cellSize: cellSize,
+                visitedColor: visitedColor,
+                shouldAnimate: isNewlyVisited,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return overlays;
+  }
+
+  /// Calculates the gradient color for a cell based on path progress.
+  Color _colorForProgress(double progress) {
+    const startColor = HoneyTheme.honeyGold;
+    const midColor = HoneyTheme.honeyGoldDark;
+    const endColor = HoneyTheme.deepHoney;
+
+    if (progress < 0.5) {
+      final t = progress * 2;
+      return Color.lerp(startColor, midColor, t)!;
+    } else {
+      final t = (progress - 0.5) * 2;
+      return Color.lerp(midColor, endColor, t)!;
+    }
   }
 
   /// Calculates the optimal cell size to fit the grid within constraints.
@@ -365,5 +456,54 @@ class _HexGridPainter extends CustomPainter {
         visitedCells != oldDelegate.visitedCells ||
         cellSize != oldDelegate.cellSize ||
         origin != oldDelegate.origin;
+  }
+}
+
+/// Custom painter for the animated cell overlay.
+/// Paints a hexagon fill that appears during the animation.
+class _AnimatedCellOverlayPainter extends CustomPainter {
+  final double cellSize;
+  final Color visitedColor;
+  final bool shouldAnimate;
+
+  _AnimatedCellOverlayPainter({
+    required this.cellSize,
+    required this.visitedColor,
+    required this.shouldAnimate,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final path = _createHexPath(center, cellSize * 0.85);
+
+    final paint = Paint()
+      ..color = visitedColor.withValues(alpha: 0.3)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(path, paint);
+  }
+
+  Path _createHexPath(Offset center, double radius) {
+    final path = Path();
+    for (int i = 0; i < 6; i++) {
+      // Pointy-top hex: first vertex at 30 degrees.
+      final angle = (60 * i - 30) * pi / 180;
+      final x = center.dx + radius * cos(angle);
+      final y = center.dy + radius * sin(angle);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldRepaint(_AnimatedCellOverlayPainter oldDelegate) {
+    return cellSize != oldDelegate.cellSize ||
+        visitedColor != oldDelegate.visitedColor;
   }
 }
