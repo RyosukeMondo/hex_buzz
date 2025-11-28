@@ -210,7 +210,7 @@
 
 ## Phase 7: Testing and Polish
 
-- [ ] 21. Write unit tests for auth system
+- [x] 21. Write unit tests for auth system
   - File: `test/domain/services/local_auth_repository_test.dart`, `test/presentation/providers/auth_provider_test.dart`
   - Test registration, login, logout flows
   - Test password hashing
