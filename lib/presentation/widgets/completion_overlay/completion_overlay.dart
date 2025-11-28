@@ -94,11 +94,14 @@ class _CompletionOverlayState extends State<CompletionOverlay>
 
   Future<void> _startAnimations() async {
     // Start card animation
+    if (!mounted) return;
     await _cardController.forward();
 
     // Animate stars sequentially with delay
     for (int i = 0; i < widget.stars && i < 3; i++) {
+      if (!mounted) return;
       await Future.delayed(const Duration(milliseconds: 150));
+      if (!mounted) return;
       _starControllers[i].forward();
     }
   }
