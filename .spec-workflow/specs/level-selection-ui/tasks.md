@@ -225,7 +225,7 @@
   - _Requirements: Widget Testing strategy_
   - _Prompt: Implement the task for spec level-selection-ui, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer | Task: Write widget tests for LevelCellWidget covering all display states | Restrictions: Test visual output and interactions | Success: All widget states tested, tap behavior verified | Instructions: Set task 7.1 to in-progress in tasks.md before starting, use log-implementation tool after completion with artifacts, then mark as complete_
 
-- [ ] 7.2 Write widget tests for LevelSelectScreen
+- [x] 7.2 Write widget tests for LevelSelectScreen
   - File: `test/presentation/screens/level_select_screen_test.dart`
   - Test: shows correct number of levels, lock states, navigation
   - Purpose: Ensure screen integrates correctly
