@@ -1,6 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
-/// Centralized honey/bee theme styling for Honeycomb One Pass.
+/// Centralized honey/bee theme styling for HexBuzz.
 ///
 /// Color palette based on requirements:
 /// - Primary: Amber/honey gold (#FFC107, #FFB300)
@@ -36,9 +38,10 @@ class HoneyTheme {
   static const Color cellBorderStart = Color(0xFF4CAF50);
   static const Color cellBorderEnd = Color(0xFFF44336);
 
-  // Star colors
+  // Star colors (WCAG AA compliant)
   static const Color starFilled = Color(0xFFFFD700);
-  static const Color starEmpty = Color(0xFFE0E0E0);
+  static const Color starEmpty = Color(0xFFBDBDBD);
+  static const Color starEmptyOutline = Color(0xFF757575);
 
   // Text colors
   static const Color textPrimary = Color(0xFF3E2723);
@@ -107,6 +110,59 @@ class HoneyTheme {
 
   /// Circular border radius (24.0)
   static const double radiusCircular = 24.0;
+
+  // ============================================
+  // Contrast Utilities
+  // ============================================
+
+  /// Calculates the relative luminance of a color per WCAG 2.1.
+  ///
+  /// Returns a value between 0.0 (black) and 1.0 (white).
+  static double relativeLuminance(Color color) {
+    double linearize(double channel) {
+      return channel <= 0.03928
+          ? channel / 12.92
+          : math.pow((channel + 0.055) / 1.055, 2.4).toDouble();
+    }
+
+    final r = linearize(color.r);
+    final g = linearize(color.g);
+    final b = linearize(color.b);
+
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+
+  /// Calculates the contrast ratio between two colors per WCAG 2.1.
+  ///
+  /// Returns a value between 1:1 and 21:1.
+  /// WCAG AA requires 4.5:1 for normal text, 3:1 for large text.
+  /// WCAG AAA requires 7:1 for normal text, 4.5:1 for large text.
+  static double contrastRatio(Color foreground, Color background) {
+    final l1 = relativeLuminance(foreground);
+    final l2 = relativeLuminance(background);
+    final lighter = l1 > l2 ? l1 : l2;
+    final darker = l1 > l2 ? l2 : l1;
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+
+  /// Returns true if the contrast ratio meets WCAG AA for normal text (4.5:1).
+  static bool meetsContrastAA(Color foreground, Color background) {
+    return contrastRatio(foreground, background) >= 4.5;
+  }
+
+  /// Returns true if the contrast ratio meets WCAG AA for large text (3:1).
+  static bool meetsContrastAALarge(Color foreground, Color background) {
+    return contrastRatio(foreground, background) >= 3.0;
+  }
+
+  /// Returns the best contrasting text color (dark or light) for a background.
+  ///
+  /// Uses the luminance of the background to determine if dark or light
+  /// text provides better contrast.
+  static Color contrastingTextColor(Color background) {
+    final luminance = relativeLuminance(background);
+    return luminance > 0.5 ? textPrimary : Colors.white;
+  }
 
   // ============================================
   // Border Width Constants

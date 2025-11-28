@@ -88,11 +88,11 @@ class PathPainter extends CustomPainter {
     final clampedProgress = progress.clamp(0.0, 1.0);
 
     if (clampedProgress < 0.5) {
-      // Interpolate from blue to purple (0.0 to 0.5)
+      // Interpolate from honey gold light to deep honey (0.0 to 0.5)
       final t = clampedProgress * 2;
       return Color.lerp(_startColor, _midColor, t)!;
     } else {
-      // Interpolate from purple to red (0.5 to 1.0)
+      // Interpolate from deep honey to deep honey dark (0.5 to 1.0)
       final t = (clampedProgress - 0.5) * 2;
       return Color.lerp(_midColor, _endColor, t)!;
     }

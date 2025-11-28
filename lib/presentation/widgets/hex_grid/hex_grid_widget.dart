@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/models/hex_cell.dart';
 import '../../../domain/models/level.dart';
+import '../../theme/honey_theme.dart';
 import '../../utils/hex_utils.dart';
 import 'hex_cell_widget.dart';
 import 'path_painter.dart';
@@ -282,9 +283,10 @@ class _HexGridPainter extends CustomPainter {
   }
 
   Color _colorForProgress(double progress) {
-    const startColor = Color(0xFF2196F3); // Blue
-    const midColor = Color(0xFF9C27B0); // Purple
-    const endColor = Color(0xFFF44336); // Red
+    // Honeybee amber/orange gradient: #FFC107 → #FFB300 → #FF8F00
+    const startColor = HoneyTheme.honeyGold; // #FFC107
+    const midColor = HoneyTheme.honeyGoldDark; // #FFB300
+    const endColor = HoneyTheme.deepHoney; // #FF8F00
 
     final clampedProgress = progress.clamp(0.0, 1.0);
 
