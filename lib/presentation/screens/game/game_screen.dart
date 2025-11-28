@@ -2,25 +2,61 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/hex_cell.dart';
+import '../../../domain/services/star_calculator.dart';
 import '../../providers/game_provider.dart';
+import '../../widgets/completion_overlay/completion_overlay.dart';
 import '../../widgets/hex_grid/hex_grid_widget.dart';
 
 /// Main game screen that displays the hexagonal grid and handles gameplay.
 ///
 /// Uses Riverpod for state management, connecting [HexGridWidget] interactions
 /// to [GameEngine] via [gameProvider].
-class GameScreen extends ConsumerWidget {
-  const GameScreen({super.key});
+///
+/// Accepts an optional [levelIndex] parameter to load a specific level.
+/// When [levelIndex] is provided, the game tracks progress and displays
+/// star ratings on completion.
+class GameScreen extends ConsumerStatefulWidget {
+  /// Index of the level to load (null for random/practice mode).
+  final int? levelIndex;
+
+  const GameScreen({super.key, this.levelIndex});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends ConsumerState<GameScreen> {
+  bool _levelLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load level on first frame to ensure provider is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadLevelIfNeeded();
+    });
+  }
+
+  void _loadLevelIfNeeded() {
+    if (_levelLoaded) return;
+
+    if (widget.levelIndex != null) {
+      final notifier = ref.read(gameProvider.notifier);
+      notifier.loadLevelByIndex(widget.levelIndex!);
+    }
+    _levelLoaded = true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final gameState = ref.watch(gameProvider);
     final visitedCells = gameState.path.toSet();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Honeycomb One Pass'),
+        title: _buildTitle(),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        leading: _buildBackButton(context),
         actions: [
           // Reset button
           IconButton(
@@ -28,12 +64,14 @@ class GameScreen extends ConsumerWidget {
             onPressed: () => ref.read(gameProvider.notifier).reset(),
             tooltip: 'Reset (same level)',
           ),
-          // New level button
-          IconButton(
-            icon: const Icon(Icons.skip_next),
-            onPressed: () => ref.read(gameProvider.notifier).generateNewLevel(),
-            tooltip: 'New Level',
-          ),
+          // New level button (only in practice mode)
+          if (widget.levelIndex == null)
+            IconButton(
+              icon: const Icon(Icons.skip_next),
+              onPressed: () =>
+                  ref.read(gameProvider.notifier).generateNewLevel(),
+              tooltip: 'New Level',
+            ),
         ],
       ),
       body: Stack(
@@ -43,6 +81,22 @@ class GameScreen extends ConsumerWidget {
           if (gameState.isComplete) _buildCompletionOverlay(context, ref),
         ],
       ),
+    );
+  }
+
+  Widget _buildTitle() {
+    if (widget.levelIndex != null) {
+      return Text('Level ${widget.levelIndex! + 1}');
+    }
+    return const Text('Honeycomb One Pass');
+  }
+
+  Widget? _buildBackButton(BuildContext context) {
+    // Show back button when navigated to (there's a previous route)
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () => _navigateToLevelSelect(context),
+      tooltip: 'Back to Level Select',
     );
   }
 
@@ -84,12 +138,15 @@ class GameScreen extends ConsumerWidget {
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Retry'),
             ),
-            const SizedBox(width: 8),
-            FilledButton.icon(
-              onPressed: () => notifier.generateNewLevel(),
-              icon: const Icon(Icons.skip_next, size: 18),
-              label: const Text('Next'),
-            ),
+            // Only show Next button in practice mode
+            if (widget.levelIndex == null) ...[
+              const SizedBox(width: 8),
+              FilledButton.icon(
+                onPressed: () => notifier.generateNewLevel(),
+                icon: const Icon(Icons.skip_next, size: 18),
+                label: const Text('Next'),
+              ),
+            ],
           ],
         ),
       ),
@@ -148,74 +205,39 @@ class GameScreen extends ConsumerWidget {
 
   Widget _buildCompletionOverlay(BuildContext context, WidgetRef ref) {
     final gameState = ref.read(gameProvider);
-    final formattedTime = _formatDuration(gameState.elapsedTime);
-    final notifier = ref.read(gameProvider.notifier);
+    final elapsedTime = gameState.elapsedTime;
+    final stars = StarCalculator.calculateStars(elapsedTime);
+    final repository = ref.read(levelRepositoryProvider);
+    final hasNextLevel =
+        widget.levelIndex != null &&
+        widget.levelIndex! + 1 < repository.totalLevelCount;
 
-    return Container(
-      color: Colors.black54,
-      child: Center(
-        child: Card(
-          margin: const EdgeInsets.all(32),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.celebration, size: 64, color: Colors.amber),
-                const SizedBox(height: 16),
-                _buildCompletionTitle(context),
-                const SizedBox(height: 8),
-                Text(
-                  'Time: $formattedTime',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 24),
-                _buildCompletionButtons(notifier),
-              ],
-            ),
-          ),
-        ),
+    return CompletionOverlay(
+      stars: stars,
+      completionTime: elapsedTime,
+      hasNextLevel: hasNextLevel,
+      onNextLevel: hasNextLevel ? () => _goToNextLevel(context) : null,
+      onReplay: () => ref.read(gameProvider.notifier).reset(),
+      onLevelSelect: () => _navigateToLevelSelect(context),
+    );
+  }
+
+  void _goToNextLevel(BuildContext context) {
+    if (widget.levelIndex == null) return;
+
+    final nextIndex = widget.levelIndex! + 1;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => GameScreen(levelIndex: nextIndex),
       ),
     );
   }
 
-  Widget _buildCompletionTitle(BuildContext context) {
-    return Text(
-      'Complete!',
-      style: Theme.of(
-        context,
-      ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-    );
-  }
-
-  Widget _buildCompletionButtons(GameNotifier notifier) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        OutlinedButton.icon(
-          onPressed: () => notifier.reset(),
-          icon: const Icon(Icons.refresh),
-          label: const Text('Play Again'),
-        ),
-        const SizedBox(width: 16),
-        FilledButton.icon(
-          onPressed: () => notifier.generateNewLevel(),
-          icon: const Icon(Icons.skip_next),
-          label: const Text('Next Level'),
-        ),
-      ],
-    );
-  }
-
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds % 60;
-    final milliseconds = (duration.inMilliseconds % 1000) ~/ 10;
-
-    if (minutes > 0) {
-      return '$minutes:${seconds.toString().padLeft(2, '0')}.'
-          '${milliseconds.toString().padLeft(2, '0')}';
+  void _navigateToLevelSelect(BuildContext context) {
+    // Pop back to level select if we were navigated here
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
     }
-    return '$seconds.${milliseconds.toString().padLeft(2, '0')}s';
   }
 }
