@@ -60,7 +60,7 @@
   - _Requirements: REQ-5_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Backend Developer | Task: Implement LocalAuthRepository using SharedPreferences. Hash passwords with SHA-256 + random salt before storage. Store users as JSON in prefs. Implement all AuthRepository methods. Support guest user creation (isGuest=true) | Restrictions: Never store plaintext passwords. Use existing SharedPreferences instance from DI. Handle concurrent access safely | Success: Can register, login, logout. Passwords are hashed. Guest mode works. Unit tests pass | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 7. Create AuthProvider with Riverpod
+- [x] 7. Create AuthProvider with Riverpod
   - File: `lib/presentation/providers/auth_provider.dart`
   - Create AsyncNotifier for auth state management
   - Expose login, register, logout, playAsGuest methods
