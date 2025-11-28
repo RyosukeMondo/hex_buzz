@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../main.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/honey_theme.dart';
+import '../../widgets/assets/game_assets.dart';
 
 /// Front screen with HexBuzz branding and animated "Tap to Start" prompt.
 ///
@@ -100,6 +101,15 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
   }
 
   Widget _buildLogo() {
+    return AssetImageWithFallback(
+      assetPath: GameAssetPaths.appIcon,
+      width: 120,
+      height: 120,
+      fallback: _buildFallbackLogo(),
+    );
+  }
+
+  Widget _buildFallbackLogo() {
     return Container(
       width: 120,
       height: 120,

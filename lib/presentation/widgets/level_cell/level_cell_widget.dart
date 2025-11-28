@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/honey_theme.dart';
+import '../assets/game_assets.dart';
 
 /// Widget that displays a single level cell in the level selection grid.
 ///
@@ -168,10 +169,20 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
   }
 
   Widget _buildLockedContent() {
+    final iconSize = widget.size * 0.35;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.lock, color: HoneyTheme.lockColor, size: widget.size * 0.35),
+        AssetImageWithFallback(
+          assetPath: GameAssetPaths.lockIcon,
+          width: iconSize,
+          height: iconSize,
+          fallback: Icon(
+            Icons.lock,
+            color: HoneyTheme.lockColor,
+            size: iconSize,
+          ),
+        ),
         const SizedBox(height: HoneyTheme.spacingXs),
         Text(
           widget.levelNumber.toString(),
@@ -200,6 +211,15 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
   }
 
   Widget _buildFilledStar(double size) {
+    return AssetImageWithFallback(
+      assetPath: GameAssetPaths.starFilled,
+      width: size,
+      height: size,
+      fallback: _buildFallbackFilledStar(size),
+    );
+  }
+
+  Widget _buildFallbackFilledStar(double size) {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -217,6 +237,15 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
   }
 
   Widget _buildEmptyStar(double size) {
+    return AssetImageWithFallback(
+      assetPath: GameAssetPaths.starEmpty,
+      width: size,
+      height: size,
+      fallback: _buildFallbackEmptyStar(size),
+    );
+  }
+
+  Widget _buildFallbackEmptyStar(double size) {
     return Stack(
       alignment: Alignment.center,
       children: [
