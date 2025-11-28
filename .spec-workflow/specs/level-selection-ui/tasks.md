@@ -252,7 +252,7 @@
   - _Requirements: 5.4_
   - _Prompt: Implement the task for spec level-selection-ui, first run spec-workflow-guide to get the workflow guide then implement the task: Role: UI Developer | Task: Add styled header to LevelSelectScreen with title and total stars count | Restrictions: Follow HoneyTheme styling | Success: Header looks polished, total stars displayed | Instructions: Set task 8.1 to in-progress in tasks.md before starting, use log-implementation tool after completion with artifacts, then mark as complete_
 
-- [ ] 8.2 End-to-end integration test
+- [x] 8.2 End-to-end integration test
   - File: `integration_test/level_progression_test.dart`
   - Test: Launch → Level 1 → Complete → Level 2 unlocked → Navigate
   - Test: Replay level → Improve star rating
