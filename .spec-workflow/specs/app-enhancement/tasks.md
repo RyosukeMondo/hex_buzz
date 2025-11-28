@@ -166,7 +166,7 @@
   - _Requirements: REQ-8_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Developer | Task: Integrate AnimatedCellPaint into HexGridWidget. For each cell in path, wrap its paint with animation. Track which cells have already animated to avoid re-triggering. Consider using CustomPainter with animation or overlay widgets | Restrictions: Maintain 60fps. Don't animate already-visited cells on rebuild | Success: Cells pop nicely when visited. Smooth 60fps. No duplicate animations | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 17. Add button tap feedback animations
+- [x] 17. Add button tap feedback animations
   - File: `lib/presentation/widgets/buttons/animated_button.dart`
   - Create reusable animated button wrapper
   - Scale to 0.95 on press, 1.0 on release
