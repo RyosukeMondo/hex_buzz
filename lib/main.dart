@@ -1,13 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'data/local/local_progress_repository.dart';
 import 'debug/api/server.dart';
 import 'domain/data/test_level.dart';
 import 'domain/models/game_mode.dart';
 import 'domain/services/game_engine.dart';
 import 'domain/services/level_repository.dart';
 import 'presentation/providers/game_provider.dart';
+import 'presentation/providers/progress_provider.dart';
 import 'presentation/screens/game/game_screen.dart';
 
 /// Whether to enable the debug API server.
@@ -40,6 +43,13 @@ void main() async {
     }
   }
 
+  // Initialize progress repository for player progress persistence
+  final prefs = await SharedPreferences.getInstance();
+  final progressRepository = LocalProgressRepository(prefs);
+  if (kDebugMode) {
+    debugPrint('Progress repository initialized');
+  }
+
   // Start debug API server if enabled and in debug mode
   DebugApiServer? apiServer;
   if (kDebugMode && _enableApiFromEnv) {
@@ -50,6 +60,7 @@ void main() async {
     ProviderScope(
       overrides: [
         levelRepositoryProvider.overrideWithValue(levelRepository),
+        progressRepositoryProvider.overrideWithValue(progressRepository),
         if (apiServer != null)
           debugApiServerProvider.overrideWithValue(apiServer),
       ],
