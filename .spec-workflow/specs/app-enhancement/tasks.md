@@ -70,7 +70,7 @@
   - _Requirements: REQ-5_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter State Management Developer | Task: Create AuthNotifier extending AsyncNotifier<User?>. Methods: login, register, logout, playAsGuest. On auth state change, trigger ProgressProvider to load/clear user progress. Use authRepository from ref.watch | Restrictions: Follow existing provider patterns. Handle loading/error states. No direct SharedPreferences access | Success: Auth state reactive, login/logout updates UI, progress loads per user | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [-] 8. Create AuthScreen UI
+- [x] 8. Create AuthScreen UI
   - File: `lib/presentation/screens/auth/auth_screen.dart`
   - Build login/register form with username/password fields
   - Add "Play as Guest" button
