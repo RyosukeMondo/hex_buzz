@@ -8,7 +8,7 @@ import '../../utils/hex_utils.dart';
 /// Uses [CustomPainter] for efficient rendering of the hexagon shape.
 /// Visual states:
 /// - Unvisited: light gray fill
-/// - Visited: colored fill (based on path progress)
+/// - Visited: smaller colored fill with visible border gap for path
 /// - Start checkpoint (1): green border
 /// - End checkpoint (max): red border
 class HexCellWidget extends StatelessWidget {
@@ -46,7 +46,7 @@ class HexCellWidget extends StatelessWidget {
 ///
 /// Handles:
 /// - Hexagon shape with fill and stroke
-/// - Visited state coloring
+/// - Visited state coloring (smaller fill to show path better)
 /// - Checkpoint number display
 /// - Start/end checkpoint border highlighting
 class HexCellPainter extends CustomPainter {
@@ -56,12 +56,15 @@ class HexCellPainter extends CustomPainter {
   final bool isEnd;
   final Color? visitedColor;
 
-  static const _unvisitedColor = Color(0xFFE0E0E0);
+  static const _unvisitedColor = Color(0xFFE8E8E8);
   static const _defaultVisitedColor = Color(0xFF64B5F6);
-  static const _borderColor = Color(0xFF424242);
+  static const _borderColor = Color(0xFF9E9E9E);
   static const _startBorderColor = Color(0xFF4CAF50);
   static const _endBorderColor = Color(0xFFF44336);
   static const _checkpointTextColor = Color(0xFF212121);
+
+  /// Scale factor for visited cell fill (smaller to show path better)
+  static const _visitedFillScale = 0.75;
 
   HexCellPainter({
     required this.cell,
@@ -74,11 +77,31 @@ class HexCellPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final vertices = HexUtils.getHexVertices(center, cellSize);
-    final path = _createHexPath(vertices);
 
-    _drawFill(canvas, path);
-    _drawBorder(canvas, path);
+    // Draw full-size hex for unvisited or border
+    final fullVertices = HexUtils.getHexVertices(center, cellSize);
+    final fullPath = _createHexPath(fullVertices);
+
+    if (cell.visited) {
+      // Draw smaller fill for visited cells to show path better
+      final smallerSize = cellSize * _visitedFillScale;
+      final smallerVertices = HexUtils.getHexVertices(center, smallerSize);
+      final smallerPath = _createHexPath(smallerVertices);
+
+      // Draw background (slightly visible for context)
+      _drawBackground(canvas, fullPath);
+
+      // Draw the smaller visited fill
+      _drawVisitedFill(canvas, smallerPath);
+    } else {
+      // Draw unvisited cell fill
+      _drawFill(canvas, fullPath);
+    }
+
+    // Always draw the border
+    _drawBorder(canvas, fullPath);
+
+    // Draw checkpoint number
     _drawCheckpoint(canvas, center);
   }
 
@@ -92,15 +115,26 @@ class HexCellPainter extends CustomPainter {
     return path;
   }
 
-  void _drawFill(Canvas canvas, Path path) {
-    final fillColor = cell.visited
-        ? (visitedColor ?? _defaultVisitedColor)
-        : _unvisitedColor;
+  void _drawBackground(Canvas canvas, Path path) {
+    // Light background for visited cells to show the cell boundary
+    final bgPaint = Paint()
+      ..color = const Color(0xFFF5F5F5)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path, bgPaint);
+  }
 
+  void _drawFill(Canvas canvas, Path path) {
+    final fillPaint = Paint()
+      ..color = _unvisitedColor
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path, fillPaint);
+  }
+
+  void _drawVisitedFill(Canvas canvas, Path path) {
+    final fillColor = visitedColor ?? _defaultVisitedColor;
     final fillPaint = Paint()
       ..color = fillColor
       ..style = PaintingStyle.fill;
-
     canvas.drawPath(path, fillPaint);
   }
 
@@ -116,7 +150,7 @@ class HexCellPainter extends CustomPainter {
       borderWidth = 3.0;
     } else {
       borderColor = _borderColor;
-      borderWidth = 1.0;
+      borderWidth = 1.5;
     }
 
     final borderPaint = Paint()

@@ -22,16 +22,24 @@ class GameScreen extends ConsumerWidget {
         title: const Text('Honeycomb One Pass'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
+          // Reset button
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => ref.read(gameProvider.notifier).reset(),
-            tooltip: 'Reset',
+            tooltip: 'Reset (same level)',
+          ),
+          // New level button
+          IconButton(
+            icon: const Icon(Icons.skip_next),
+            onPressed: () => ref.read(gameProvider.notifier).generateNewLevel(),
+            tooltip: 'New Level',
           ),
         ],
       ),
       body: Stack(
         children: [
           _buildGameGrid(ref, gameState, visitedCells),
+          _buildBottomControls(context, ref),
           if (gameState.isComplete) _buildCompletionOverlay(context, ref),
         ],
       ),
@@ -43,11 +51,76 @@ class GameScreen extends ConsumerWidget {
     dynamic gameState,
     Set<HexCell> visitedCells,
   ) {
-    return HexGridWidget(
-      level: gameState.level,
-      path: gameState.path,
-      visitedCells: visitedCells,
-      onCellEntered: (cell) => _handleCellEntered(ref, cell),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 80), // Space for bottom controls
+      child: HexGridWidget(
+        level: gameState.level,
+        path: gameState.path,
+        visitedCells: visitedCells,
+        onCellEntered: (cell) => _handleCellEntered(ref, cell),
+      ),
+    );
+  }
+
+  Widget _buildBottomControls(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(gameProvider.notifier);
+    final gameState = ref.watch(gameProvider);
+    final cellCount = gameState.level.cells.length;
+    final visitedCount = gameState.path.length;
+
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 4,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Progress indicator
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Progress: $visitedCount / $cellCount',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  LinearProgressIndicator(
+                    value: cellCount > 0 ? visitedCount / cellCount : 0,
+                    backgroundColor: Colors.grey[300],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Retry button
+            OutlinedButton.icon(
+              onPressed: () => notifier.reset(),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Retry'),
+            ),
+            const SizedBox(width: 8),
+            // Next button
+            FilledButton.icon(
+              onPressed: () => notifier.generateNewLevel(),
+              icon: const Icon(Icons.skip_next, size: 18),
+              label: const Text('Next'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -72,6 +145,7 @@ class GameScreen extends ConsumerWidget {
     final gameState = ref.read(gameProvider);
     final elapsedTime = gameState.elapsedTime;
     final formattedTime = _formatDuration(elapsedTime);
+    final notifier = ref.read(gameProvider.notifier);
 
     return Container(
       color: Colors.black54,
@@ -97,10 +171,21 @@ class GameScreen extends ConsumerWidget {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () => ref.read(gameProvider.notifier).reset(),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Play Again'),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () => notifier.reset(),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Play Again'),
+                    ),
+                    const SizedBox(width: 16),
+                    FilledButton.icon(
+                      onPressed: () => notifier.generateNewLevel(),
+                      icon: const Icon(Icons.skip_next),
+                      label: const Text('Next Level'),
+                    ),
+                  ],
                 ),
               ],
             ),
