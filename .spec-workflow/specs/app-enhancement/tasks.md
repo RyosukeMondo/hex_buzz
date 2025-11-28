@@ -136,7 +136,7 @@
   - _Requirements: REQ-9_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter UI Developer | Task: Update star rendering in LevelCellWidget. Filled stars: #FFD700 with subtle drop shadow. Empty stars: #BDBDBD fill with 1px #757575 stroke or shadow. Ensure WCAG AA contrast on both unlocked (cream) and completed (gold) backgrounds | Restrictions: Keep star size proportional to cell. Don't change star count logic | Success: Stars visible on all cell states. Contrast meets accessibility standards | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 14. Update LevelSelectScreen header with new branding
+- [x] 14. Update LevelSelectScreen header with new branding
   - File: `lib/presentation/screens/level_select/level_select_screen.dart`
   - Change title from "Honeycomb One Pass" to "HexBuzz"
   - Add logout button if user is logged in
