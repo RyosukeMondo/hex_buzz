@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/hex_cell.dart';
+import '../../theme/honey_theme.dart';
 import '../../utils/hex_utils.dart';
 
 /// Widget that renders a single hexagonal cell.
@@ -56,12 +57,13 @@ class HexCellPainter extends CustomPainter {
   final bool isEnd;
   final Color? visitedColor;
 
-  static const _unvisitedColor = Color(0xFFE8E8E8);
-  static const _defaultVisitedColor = Color(0xFF64B5F6);
-  static const _borderColor = Color(0xFF9E9E9E);
-  static const _startBorderColor = Color(0xFF4CAF50);
-  static const _endBorderColor = Color(0xFFF44336);
-  static const _checkpointTextColor = Color(0xFF212121);
+  // Using HoneyTheme colors for honey/bee visual styling
+  static const _unvisitedColor = HoneyTheme.cellUnvisited;
+  static const _defaultVisitedColor = HoneyTheme.cellVisited;
+  static const _borderColor = HoneyTheme.cellBorder;
+  static const _startBorderColor = HoneyTheme.cellBorderStart;
+  static const _endBorderColor = HoneyTheme.cellBorderEnd;
+  static const _checkpointTextColor = HoneyTheme.textPrimary;
 
   /// Scale factor for visited cell fill (smaller to show path better)
   static const _visitedFillScale = 0.75;
@@ -116,9 +118,9 @@ class HexCellPainter extends CustomPainter {
   }
 
   void _drawBackground(Canvas canvas, Path path) {
-    // Light background for visited cells to show the cell boundary
+    // Light honey background for visited cells to show the cell boundary
     final bgPaint = Paint()
-      ..color = const Color(0xFFF5F5F5)
+      ..color = HoneyTheme.warmCream
       ..style = PaintingStyle.fill;
     canvas.drawPath(path, bgPaint);
   }

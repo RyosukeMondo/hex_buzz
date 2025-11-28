@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/hex_cell.dart';
+import '../../theme/honey_theme.dart';
 import '../../utils/hex_utils.dart';
 
 /// Custom painter that renders the player's path through the hex grid.
 ///
 /// Draws a thick line connecting cell centers with a color gradient
 /// based on path progress (0% to 100% of total cells).
-/// Gradient: blue -> purple -> red
+/// Gradient: honey gold light -> deep honey -> deep honey dark
 class PathPainter extends CustomPainter {
   final List<HexCell> path;
   final int totalCells;
@@ -19,9 +20,10 @@ class PathPainter extends CustomPainter {
   static const _minPathWidth = 8.0;
   static const _maxPathWidth = 20.0;
 
-  static const _startColor = Color(0xFF2196F3); // Blue
-  static const _midColor = Color(0xFF9C27B0); // Purple
-  static const _endColor = Color(0xFFF44336); // Red
+  // Using HoneyTheme colors for honey-drip gradient effect
+  static const _startColor = HoneyTheme.honeyGoldLight;
+  static const _midColor = HoneyTheme.deepHoney;
+  static const _endColor = HoneyTheme.deepHoneyDark;
 
   PathPainter({
     required this.path,
@@ -81,7 +83,7 @@ class PathPainter extends CustomPainter {
 
   /// Returns the gradient color for a given progress value (0.0 to 1.0).
   ///
-  /// 0.0 = blue, 0.5 = purple, 1.0 = red
+  /// 0.0 = honey gold light, 0.5 = deep honey, 1.0 = deep honey dark
   Color _colorForProgress(double progress) {
     final clampedProgress = progress.clamp(0.0, 1.0);
 
