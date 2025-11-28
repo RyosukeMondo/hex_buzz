@@ -25,6 +25,9 @@ class LevelCellWidget extends StatefulWidget {
   /// Whether the level has been completed.
   final bool isCompleted;
 
+  /// Best completion time for this level (null if not completed).
+  final Duration? bestTime;
+
   /// Callback when the cell is tapped.
   /// Only called for unlocked levels.
   final VoidCallback? onTap;
@@ -38,6 +41,7 @@ class LevelCellWidget extends StatefulWidget {
     this.stars = 0,
     this.isUnlocked = true,
     this.isCompleted = false,
+    this.bestTime,
     this.onTap,
     this.size = HoneyTheme.levelCellSize,
   }) : assert(stars >= 0 && stars <= 3, 'Stars must be between 0 and 3');
@@ -130,7 +134,36 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
         ),
         const SizedBox(height: HoneyTheme.spacingXs),
         _buildStarsRow(),
+        if (widget.isCompleted && widget.bestTime != null) ...[
+          const SizedBox(height: HoneyTheme.spacingXs / 2),
+          _buildTimeDisplay(),
+        ],
       ],
+    );
+  }
+
+  /// Formats duration as MM:SS for times >= 60s, or SS.ss for times < 60s.
+  String _formatTime(Duration duration) {
+    final totalSeconds = duration.inMilliseconds / 1000;
+    if (totalSeconds >= 60) {
+      final minutes = duration.inMinutes;
+      final seconds = duration.inSeconds % 60;
+      return '$minutes:${seconds.toString().padLeft(2, '0')}';
+    } else {
+      final seconds = duration.inSeconds;
+      final centiseconds = (duration.inMilliseconds % 1000) ~/ 10;
+      return '$seconds.${centiseconds.toString().padLeft(2, '0')}';
+    }
+  }
+
+  Widget _buildTimeDisplay() {
+    return Text(
+      _formatTime(widget.bestTime!),
+      style: TextStyle(
+        color: HoneyTheme.textSecondary,
+        fontSize: widget.size * 0.12,
+        fontWeight: FontWeight.w500,
+      ),
     );
   }
 

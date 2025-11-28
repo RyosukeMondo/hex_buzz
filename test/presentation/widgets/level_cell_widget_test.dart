@@ -10,6 +10,7 @@ void main() {
       int stars = 0,
       bool isUnlocked = true,
       bool isCompleted = false,
+      Duration? bestTime,
       VoidCallback? onTap,
       double size = 80,
     }) {
@@ -22,6 +23,7 @@ void main() {
               stars: stars,
               isUnlocked: isUnlocked,
               isCompleted: isCompleted,
+              bestTime: bestTime,
               onTap: onTap,
               size: size,
             ),
@@ -383,6 +385,118 @@ void main() {
 
         // Colors should be different
         expect(completedColor, isNot(equals(uncompletedColor)));
+      });
+    });
+
+    group('Best time display', () {
+      testWidgets('displays time for completed level with bestTime', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          createTestWidget(
+            levelNumber: 1,
+            isCompleted: true,
+            bestTime: const Duration(seconds: 45, milliseconds: 230),
+          ),
+        );
+
+        // Should display time in SS.ss format (45.23)
+        expect(find.text('45.23'), findsOneWidget);
+      });
+
+      testWidgets('formats time as MM:SS for duration >= 60 seconds', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          createTestWidget(
+            levelNumber: 1,
+            isCompleted: true,
+            bestTime: const Duration(minutes: 2, seconds: 5),
+          ),
+        );
+
+        // Should display as 2:05
+        expect(find.text('2:05'), findsOneWidget);
+      });
+
+      testWidgets('formats time as SS.ss for duration < 60 seconds', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          createTestWidget(
+            levelNumber: 1,
+            isCompleted: true,
+            bestTime: const Duration(seconds: 8, milliseconds: 50),
+          ),
+        );
+
+        // Should display as 8.05
+        expect(find.text('8.05'), findsOneWidget);
+      });
+
+      testWidgets('does not display time for incomplete level', (tester) async {
+        await tester.pumpWidget(
+          createTestWidget(
+            levelNumber: 1,
+            isCompleted: false,
+            bestTime: const Duration(seconds: 30),
+          ),
+        );
+
+        // Time should not be displayed
+        expect(find.text('30.00'), findsNothing);
+      });
+
+      testWidgets('does not display time when bestTime is null', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          createTestWidget(levelNumber: 1, isCompleted: true, bestTime: null),
+        );
+
+        // No time text should be present (level 1 text exists but no time)
+        final textWidgets = tester.widgetList<Text>(find.byType(Text));
+        final texts = textWidgets.map((t) => t.data ?? '').toList();
+        // Should only have level number, no time format strings
+        expect(texts.where((t) => t.contains('.')).isEmpty, isTrue);
+        expect(texts.where((t) => t.contains(':')).isEmpty, isTrue);
+      });
+
+      testWidgets('does not display time for locked level', (tester) async {
+        await tester.pumpWidget(
+          createTestWidget(
+            levelNumber: 1,
+            isUnlocked: false,
+            isCompleted: false,
+            bestTime: const Duration(seconds: 30),
+          ),
+        );
+
+        expect(find.text('30.00'), findsNothing);
+      });
+
+      testWidgets('formats exactly 60 seconds as 1:00', (tester) async {
+        await tester.pumpWidget(
+          createTestWidget(
+            levelNumber: 1,
+            isCompleted: true,
+            bestTime: const Duration(seconds: 60),
+          ),
+        );
+
+        expect(find.text('1:00'), findsOneWidget);
+      });
+
+      testWidgets('handles sub-second times correctly', (tester) async {
+        await tester.pumpWidget(
+          createTestWidget(
+            levelNumber: 1,
+            isCompleted: true,
+            bestTime: const Duration(milliseconds: 500),
+          ),
+        );
+
+        expect(find.text('0.50'), findsOneWidget);
       });
     });
 

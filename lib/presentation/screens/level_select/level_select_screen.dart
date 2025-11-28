@@ -173,6 +173,7 @@ class LevelSelectScreen extends ConsumerWidget {
             stars: progress.stars,
             isUnlocked: isUnlocked,
             isCompleted: progress.completed,
+            bestTime: progress.bestTime,
             onTap: () => _navigateToLevel(context, ref, index),
           );
         },
