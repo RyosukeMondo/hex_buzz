@@ -11,7 +11,7 @@
   - _Requirements: REQ-2_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Developer | Task: Rename the app from "Honeycomb One Pass" to "HexBuzz" across all configuration files and UI strings, following REQ-2. Update pubspec.yaml name/description, AndroidManifest.xml label, Info.plist bundle name, and MaterialApp title | Restrictions: Do not change package identifiers yet (com.example), only display names. Preserve all other configurations | Success: App displays "HexBuzz" in app launcher, title bar, and level selection header. Build succeeds on both platforms | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 2. Refine honeybee color palette in theme
+- [x] 2. Refine honeybee color palette in theme
   - File: `lib/presentation/theme/honey_theme.dart`
   - Update path gradient colors from blue/purple to amber/orange
   - Ensure visited cell colors use warm honey tones
