@@ -239,7 +239,7 @@
   - _Requirements: All_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer | Task: Write integration tests for full user journeys. Test 1: New user registers, plays level, completes, sees stars/time, progress persists on restart. Test 2: Guest plays, progress exists, simulated reinstall loses progress. Use integration_test package with flutter_driver | Restrictions: Tests should be reliable (no flaky timing). Reset state between tests | Success: Integration tests pass reliably. Critical paths verified | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 24. Final polish and accessibility review
+- [x] 24. Final polish and accessibility review
   - Files: Various
   - Verify all animations respect reduced-motion setting
   - Check color contrast throughout
