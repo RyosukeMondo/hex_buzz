@@ -188,7 +188,7 @@
 
 ## Phase 6: Asset Generation
 
-- [ ] 19. Create asset generation script
+- [x] 19. Create asset generation script
   - File: `tool/generate_assets.dart`
   - Connect to Automatic1111 API at localhost:7860
   - Generate 512x512 images from prompts
