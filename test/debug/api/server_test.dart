@@ -65,13 +65,22 @@ void main() {
       });
 
       test('handles OPTIONS preflight request', () async {
-        final request = http.Request('OPTIONS', Uri.parse('$baseUrl/api/health'));
+        final request = http.Request(
+          'OPTIONS',
+          Uri.parse('$baseUrl/api/health'),
+        );
         final streamedResponse = await request.send();
         final response = await http.Response.fromStream(streamedResponse);
 
         expect(response.statusCode, equals(200));
-        expect(response.headers['access-control-allow-methods'], contains('POST'));
-        expect(response.headers['access-control-allow-headers'], contains('Content-Type'));
+        expect(
+          response.headers['access-control-allow-methods'],
+          contains('POST'),
+        );
+        expect(
+          response.headers['access-control-allow-headers'],
+          contains('Content-Type'),
+        );
       });
     });
 
@@ -108,8 +117,8 @@ void main() {
 
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         expect(body['level'], isNotNull);
-        expect(body['level']['size'], equals(4));
-        expect(body['level']['checkpointCount'], equals(3));
+        expect(body['level']['size'], equals(3));
+        expect(body['level']['checkpointCount'], equals(2));
         expect(body['mode'], equals('practice'));
         expect(body['path'], isEmpty);
         expect(body['isStarted'], isFalse);
@@ -118,11 +127,11 @@ void main() {
       });
 
       test('returns updated state after moves', () async {
-        // Make a move first
+        // Make a move first - start at (0, -3)
         await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 0, 'r': 0}),
+          body: jsonEncode({'q': 0, 'r': -2}),
         );
 
         final response = await http.get(Uri.parse('$baseUrl/api/game/state'));
@@ -136,10 +145,11 @@ void main() {
 
     group('POST /api/game/move', () {
       test('valid first move to start cell succeeds', () async {
+        // Start cell is now at (0, -3) in the hexagonal grid
         final response = await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 0, 'r': 0}),
+          body: jsonEncode({'q': 0, 'r': -2}),
         );
 
         expect(response.statusCode, equals(200));
@@ -151,18 +161,18 @@ void main() {
       });
 
       test('valid adjacent move succeeds', () async {
-        // First move to start
+        // First move to start at (0, -3)
         await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 0, 'r': 0}),
+          body: jsonEncode({'q': 0, 'r': -2}),
         );
 
-        // Adjacent move
+        // Adjacent move to (1, -3) - neighbor of start
         final response = await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 1, 'r': 0}),
+          body: jsonEncode({'q': 1, 'r': -2}),
         );
 
         expect(response.statusCode, equals(200));
@@ -173,10 +183,11 @@ void main() {
       });
 
       test('move to non-start cell as first move fails', () async {
+        // Try moving to center (0, 0) which is not the start cell
         final response = await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 1, 'r': 1}),
+          body: jsonEncode({'q': 0, 'r': 0}),
         );
 
         expect(response.statusCode, equals(400));
@@ -188,18 +199,18 @@ void main() {
       });
 
       test('move to non-adjacent cell fails', () async {
-        // First move to start
+        // First move to start at (0, -3)
         await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 0, 'r': 0}),
+          body: jsonEncode({'q': 0, 'r': -2}),
         );
 
-        // Non-adjacent move
+        // Non-adjacent move to (0, 2) - far away (end cell)
         final response = await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 3, 'r': 3}),
+          body: jsonEncode({'q': 0, 'r': 2}),
         );
 
         expect(response.statusCode, equals(400));
@@ -210,28 +221,28 @@ void main() {
       });
 
       test('move to visited cell fails', () async {
-        // Build a path
+        // Build a path: (0,-3) -> (1,-3) -> (2,-3)
         await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 0, 'r': 0}),
+          body: jsonEncode({'q': 0, 'r': -2}),
         );
         await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 1, 'r': 0}),
+          body: jsonEncode({'q': 1, 'r': -2}),
         );
         await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 2, 'r': 0}),
+          body: jsonEncode({'q': 2, 'r': -2}),
         );
 
         // Try to move back to visited cell
         final response = await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 1, 'r': 0}),
+          body: jsonEncode({'q': 1, 'r': -2}),
         );
 
         expect(response.statusCode, equals(400));
@@ -315,7 +326,10 @@ void main() {
           checkpointCount: 2,
         );
 
-        final simpleEngine = GameEngine(level: simpleLevel, mode: GameMode.practice);
+        final simpleEngine = GameEngine(
+          level: simpleLevel,
+          mode: GameMode.practice,
+        );
         server = DebugApiServer(engine: simpleEngine, port: testPort);
         await server.start();
 
@@ -352,16 +366,16 @@ void main() {
 
     group('POST /api/game/reset', () {
       test('resets game to initial state', () async {
-        // Make some moves first
+        // Make some moves first - start at (0, -3)
         await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 0, 'r': 0}),
+          body: jsonEncode({'q': 0, 'r': -2}),
         );
         await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 1, 'r': 0}),
+          body: jsonEncode({'q': 1, 'r': -2}),
         );
 
         // Reset
@@ -377,21 +391,21 @@ void main() {
       });
 
       test('allows playing again after reset', () async {
-        // Make a move
+        // Make a move - start at (0, -3)
         await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 0, 'r': 0}),
+          body: jsonEncode({'q': 0, 'r': -2}),
         );
 
         // Reset
         await http.post(Uri.parse('$baseUrl/api/game/reset'));
 
-        // Play again
+        // Play again - start at (0, -3)
         final response = await http.post(
           Uri.parse('$baseUrl/api/game/move'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'q': 0, 'r': 0}),
+          body: jsonEncode({'q': 0, 'r': -2}),
         );
 
         expect(response.statusCode, equals(200));

@@ -69,10 +69,7 @@ void main() {
 
     group('fromCells factory', () {
       test('creates edge from cell records', () {
-        final edge = HexEdge.fromCells(
-          (q: 2, r: 1),
-          (q: 1, r: 1),
-        );
+        final edge = HexEdge.fromCells((q: 2, r: 1), (q: 1, r: 1));
 
         expect(edge.cell1, (q: 1, r: 1));
         expect(edge.cell2, (q: 2, r: 1));

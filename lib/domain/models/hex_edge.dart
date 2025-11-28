@@ -17,16 +17,13 @@ class HexEdge {
     required int cellR1,
     required int cellQ2,
     required int cellR2,
-  })  : q1 = _isFirstSmaller(cellQ1, cellR1, cellQ2, cellR2) ? cellQ1 : cellQ2,
-        r1 = _isFirstSmaller(cellQ1, cellR1, cellQ2, cellR2) ? cellR1 : cellR2,
-        q2 = _isFirstSmaller(cellQ1, cellR1, cellQ2, cellR2) ? cellQ2 : cellQ1,
-        r2 = _isFirstSmaller(cellQ1, cellR1, cellQ2, cellR2) ? cellR2 : cellR1;
+  }) : q1 = _isFirstSmaller(cellQ1, cellR1, cellQ2, cellR2) ? cellQ1 : cellQ2,
+       r1 = _isFirstSmaller(cellQ1, cellR1, cellQ2, cellR2) ? cellR1 : cellR2,
+       q2 = _isFirstSmaller(cellQ1, cellR1, cellQ2, cellR2) ? cellQ2 : cellQ1,
+       r2 = _isFirstSmaller(cellQ1, cellR1, cellQ2, cellR2) ? cellR2 : cellR1;
 
   /// Creates a HexEdge from two HexCell-like objects with q and r properties.
-  factory HexEdge.fromCells(
-    ({int q, int r}) cell1,
-    ({int q, int r}) cell2,
-  ) {
+  factory HexEdge.fromCells(({int q, int r}) cell1, ({int q, int r}) cell2) {
     return HexEdge(
       cellQ1: cell1.q,
       cellR1: cell1.r,
@@ -66,12 +63,7 @@ class HexEdge {
 
   /// Serializes the edge to JSON.
   Map<String, dynamic> toJson() {
-    return {
-      'q1': q1,
-      'r1': r1,
-      'q2': q2,
-      'r2': r2,
-    };
+    return {'q1': q1, 'r1': r1, 'q2': q2, 'r2': r2};
   }
 
   /// Creates a HexEdge from JSON data.

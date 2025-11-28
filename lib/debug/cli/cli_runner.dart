@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 
+import 'commands/evaluate_command.dart';
+import 'commands/generate_command.dart';
 import 'commands/validate_command.dart';
 
 /// Base class for CLI commands that output JSON responses.
@@ -61,6 +63,8 @@ class CliRunner extends CommandRunner<int> {
     );
 
     addCommand(ValidateCommand());
+    addCommand(GenerateCommand());
+    addCommand(EvaluateCommand());
   }
 
   /// Runs the CLI with the given arguments.
@@ -110,7 +114,10 @@ class CliRunner extends CommandRunner<int> {
 
 Examples:
   honeycomb-cli validate --file level.json
-  honeycomb-cli validate --level '{"size":4,"cells":[...]}'
+  honeycomb-cli validate --level '{"size":3,"cells":[...]}'
+  honeycomb-cli generate --size 3
+  honeycomb-cli generate --size 4 --output level.json
+  honeycomb-cli evaluate --file level.json
 
 Output is JSON formatted for AI agent parsing.''';
 }

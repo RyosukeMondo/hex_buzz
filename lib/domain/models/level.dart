@@ -72,7 +72,8 @@ class Level {
     final result = <HexCell>[];
     for (final neighbor in cell.neighbors) {
       final neighborCell = getCell(neighbor.q, neighbor.r);
-      if (neighborCell != null && !hasWall(cell.q, cell.r, neighbor.q, neighbor.r)) {
+      if (neighborCell != null &&
+          !hasWall(cell.q, cell.r, neighbor.q, neighbor.r)) {
         result.add(neighborCell);
       }
     }
@@ -182,5 +183,6 @@ class Level {
   int get hashCode => id.hashCode;
 
   @override
-  String toString() => 'Level($id, size: $size, cells: ${cells.length}, walls: ${walls.length})';
+  String toString() =>
+      'Level($id, size: $size, cells: ${cells.length}, walls: ${walls.length})';
 }

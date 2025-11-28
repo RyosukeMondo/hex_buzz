@@ -20,12 +20,7 @@ class HexCell {
   });
 
   /// Creates a copy with optional updated fields.
-  HexCell copyWith({
-    int? q,
-    int? r,
-    int? checkpoint,
-    bool? visited,
-  }) {
+  HexCell copyWith({int? q, int? r, int? checkpoint, bool? visited}) {
     return HexCell(
       q: q ?? this.q,
       r: r ?? this.r,
@@ -49,12 +44,12 @@ class HexCell {
   /// Neighbors are returned in clockwise order starting from the right.
   List<({int q, int r})> get neighbors {
     return [
-      (q: q + 1, r: r),     // East
+      (q: q + 1, r: r), // East
       (q: q + 1, r: r - 1), // Northeast
-      (q: q, r: r - 1),     // Northwest
-      (q: q - 1, r: r),     // West
+      (q: q, r: r - 1), // Northwest
+      (q: q - 1, r: r), // West
       (q: q - 1, r: r + 1), // Southwest
-      (q: q, r: r + 1),     // Southeast
+      (q: q, r: r + 1), // Southeast
     ];
   }
 

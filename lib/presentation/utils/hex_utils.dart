@@ -17,7 +17,12 @@ class HexUtils {
   /// [origin] is the pixel offset for the grid origin (default: 0,0).
   ///
   /// Returns the center position of the hexagon in pixel coordinates.
-  static Offset axialToPixel(int q, int r, double cellSize, [Offset origin = Offset.zero]) {
+  static Offset axialToPixel(
+    int q,
+    int r,
+    double cellSize, [
+    Offset origin = Offset.zero,
+  ]) {
     final x = cellSize * (3 / 2 * q);
     final y = cellSize * (sqrt(3) / 2 * q + sqrt(3) * r);
     return Offset(x + origin.dx, y + origin.dy);
@@ -30,7 +35,11 @@ class HexUtils {
   /// [origin] is the pixel offset for the grid origin (default: 0,0).
   ///
   /// Returns the (q, r) axial coordinates of the containing hexagon.
-  static ({int q, int r}) pixelToAxial(Offset pixel, double cellSize, [Offset origin = Offset.zero]) {
+  static ({int q, int r}) pixelToAxial(
+    Offset pixel,
+    double cellSize, [
+    Offset origin = Offset.zero,
+  ]) {
     final adjustedX = pixel.dx - origin.dx;
     final adjustedY = pixel.dy - origin.dy;
 
@@ -80,10 +89,12 @@ class HexUtils {
       // Flat-top: start at 0 degrees (right corner)
       final angleDeg = 60.0 * i;
       final angleRad = pi / 180 * angleDeg;
-      vertices.add(Offset(
-        center.dx + size * cos(angleRad),
-        center.dy + size * sin(angleRad),
-      ));
+      vertices.add(
+        Offset(
+          center.dx + size * cos(angleRad),
+          center.dy + size * sin(angleRad),
+        ),
+      );
     }
     return vertices;
   }

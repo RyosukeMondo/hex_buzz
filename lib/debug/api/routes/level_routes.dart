@@ -14,7 +14,7 @@ class LevelRoutes {
   final LevelValidator validator;
 
   LevelRoutes({LevelValidator? validator})
-      : validator = validator ?? const LevelValidator();
+    : validator = validator ?? const LevelValidator();
 
   /// Creates a router with all level routes.
   Router get router {
@@ -59,7 +59,9 @@ class LevelRoutes {
       'valid': true,
       'solvable': result.isSolvable,
       if (result.solutionPath != null)
-        'solution': result.solutionPath!.map((c) => {'q': c.q, 'r': c.r}).toList(),
+        'solution': result.solutionPath!
+            .map((c) => {'q': c.q, 'r': c.r})
+            .toList(),
       if (result.error != null) 'error': result.error,
       'levelId': level.id,
     });

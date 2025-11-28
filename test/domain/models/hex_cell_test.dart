@@ -95,28 +95,34 @@ void main() {
         final cell = HexCell(q: 0, r: 0);
         final neighbors = cell.neighbors;
 
-        expect(neighbors, containsAll([
-          (q: 1, r: 0),     // East
-          (q: 1, r: -1),    // Northeast
-          (q: 0, r: -1),    // Northwest
-          (q: -1, r: 0),    // West
-          (q: -1, r: 1),    // Southwest
-          (q: 0, r: 1),     // Southeast
-        ]));
+        expect(
+          neighbors,
+          containsAll([
+            (q: 1, r: 0), // East
+            (q: 1, r: -1), // Northeast
+            (q: 0, r: -1), // Northwest
+            (q: -1, r: 0), // West
+            (q: -1, r: 1), // Southwest
+            (q: 0, r: 1), // Southeast
+          ]),
+        );
       });
 
       test('returns correct neighbors for non-origin cell', () {
         final cell = HexCell(q: 2, r: 3);
         final neighbors = cell.neighbors;
 
-        expect(neighbors, containsAll([
-          (q: 3, r: 3),
-          (q: 3, r: 2),
-          (q: 2, r: 2),
-          (q: 1, r: 3),
-          (q: 1, r: 4),
-          (q: 2, r: 4),
-        ]));
+        expect(
+          neighbors,
+          containsAll([
+            (q: 3, r: 3),
+            (q: 3, r: 2),
+            (q: 2, r: 2),
+            (q: 1, r: 3),
+            (q: 1, r: 4),
+            (q: 2, r: 4),
+          ]),
+        );
       });
     });
 
@@ -140,8 +146,11 @@ void main() {
         ];
 
         for (final neighbor in directions) {
-          expect(cell.isAdjacentTo(neighbor), true,
-              reason: 'Expected ($cell) to be adjacent to ($neighbor)');
+          expect(
+            cell.isAdjacentTo(neighbor),
+            true,
+            reason: 'Expected ($cell) to be adjacent to ($neighbor)',
+          );
         }
       });
 
@@ -223,13 +232,16 @@ void main() {
         expect(cell1, equals(cell2));
       });
 
-      test('cells with same coordinates but different checkpoint are equal', () {
-        final cell1 = HexCell(q: 1, r: 2, checkpoint: 1);
-        final cell2 = HexCell(q: 1, r: 2, checkpoint: 2);
+      test(
+        'cells with same coordinates but different checkpoint are equal',
+        () {
+          final cell1 = HexCell(q: 1, r: 2, checkpoint: 1);
+          final cell2 = HexCell(q: 1, r: 2, checkpoint: 2);
 
-        // Equality is based on position only
-        expect(cell1, equals(cell2));
-      });
+          // Equality is based on position only
+          expect(cell1, equals(cell2));
+        },
+      );
 
       test('cells with same coordinates but different visited are equal', () {
         final cell1 = HexCell(q: 1, r: 2, visited: false);

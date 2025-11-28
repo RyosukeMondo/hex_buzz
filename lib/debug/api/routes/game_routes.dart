@@ -114,7 +114,9 @@ class GameRoutes {
       'isStarted': state.isStarted,
       'isComplete': state.isComplete,
       'elapsedTimeMs': state.elapsedTime.inMilliseconds,
-      'visitedCells': state.visitedCoordinates.map((c) => {'q': c.$1, 'r': c.$2}).toList(),
+      'visitedCells': state.visitedCoordinates
+          .map((c) => {'q': c.$1, 'r': c.$2})
+          .toList(),
       'currentCell': state.currentCell != null
           ? {'q': state.currentCell!.q, 'r': state.currentCell!.r}
           : null,

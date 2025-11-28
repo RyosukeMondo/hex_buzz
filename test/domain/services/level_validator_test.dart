@@ -197,8 +197,7 @@ void main() {
         final solution = validator.findSolution(level);
 
         expect(solution, isNotNull);
-        final visitedCoords =
-            solution!.map((c) => (c.q, c.r)).toSet();
+        final visitedCoords = solution!.map((c) => (c.q, c.r)).toSet();
         expect(visitedCoords.length, solution.length);
         expect(visitedCoords.length, level.cells.length);
       });
@@ -233,7 +232,10 @@ void main() {
           final current = solution[i];
           final next = solution[i + 1];
           final crossesWall =
-              (current.q == 0 && current.r == 0 && next.q == 1 && next.r == 0) ||
+              (current.q == 0 &&
+                  current.r == 0 &&
+                  next.q == 1 &&
+                  next.r == 0) ||
               (current.q == 1 && current.r == 0 && next.q == 0 && next.r == 0);
           expect(crossesWall, false, reason: 'Solution crosses wall');
         }
@@ -267,10 +269,7 @@ void main() {
 
     group('ValidationResult', () {
       test('solvable result has solution path', () {
-        final path = [
-          const HexCell(q: 0, r: 0),
-          const HexCell(q: 1, r: 0),
-        ];
+        final path = [const HexCell(q: 0, r: 0), const HexCell(q: 1, r: 0)];
         final result = ValidationResult.solvable(path);
 
         expect(result.isSolvable, true);
@@ -287,10 +286,7 @@ void main() {
       });
 
       test('toJson for solvable result', () {
-        final path = [
-          const HexCell(q: 0, r: 0),
-          const HexCell(q: 1, r: 0),
-        ];
+        final path = [const HexCell(q: 0, r: 0), const HexCell(q: 1, r: 0)];
         final result = ValidationResult.solvable(path);
 
         final json = result.toJson();
@@ -332,9 +328,10 @@ void main() {
         expect(result.error, contains('Missing checkpoint'));
       });
 
-      test('handles level where end is not reachable', () {
+      test('handles level where end checkpoint is not final cell', () {
         // Create a linear level where checkpoint 2 is in the middle
-        // making it impossible to visit all cells ending at last checkpoint
+        // With the new rule, the path must END at the final checkpoint,
+        // so this level is unsolvable because (2,0) comes after checkpoint 2
         final cells = <(int, int), HexCell>{
           (0, 0): const HexCell(q: 0, r: 0, checkpoint: 1),
           (1, 0): const HexCell(q: 1, r: 0, checkpoint: 2),
@@ -349,9 +346,9 @@ void main() {
 
         final result = validator.validate(level);
 
-        // This should still be solvable: 1 -> 2 -> (2,0) is valid
-        // as checkpoint 2 doesn't need to be at the end of the path
-        expect(result.isSolvable, true);
+        // This should be unsolvable: path must end at checkpoint 2,
+        // but there's still a cell (2,0) that would need to be visited
+        expect(result.isSolvable, false);
       });
 
       test('handles larger grid with multiple solutions', () {

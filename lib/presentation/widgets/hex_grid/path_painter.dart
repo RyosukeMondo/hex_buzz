@@ -14,7 +14,11 @@ class PathPainter extends CustomPainter {
   final double cellSize;
   final Offset origin;
 
-  static const _pathWidth = 6.0;
+  /// Path width as proportion of cell size for consistent scaling
+  static const _pathWidthRatio = 0.25;
+  static const _minPathWidth = 8.0;
+  static const _maxPathWidth = 20.0;
+
   static const _startColor = Color(0xFF2196F3); // Blue
   static const _midColor = Color(0xFF9C27B0); // Purple
   static const _endColor = Color(0xFFF44336); // Red
@@ -41,8 +45,16 @@ class PathPainter extends CustomPainter {
     }).toList();
   }
 
+  /// Calculate path width based on cell size
+  double get _pathWidth {
+    final width = cellSize * _pathWidthRatio;
+    return width.clamp(_minPathWidth, _maxPathWidth);
+  }
+
   /// Draws the path with a gradient color based on progress.
   void _drawGradientPath(Canvas canvas, List<Offset> points) {
+    final pathWidth = _pathWidth;
+
     for (var i = 0; i < points.length - 1; i++) {
       final startPoint = points[i];
       final endPoint = points[i + 1];
@@ -59,7 +71,7 @@ class PathPainter extends CustomPainter {
           colors: [startColor, endColor],
         ).createShader(Rect.fromPoints(startPoint, endPoint))
         ..style = PaintingStyle.stroke
-        ..strokeWidth = _pathWidth
+        ..strokeWidth = pathWidth
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round;
 

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/hex_cell.dart';
@@ -38,8 +40,8 @@ class HexGridWidget extends StatefulWidget {
 
 class _HexGridWidgetState extends State<HexGridWidget> {
   static const _minCellSize = 20.0;
-  static const _maxCellSize = 60.0;
-  static const _padding = 20.0;
+  static const _maxCellSize = 80.0;
+  static const _padding = 24.0;
 
   HexCell? _lastEnteredCell;
   bool _isDragging = false;
@@ -75,55 +77,93 @@ class _HexGridWidgetState extends State<HexGridWidget> {
     );
   }
 
+  /// Calculates the optimal cell size to fit the grid within constraints.
+  /// Uses actual pixel bounds of all cells for accurate sizing.
   double _calculateCellSize(BoxConstraints constraints) {
     final availableWidth = constraints.maxWidth - (_padding * 2);
     final availableHeight = constraints.maxHeight - (_padding * 2);
 
-    // Calculate size needed to fit grid horizontally
-    // For flat-top hexagons: width = (3/2) * size * (cols - 1) + 2 * size
-    final cols = widget.level.size;
-    final rows = widget.level.size;
-    final horizontalSize = availableWidth / (1.5 * (cols - 1) + 2);
+    final cells = widget.level.cells.values;
+    if (cells.isEmpty) return _minCellSize;
 
-    // Calculate size needed to fit grid vertically
-    // For flat-top hexagons: height = sqrt(3) * size * (rows - 0.5) for offset rows
-    final verticalSize =
-        availableHeight / (HexUtils.hexHeight(1) * (rows + 0.5));
+    // Calculate actual pixel bounds at size=1.0 to determine scaling
+    double minX = double.infinity, maxX = double.negativeInfinity;
+    double minY = double.infinity, maxY = double.negativeInfinity;
 
-    // Use the smaller to ensure grid fits
-    final calculatedSize = horizontalSize < verticalSize
-        ? horizontalSize
-        : verticalSize;
+    for (final cell in cells) {
+      final pos = HexUtils.axialToPixel(cell.q, cell.r, 1.0);
+      minX = min(minX, pos.dx);
+      maxX = max(maxX, pos.dx);
+      minY = min(minY, pos.dy);
+      maxY = max(maxY, pos.dy);
+    }
 
-    return calculatedSize.clamp(_minCellSize, _maxCellSize);
+    // Add hex radius to bounds (cells extend beyond their centers)
+    final gridWidth = (maxX - minX) + 2.0; // +2 for hex width at size 1
+    final gridHeight =
+        (maxY - minY) + sqrt(3); // +sqrt(3) for hex height at size 1
+
+    if (gridWidth <= 0 || gridHeight <= 0) return _minCellSize;
+
+    // Calculate scale factor to fit
+    final scaleX = availableWidth / gridWidth;
+    final scaleY = availableHeight / gridHeight;
+    final cellSize = min(scaleX, scaleY);
+
+    return cellSize.clamp(_minCellSize, _maxCellSize);
   }
 
+  /// Calculates the actual pixel size of the grid.
   Size _calculateGridSize(double cellSize) {
-    final cols = widget.level.size;
-    final rows = widget.level.size;
+    final cells = widget.level.cells.values;
+    if (cells.isEmpty) return Size.zero;
 
-    final width =
-        HexUtils.horizontalSpacing(cellSize) * (cols - 1) +
-        HexUtils.hexWidth(cellSize);
-    final height =
-        HexUtils.verticalSpacing(cellSize) * (rows - 1) +
-        HexUtils.hexHeight(cellSize);
+    double minX = double.infinity, maxX = double.negativeInfinity;
+    double minY = double.infinity, maxY = double.negativeInfinity;
+
+    for (final cell in cells) {
+      final pos = HexUtils.axialToPixel(cell.q, cell.r, cellSize);
+      minX = min(minX, pos.dx);
+      maxX = max(maxX, pos.dx);
+      minY = min(minY, pos.dy);
+      maxY = max(maxY, pos.dy);
+    }
+
+    final width = (maxX - minX) + HexUtils.hexWidth(cellSize);
+    final height = (maxY - minY) + HexUtils.hexHeight(cellSize);
 
     return Size(width, height);
   }
 
+  /// Calculates the origin offset to center the grid.
   Offset _calculateOrigin(
     BoxConstraints constraints,
     Size gridSize,
     double cellSize,
   ) {
-    // Center the grid within the available space
-    final centerX = (constraints.maxWidth - gridSize.width) / 2 + cellSize;
-    final centerY =
-        (constraints.maxHeight - gridSize.height) / 2 +
-        HexUtils.hexHeight(cellSize) / 2;
+    final cells = widget.level.cells.values;
+    if (cells.isEmpty) return Offset.zero;
 
-    return Offset(centerX, centerY);
+    // Find the center of all cell positions
+    double minX = double.infinity, maxX = double.negativeInfinity;
+    double minY = double.infinity, maxY = double.negativeInfinity;
+
+    for (final cell in cells) {
+      final pos = HexUtils.axialToPixel(cell.q, cell.r, cellSize);
+      minX = min(minX, pos.dx);
+      maxX = max(maxX, pos.dx);
+      minY = min(minY, pos.dy);
+      maxY = max(maxY, pos.dy);
+    }
+
+    final gridCenterX = (minX + maxX) / 2;
+    final gridCenterY = (minY + maxY) / 2;
+
+    // Offset to center grid in available space
+    final originX = constraints.maxWidth / 2 - gridCenterX;
+    final originY = constraints.maxHeight / 2 - gridCenterY;
+
+    return Offset(originX, originY);
   }
 
   void _handleDragStart(

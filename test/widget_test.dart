@@ -11,6 +11,6 @@ void main() {
     expect(find.text('Honeycomb One Pass'), findsOneWidget);
 
     // Verify reset button is present in the app bar
-    expect(find.byTooltip('Reset'), findsOneWidget);
+    expect(find.byTooltip('Reset (same level)'), findsOneWidget);
   });
 }

@@ -18,9 +18,7 @@ void main() {
       };
 
       // Add a wall between (0,0) and (1,0)
-      walls = {
-        HexEdge(cellQ1: 0, cellR1: 0, cellQ2: 1, cellR2: 0),
-      };
+      walls = {HexEdge(cellQ1: 0, cellR1: 0, cellQ2: 1, cellR2: 0)};
     });
 
     group('construction', () {

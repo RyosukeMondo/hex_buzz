@@ -4,49 +4,48 @@ import '../models/level.dart';
 
 /// Creates a hardcoded test level for development and testing.
 ///
-/// This is a 4x4 hexagonal grid (16 cells) with 3 checkpoints and
-/// strategic walls that create exactly one solution path.
+/// This is a hexagonal grid with edge size 3 (19 cells total) with 2 checkpoints
+/// and strategic walls that create exactly one solution path.
 ///
 /// Grid layout (axial coordinates q,r):
-/// ```
-///     (0,0) (1,0) (2,0) (3,0)
-///   (0,1) (1,1) (2,1) (3,1)
-///     (0,2) (1,2) (2,2) (3,2)
-///   (0,3) (1,3) (2,3) (3,3)
-/// ```
+/// The hexagonal grid uses axial coordinates where the constraint is:
+/// max(|q|, |r|, |s|) <= 2, where s = -q-r
 ///
 /// Checkpoint positions:
-/// - Checkpoint 1 (start): (0,0) - top left
-/// - Checkpoint 2 (middle): (1,2) - center-left area
-/// - Checkpoint 3 (end): (3,3) - bottom right corner (must be last)
+/// - Checkpoint 1 (start): (0,-2) - top
+/// - Checkpoint 2 (end): (0,2) - bottom (must be last)
 ///
 /// The walls force the path to snake through the grid while
-/// visiting checkpoint 2 before reaching checkpoint 3 as the final cell.
+/// visiting every cell exactly once.
 Level getTestLevel() {
-  // Create 4x4 grid of cells (16 cells total)
+  // Create hexagonal grid with edge size 3 (19 cells total)
+  // Using axial coordinates where the constraint is:
+  // max(|q|, |r|, |s|) <= n-1, where s = -q-r and n=3
   final cells = <(int, int), HexCell>{};
+  const edgeSize = 3;
+  const maxCoord = edgeSize - 1; // 2
 
-  for (var q = 0; q < 4; q++) {
-    for (var r = 0; r < 4; r++) {
-      int? checkpoint;
-      if (q == 0 && r == 0) checkpoint = 1; // Start
-      if (q == 1 && r == 2) checkpoint = 2; // Middle checkpoint
-      if (q == 3 && r == 3) checkpoint = 3; // End (must be final cell)
+  for (var q = -maxCoord; q <= maxCoord; q++) {
+    for (var r = -maxCoord; r <= maxCoord; r++) {
+      final s = -q - r;
+      // Check if cell is within hexagonal bounds
+      if (q.abs() <= maxCoord && r.abs() <= maxCoord && s.abs() <= maxCoord) {
+        int? checkpoint;
+        // Place checkpoints at strategic positions
+        if (q == 0 && r == -2) checkpoint = 1; // Start - top
+        if (q == 0 && r == 2) checkpoint = 2; // End - bottom
 
-      cells[(q, r)] = HexCell(q: q, r: r, checkpoint: checkpoint);
+        cells[(q, r)] = HexCell(q: q, r: r, checkpoint: checkpoint);
+      }
     }
   }
 
   // Strategic walls to create a challenging but solvable puzzle
-  // The walls force a path that ends at checkpoint 3 (3,3) as the final cell
+  // These walls force a specific path through the grid
   final walls = <HexEdge>{
-    // Wall between (0,1) and (1,1) - forces early path choice
-    HexEdge(cellQ1: 0, cellR1: 1, cellQ2: 1, cellR2: 1),
-    // Wall between (2,1) and (2,2) - creates routing constraint
-    HexEdge(cellQ1: 2, cellR1: 1, cellQ2: 2, cellR2: 2),
-    // Wall between (2,3) and (3,3) - protects final approach to end
-    HexEdge(cellQ1: 2, cellR1: 3, cellQ2: 3, cellR2: 3),
+    // Wall creating a barrier that forces path around center
+    HexEdge(cellQ1: 0, cellR1: -1, cellQ2: 0, cellR2: 0),
   };
 
-  return Level(size: 4, cells: cells, walls: walls, checkpointCount: 3);
+  return Level(size: edgeSize, cells: cells, walls: walls, checkpointCount: 2);
 }
