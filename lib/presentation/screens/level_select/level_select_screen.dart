@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/progress_state.dart';
+import '../../../domain/models/user.dart';
 import '../../../main.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/progress_provider.dart';
 import '../../theme/honey_theme.dart';
@@ -18,14 +20,20 @@ class LevelSelectScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final progressAsync = ref.watch(progressProvider);
+    final authAsync = ref.watch(authProvider);
     final levelRepository = ref.watch(levelRepositoryProvider);
     final totalLevels = levelRepository.totalLevelCount;
 
     return Scaffold(
       body: SafeArea(
         child: progressAsync.when(
-          data: (progressState) =>
-              _buildContent(context, ref, progressState, totalLevels),
+          data: (progressState) => _buildContent(
+            context,
+            ref,
+            progressState,
+            totalLevels,
+            authAsync.valueOrNull,
+          ),
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) => Center(
             child: Column(
@@ -56,10 +64,11 @@ class LevelSelectScreen extends ConsumerWidget {
     WidgetRef ref,
     ProgressState progressState,
     int totalLevels,
+    User? user,
   ) {
     return Column(
       children: [
-        _buildHeader(context, progressState, totalLevels),
+        _buildHeader(context, ref, progressState, totalLevels, user),
         Expanded(
           child: _buildLevelGrid(context, ref, progressState, totalLevels),
         ),
@@ -69,12 +78,11 @@ class LevelSelectScreen extends ConsumerWidget {
 
   Widget _buildHeader(
     BuildContext context,
+    WidgetRef ref,
     ProgressState progressState,
     int totalLevels,
+    User? user,
   ) {
-    final totalStars = progressState.totalStars;
-    final maxStars = totalLevels * 3;
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
@@ -100,48 +108,106 @@ class LevelSelectScreen extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          Text(
+          _buildTitleRow(context, ref, user),
+          if (user != null) _buildUserGreeting(context, user),
+          const SizedBox(height: HoneyTheme.spacingMd),
+          _buildStarsCounter(
+            context,
+            progressState.totalStars,
+            totalLevels * 3,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTitleRow(BuildContext context, WidgetRef ref, User? user) {
+    final isLoggedIn = user != null;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(width: isLoggedIn ? 40 : 0),
+        Expanded(
+          child: Text(
             'HexBuzz',
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               color: HoneyTheme.textPrimary,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: HoneyTheme.spacingMd),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: HoneyTheme.spacingLg,
-              vertical: HoneyTheme.spacingSm,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(HoneyTheme.radiusXl),
-              border: Border.all(
-                color: HoneyTheme.honeyGoldDark.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.star,
-                  color: HoneyTheme.starFilled,
-                  size: HoneyTheme.iconSizeMd,
-                ),
-                const SizedBox(width: HoneyTheme.spacingSm),
-                Text(
-                  '$totalStars / $maxStars',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: HoneyTheme.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+        ),
+        isLoggedIn
+            ? IconButton(
+                onPressed: () => _handleLogout(context, ref),
+                icon: const Icon(Icons.logout),
+                color: HoneyTheme.textPrimary,
+                tooltip: 'Logout',
+              )
+            : const SizedBox(width: 40),
+      ],
+    );
+  }
+
+  Widget _buildUserGreeting(BuildContext context, User user) {
+    return Column(
+      children: [
+        const SizedBox(height: HoneyTheme.spacingXs),
+        Text(
+          'Hi, ${user.username}',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: HoneyTheme.textPrimary.withValues(alpha: 0.8),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStarsCounter(
+    BuildContext context,
+    int totalStars,
+    int maxStars,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: HoneyTheme.spacingLg,
+        vertical: HoneyTheme.spacingSm,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(HoneyTheme.radiusXl),
+        border: Border.all(
+          color: HoneyTheme.honeyGoldDark.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.star,
+            color: HoneyTheme.starFilled,
+            size: HoneyTheme.iconSizeMd,
+          ),
+          const SizedBox(width: HoneyTheme.spacingSm),
+          Text(
+            '$totalStars / $maxStars',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: HoneyTheme.textPrimary,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
+    await ref.read(authProvider.notifier).logout();
+    if (context.mounted) {
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(AppRoutes.front, (route) => false);
+    }
   }
 
   Widget _buildLevelGrid(
