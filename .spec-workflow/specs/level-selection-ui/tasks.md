@@ -196,7 +196,7 @@
   - _Requirements: 3.4, 4.1, 4.2, 4.3, 4.4, 4.5_
   - _Prompt: Implement the task for spec level-selection-ui, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Widget Developer | Task: Create CompletionOverlay with stars, time display, and navigation buttons | Restrictions: Accept callbacks for all actions, animate star appearance | Success: Overlay displays correctly, buttons trigger callbacks, stars animate | Instructions: Set task 6.3 to in-progress in tasks.md before starting, use log-implementation tool after completion with artifacts, then mark as complete_
 
-- [ ] 6.4 Update GameScreen with level index and completion overlay
+- [x] 6.4 Update GameScreen with level index and completion overlay
   - File: `lib/presentation/screens/game/game_screen.dart` (modify)
   - Accept level index parameter
   - Replace current completion overlay with new CompletionOverlay
