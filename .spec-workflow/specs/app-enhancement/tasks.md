@@ -126,7 +126,7 @@
   - _Requirements: REQ-1_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Widget Developer | Task: Modify LevelCellWidget to accept bestTime parameter. Display formatted time below stars for completed levels. Format: if >=60s show "M:SS", else show "SS.ss". Use smaller font size than level number. Ensure contrast against cell background | Restrictions: Don't break existing star display. Keep cell aspect ratio. Handle null bestTime gracefully | Success: Completed levels show time, uncompleted don't. Format is correct. Looks good in grid | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 13. Improve star display contrast
+- [x] 13. Improve star display contrast
   - File: `lib/presentation/widgets/level_cell/level_cell_widget.dart`
   - Add shadow/outline to empty stars for visibility
   - Ensure filled stars have strong contrast
