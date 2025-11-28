@@ -29,7 +29,7 @@
   - _Requirements: 2.5, 2.6_
   - _Prompt: Implement the task for spec level-selection-ui, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer specializing in clean architecture | Task: Create abstract ProgressRepository interface with async methods for load/save/reset | Restrictions: Interface only, no implementation, no Flutter imports | Success: Interface compiles, methods return correct types | Instructions: Set task 1.3 to in-progress in tasks.md before starting, use log-implementation tool after completion with artifacts, then mark as complete_
 
-- [ ] 1.4 Write unit tests for domain models and services
+- [x] 1.4 Write unit tests for domain models and services
   - Files: `test/domain/models/progress_state_test.dart`, `test/domain/services/star_calculator_test.dart`
   - Test ProgressState: `isUnlocked()`, `withLevelCompleted()`, JSON serialization
   - Test StarCalculator: all boundary conditions (9.99s, 10.00s, 10.01s, 29.99s, 30.00s, etc.)
@@ -40,7 +40,7 @@
 
 ## Phase 2: Data Layer (Persistence)
 
-- [ ] 2.1 Add shared_preferences dependency
+- [x] 2.1 Add shared_preferences dependency
   - File: `pubspec.yaml`
   - Add `shared_preferences: ^2.2.0` to dependencies
   - Run `flutter pub get`
