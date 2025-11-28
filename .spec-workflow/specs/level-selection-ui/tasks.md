@@ -129,7 +129,7 @@
   - _Requirements: 2.2, 3.1, 3.2_
   - _Prompt: Implement the task for spec level-selection-ui, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Developer | Task: Modify GameNotifier to track level index and trigger progress updates on completion | Restrictions: Minimal changes, maintain existing functionality | Success: Progress updated when level completed, level index tracked | Instructions: Set task 4.2 to in-progress in tasks.md before starting, use log-implementation tool after completion with artifacts, then mark as complete_
 
-- [ ] 4.3 Initialize progress provider in main.dart
+- [x] 4.3 Initialize progress provider in main.dart
   - File: `lib/main.dart` (modify)
   - Load LocalProgressRepository at startup
   - Override progressRepositoryProvider
