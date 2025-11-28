@@ -30,13 +30,13 @@ dependencies:
   # Local storage for progress persistence
   shared_preferences: ^2.2.0
 
+  # HTTP client for API calls and asset generation
+  http: ^1.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
-
-  # HTTP client for API tests
-  http: ^1.3.0
 
   # Integration testing
   integration_test:
