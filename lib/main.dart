@@ -11,7 +11,7 @@ import 'domain/services/game_engine.dart';
 import 'domain/services/level_repository.dart';
 import 'presentation/providers/game_provider.dart';
 import 'presentation/providers/progress_provider.dart';
-import 'presentation/screens/game/game_screen.dart';
+import 'presentation/screens/level_select/level_select_screen.dart';
 import 'presentation/theme/honey_theme.dart';
 
 /// Whether to enable the debug API server.
@@ -104,7 +104,7 @@ class HoneycombApp extends StatelessWidget {
     return MaterialApp(
       title: 'Honeycomb One Pass',
       theme: HoneyTheme.lightTheme,
-      home: const GameScreen(),
+      home: const LevelSelectScreen(),
     );
   }
 }

@@ -91,8 +91,10 @@ class LevelSelectScreen extends ConsumerWidget {
 
     if (!success) return;
 
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => const GameScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => GameScreen(levelIndex: levelIndex),
+      ),
+    );
   }
 }
