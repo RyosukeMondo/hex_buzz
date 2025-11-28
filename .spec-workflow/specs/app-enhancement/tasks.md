@@ -176,7 +176,7 @@
   - _Requirements: REQ-8_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Widget Developer | Task: Create AnimatedButton widget that wraps any child. On tap down, scale to 0.95 over 100ms. On tap up/cancel, scale back to 1.0 over 100ms. Expose onTap callback. Use AnimatedScale or explicit controller | Restrictions: Must work with any child widget. Don't intercept other gestures | Success: Buttons feel tactile and responsive. Animation is subtle but noticeable | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 18. Enhance completion overlay animations
+- [x] 18. Enhance completion overlay animations
   - File: `lib/presentation/widgets/completion_overlay/completion_overlay.dart`
   - Add bounce effect to card appearance (elasticOut curve)
   - Stagger star animations with 150ms delay between each
