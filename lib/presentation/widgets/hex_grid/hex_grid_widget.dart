@@ -233,12 +233,18 @@ class _HexGridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    _drawCells(canvas);
-    _drawWalls(canvas, size);
+    // Render layers in correct order per REQ-7:
+    // 1. Cell backgrounds and borders (without checkpoint numbers)
+    _drawCells(canvas, skipCheckpoints: true);
+    // 2. Path line
     _drawPath(canvas, size);
+    // 3. Walls
+    _drawWalls(canvas, size);
+    // 4. Checkpoint numbers (on top of everything)
+    _drawCheckpoints(canvas);
   }
 
-  void _drawCells(Canvas canvas) {
+  void _drawCells(Canvas canvas, {bool skipCheckpoints = false}) {
     final startCheckpoint = 1;
     final endCheckpoint = level.checkpointCount;
 
@@ -261,6 +267,7 @@ class _HexGridPainter extends CustomPainter {
         isStart: isStart,
         isEnd: isEnd,
         visitedColor: visitedColor,
+        skipCheckpoint: skipCheckpoints,
       );
 
       cellPainter.paint(
@@ -322,6 +329,33 @@ class _HexGridPainter extends CustomPainter {
     );
 
     pathPainter.paint(canvas, size);
+  }
+
+  /// Draws checkpoint numbers as a separate layer on top of everything.
+  void _drawCheckpoints(Canvas canvas) {
+    for (final cell in level.cells.values) {
+      if (cell.checkpoint == null) continue;
+
+      final center = HexUtils.axialToPixel(cell.q, cell.r, cellSize, origin);
+
+      canvas.save();
+      canvas.translate(
+        center.dx - HexUtils.hexWidth(cellSize) / 2,
+        center.dy - HexUtils.hexHeight(cellSize) / 2,
+      );
+
+      final checkpointPainter = CheckpointPainter(
+        cell: cell,
+        cellSize: cellSize,
+      );
+
+      checkpointPainter.paint(
+        canvas,
+        Size(HexUtils.hexWidth(cellSize), HexUtils.hexHeight(cellSize)),
+      );
+
+      canvas.restore();
+    }
   }
 
   @override

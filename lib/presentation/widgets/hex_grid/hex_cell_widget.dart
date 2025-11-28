@@ -57,6 +57,9 @@ class HexCellPainter extends CustomPainter {
   final bool isEnd;
   final Color? visitedColor;
 
+  /// When true, skips drawing checkpoint numbers (for layered rendering)
+  final bool skipCheckpoint;
+
   // Using HoneyTheme colors for honey/bee visual styling
   static const _unvisitedColor = HoneyTheme.cellUnvisited;
   static const _defaultVisitedColor = HoneyTheme.cellVisited;
@@ -74,6 +77,7 @@ class HexCellPainter extends CustomPainter {
     this.isStart = false,
     this.isEnd = false,
     this.visitedColor,
+    this.skipCheckpoint = false,
   });
 
   @override
@@ -103,8 +107,10 @@ class HexCellPainter extends CustomPainter {
     // Always draw the border
     _drawBorder(canvas, fullPath);
 
-    // Draw checkpoint number
-    _drawCheckpoint(canvas, center);
+    // Draw checkpoint number (unless skipped for layered rendering)
+    if (!skipCheckpoint) {
+      _drawCheckpoint(canvas, center);
+    }
   }
 
   Path _createHexPath(List<Offset> vertices) {
@@ -195,6 +201,53 @@ class HexCellPainter extends CustomPainter {
         cellSize != oldDelegate.cellSize ||
         isStart != oldDelegate.isStart ||
         isEnd != oldDelegate.isEnd ||
-        visitedColor != oldDelegate.visitedColor;
+        visitedColor != oldDelegate.visitedColor ||
+        skipCheckpoint != oldDelegate.skipCheckpoint;
+  }
+}
+
+/// Custom painter that renders only checkpoint numbers.
+///
+/// Used for layered rendering where checkpoints must appear above the path.
+class CheckpointPainter extends CustomPainter {
+  final HexCell cell;
+  final double cellSize;
+
+  static const _checkpointTextColor = HoneyTheme.textPrimary;
+
+  CheckpointPainter({required this.cell, required this.cellSize});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (cell.checkpoint == null) return;
+
+    final center = Offset(size.width / 2, size.height / 2);
+
+    final textSpan = TextSpan(
+      text: cell.checkpoint.toString(),
+      style: TextStyle(
+        color: _checkpointTextColor,
+        fontSize: cellSize * 0.4,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+      textAlign: TextAlign.center,
+    );
+
+    textPainter.layout();
+    final textOffset = Offset(
+      center.dx - textPainter.width / 2,
+      center.dy - textPainter.height / 2,
+    );
+    textPainter.paint(canvas, textOffset);
+  }
+
+  @override
+  bool shouldRepaint(CheckpointPainter oldDelegate) {
+    return cell != oldDelegate.cell || cellSize != oldDelegate.cellSize;
   }
 }
