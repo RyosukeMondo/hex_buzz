@@ -198,7 +198,7 @@
   - _Requirements: REQ-4_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer | Task: Create CLI script tool/generate_assets.dart. Use http package to call Automatic1111 txt2img API. Config: width=512, height=512, steps=20, cfg_scale=7.0. Decode base64 response, save as PNG. Include prompts from design spec for: app_icon, level_button, lock_icon, star_filled, star_empty | Restrictions: Handle API errors gracefully. Don't overwrite existing assets without flag | Success: Running script generates all required assets. Images are 512x512 PNG | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 20. Generate and integrate game assets
+- [x] 20. Generate and integrate game assets
   - Files: `assets/images/*.png`, `pubspec.yaml`
   - Run generation script to create assets
   - Add assets to pubspec.yaml
