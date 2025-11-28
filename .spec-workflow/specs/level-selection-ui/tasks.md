@@ -93,7 +93,7 @@
   - _Requirements: 6.4, 6.5, 6.6_
   - _Prompt: Implement the task for spec level-selection-ui, first run spec-workflow-guide to get the workflow guide then implement the task: Role: API Developer | Task: Create progress REST endpoints following existing route patterns | Restrictions: JSON request/response, follow existing API patterns | Success: All endpoints return correct data, status codes correct | Instructions: Set task 3.3 to in-progress in tasks.md before starting, use log-implementation tool after completion with artifacts, then mark as complete_
 
-- [ ] 3.4 Register progress routes in server
+- [x] 3.4 Register progress routes in server
   - File: `lib/debug/api/server.dart` (modify)
   - Mount progress routes on router
   - Purpose: Make progress API available
