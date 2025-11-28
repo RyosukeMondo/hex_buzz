@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../theme/honey_theme.dart';
@@ -51,22 +53,36 @@ class _CompletionOverlayState extends State<CompletionOverlay>
   late List<AnimationController> _starControllers;
   late List<Animation<double>> _starScales;
 
+  late AnimationController _buttonsController;
+  late Animation<double> _buttonsOpacity;
+
+  bool _reduceMotion = false;
+  final List<Timer> _pendingTimers = [];
+
   @override
   void initState() {
     super.initState();
     _initCardAnimation();
     _initStarAnimations();
+    _initButtonsAnimation();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
     _startAnimations();
   }
 
   void _initCardAnimation() {
     _cardController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
 
+    // Bounce effect with elasticOut curve for celebratory feel
     _cardScale = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _cardController, curve: Curves.easeOutBack),
+      CurvedAnimation(parent: _cardController, curve: Curves.elasticOut),
     );
 
     _cardOpacity = Tween<double>(
@@ -92,26 +108,87 @@ class _CompletionOverlayState extends State<CompletionOverlay>
     }).toList();
   }
 
-  Future<void> _startAnimations() async {
-    // Start card animation
-    if (!mounted) return;
-    await _cardController.forward();
+  void _initButtonsAnimation() {
+    _buttonsController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
 
-    // Animate stars sequentially with delay
-    for (int i = 0; i < widget.stars && i < 3; i++) {
-      if (!mounted) return;
-      await Future.delayed(const Duration(milliseconds: 150));
-      if (!mounted) return;
-      _starControllers[i].forward();
+    _buttonsOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _buttonsController, curve: Curves.easeOut),
+    );
+  }
+
+  bool _animationsStarted = false;
+
+  void _startAnimations() {
+    // Prevent multiple animation starts from didChangeDependencies
+    if (_animationsStarted) return;
+    _animationsStarted = true;
+
+    // Skip animations if reduced motion is enabled
+    if (_reduceMotion) {
+      _cardController.value = 1.0;
+      for (final controller in _starControllers) {
+        controller.value = 1.0;
+      }
+      _buttonsController.value = 1.0;
+      return;
     }
+
+    // Start card animation
+    _cardController.forward().then((_) {
+      if (!mounted) return;
+      _animateStarsSequentially(0);
+    });
+  }
+
+  void _animateStarsSequentially(int starIndex) {
+    if (!mounted) return;
+    if (starIndex >= widget.stars || starIndex >= 3) {
+      // All stars animated, now animate buttons
+      _animateButtonsAfterDelay();
+      return;
+    }
+
+    // Delay before animating this star
+    final timer = Timer(const Duration(milliseconds: 150), () {
+      if (!mounted) return;
+      _starControllers[starIndex].forward();
+      _animateStarsSequentially(starIndex + 1);
+    });
+    _pendingTimers.add(timer);
+  }
+
+  void _animateButtonsAfterDelay() {
+    if (!mounted) return;
+
+    // Wait for the last star animation to complete (400ms duration)
+    final delayMs = widget.stars > 0 ? 400 : 0;
+    if (delayMs == 0) {
+      _buttonsController.forward();
+      return;
+    }
+
+    final timer = Timer(Duration(milliseconds: delayMs), () {
+      if (!mounted) return;
+      _buttonsController.forward();
+    });
+    _pendingTimers.add(timer);
   }
 
   @override
   void dispose() {
+    // Cancel any pending timers to avoid test failures
+    for (final timer in _pendingTimers) {
+      timer.cancel();
+    }
+    _pendingTimers.clear();
     _cardController.dispose();
     for (final controller in _starControllers) {
       controller.dispose();
     }
+    _buttonsController.dispose();
     super.dispose();
   }
 
@@ -219,46 +296,52 @@ class _CompletionOverlayState extends State<CompletionOverlay>
   }
 
   Widget _buildButtons() {
-    return Column(
-      children: [
-        // Primary action: Next Level (if available)
-        if (widget.hasNextLevel)
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: widget.onNextLevel,
-              icon: const Icon(Icons.arrow_forward),
-              label: const Text('Next Level'),
-              style: FilledButton.styleFrom(
-                backgroundColor: HoneyTheme.honeyGold,
-                foregroundColor: HoneyTheme.textOnPrimary,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+    return AnimatedBuilder(
+      animation: _buttonsOpacity,
+      builder: (context, child) {
+        return Opacity(opacity: _buttonsOpacity.value, child: child);
+      },
+      child: Column(
+        children: [
+          // Primary action: Next Level (if available)
+          if (widget.hasNextLevel)
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: widget.onNextLevel,
+                icon: const Icon(Icons.arrow_forward),
+                label: const Text('Next Level'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: HoneyTheme.honeyGold,
+                  foregroundColor: HoneyTheme.textOnPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
-          ),
-        if (widget.hasNextLevel) const SizedBox(height: 12),
+          if (widget.hasNextLevel) const SizedBox(height: 12),
 
-        // Secondary actions row
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: widget.onReplay,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Replay'),
+          // Secondary actions row
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: widget.onReplay,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Replay'),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: widget.onLevelSelect,
-                icon: const Icon(Icons.grid_view),
-                label: const Text('Levels'),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: widget.onLevelSelect,
+                  icon: const Icon(Icons.grid_view),
+                  label: const Text('Levels'),
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
