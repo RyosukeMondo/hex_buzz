@@ -150,7 +150,7 @@
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
   - _Prompt: Implement the task for spec level-selection-ui, first run spec-workflow-guide to get the workflow guide then implement the task: Role: UI/UX Developer specializing in theming | Task: Create HoneyTheme with color palette and ThemeData following design specs | Restrictions: Use exact color codes from requirements, ensure WCAG AA contrast | Success: Theme compiles, colors match spec, contrast ratios acceptable | Instructions: Set task 5.1 to in-progress in tasks.md before starting, use log-implementation tool after completion with artifacts, then mark as complete_
 
-- [ ] 5.2 Apply HoneyTheme to app
+- [x] 5.2 Apply HoneyTheme to app
   - File: `lib/main.dart` (modify)
   - Replace current theme with `HoneyTheme.lightTheme`
   - Purpose: Apply honey styling throughout app
