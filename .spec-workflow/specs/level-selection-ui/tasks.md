@@ -77,7 +77,7 @@
   - _Requirements: 6.1, 6.2, 6.3_
   - _Prompt: Implement the task for spec level-selection-ui, first run spec-workflow-guide to get the workflow guide then implement the task: Role: CLI Developer | Task: Create ProgressCommand with get/set/reset subcommands, JSON output | Restrictions: Follow existing CLI patterns, structured JSON output | Success: All subcommands work, JSON output parseable | Instructions: Set task 3.1 to in-progress in tasks.md before starting, use log-implementation tool after completion with artifacts, then mark as complete_
 
-- [ ] 3.2 Register progress command in CLI runner
+- [x] 3.2 Register progress command in CLI runner
   - File: `lib/debug/cli/cli_runner.dart` (modify)
   - Add `ProgressCommand` to command list
   - Purpose: Make progress command available via CLI
