@@ -136,16 +136,38 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
   }
 
   Widget _buildCell() {
-    return Container(
-      width: widget.size,
-      height: widget.size,
-      decoration: HoneycombDecorations.levelCell(
-        isUnlocked: widget.isUnlocked,
-        isCompleted: widget.isCompleted,
-      ),
-      child: widget.isUnlocked
-          ? _buildUnlockedContent()
-          : _buildLockedContent(),
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Background texture from SD-generated asset
+        AssetImageWithFallback(
+          assetPath: widget.isUnlocked
+              ? GameAssetPaths.levelButton
+              : GameAssetPaths.levelButton,
+          width: widget.size,
+          height: widget.size,
+          fallback: Container(
+            width: widget.size,
+            height: widget.size,
+            decoration: HoneycombDecorations.levelCell(
+              isUnlocked: widget.isUnlocked,
+              isCompleted: widget.isCompleted,
+            ),
+          ),
+        ),
+        // Overlay for locked state
+        if (!widget.isUnlocked)
+          Container(
+            width: widget.size,
+            height: widget.size,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(HoneyTheme.radiusMd),
+            ),
+          ),
+        // Content on top
+        widget.isUnlocked ? _buildUnlockedContent() : _buildLockedContent(),
+      ],
     );
   }
 
@@ -157,7 +179,7 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
           widget.levelNumber.toString(),
           style: TextStyle(
             color: HoneyTheme.textPrimary,
-            fontSize: widget.size * 0.3,
+            fontSize: widget.size * 0.45,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -197,7 +219,7 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
   }
 
   Widget _buildLockedContent() {
-    final iconSize = widget.size * 0.35;
+    final iconSize = widget.size * 0.45;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -205,6 +227,7 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
           assetPath: GameAssetPaths.lockIcon,
           width: iconSize,
           height: iconSize,
+          fit: BoxFit.contain,
           fallback: Icon(
             Icons.lock,
             color: HoneyTheme.lockColor,
@@ -216,7 +239,7 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
           widget.levelNumber.toString(),
           style: TextStyle(
             color: HoneyTheme.lockColor,
-            fontSize: widget.size * 0.2,
+            fontSize: widget.size * 0.28,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -225,7 +248,7 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
   }
 
   Widget _buildStarsRow() {
-    final starSize = widget.size * 0.18;
+    final starSize = widget.size * 0.22;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
@@ -243,6 +266,7 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
       assetPath: GameAssetPaths.starFilled,
       width: size,
       height: size,
+      fit: BoxFit.contain,
       fallback: _buildFallbackFilledStar(size),
     );
   }
@@ -269,6 +293,7 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
       assetPath: GameAssetPaths.starEmpty,
       width: size,
       height: size,
+      fit: BoxFit.contain,
       fallback: _buildFallbackEmptyStar(size),
     );
   }

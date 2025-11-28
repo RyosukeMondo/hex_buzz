@@ -3,16 +3,54 @@ import 'package:flutter/services.dart';
 
 /// Paths to generated game assets.
 ///
-/// Assets are generated via `dart run tool/generate_assets.dart` using
-/// Stable Diffusion. If assets are not available, widgets should
-/// gracefully fall back to icon/color-based rendering.
+/// Assets are generated via `python3 tool/generate_sd_assets.py` using
+/// Stable Diffusion (DreamShaper XL Lightning model). If assets are not
+/// available, widgets should gracefully fall back to icon/color-based rendering.
 class GameAssetPaths {
   static const String basePath = 'assets/images';
+
+  // App branding
   static const String appIcon = '$basePath/app_icon.png';
+  static const String beeMascot = '$basePath/bee_mascot.png';
+
+  // Backgrounds
+  static const String splashBackground = '$basePath/splash_background.png';
+  static const String victoryBackground = '$basePath/victory_background.png';
+  static const String headerBanner = '$basePath/header_banner.png';
+
+  // Level cell button
   static const String levelButton = '$basePath/level_button.png';
+  static const String levelButtonHover = '$basePath/level_button_hover.png';
+
+  // Hexagonal cell states
+  static const String hexCellUnvisited = '$basePath/hex_cell_unvisited.png';
+  static const String hexCellVisited = '$basePath/hex_cell_visited.png';
+  static const String hexCellStart = '$basePath/hex_cell_start.png';
+  static const String hexCellEnd = '$basePath/hex_cell_end.png';
+
+  // Icons
   static const String lockIcon = '$basePath/lock_icon.png';
   static const String starFilled = '$basePath/star_filled.png';
   static const String starEmpty = '$basePath/star_empty.png';
+  static const String trophyIcon = '$basePath/trophy_icon.png';
+  static const String checkmarkIcon = '$basePath/icon_checkmark.png';
+
+  // Navigation buttons
+  static const String buttonPlay = '$basePath/button_play.png';
+  static const String buttonRetry = '$basePath/button_retry.png';
+  static const String buttonNext = '$basePath/button_next.png';
+  static const String buttonBack = '$basePath/button_back.png';
+  static const String buttonMenu = '$basePath/button_menu.png';
+
+  // Settings icons
+  static const String iconSettings = '$basePath/icon_settings.png';
+  static const String iconSoundOn = '$basePath/icon_sound_on.png';
+  static const String iconSoundOff = '$basePath/icon_sound_off.png';
+  static const String iconInfo = '$basePath/icon_info.png';
+
+  // Decorations
+  static const String honeyDrip = '$basePath/honey_drip.png';
+  static const String progressFill = '$basePath/progress_fill.png';
 }
 
 /// Utility for loading game assets with fallback support.
@@ -72,7 +110,7 @@ class AssetImageWithFallback extends StatefulWidget {
     required this.fallback,
     this.width,
     this.height,
-    this.fit = BoxFit.contain,
+    this.fit = BoxFit.cover,
   });
 
   @override
