@@ -3,12 +3,16 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:hex_buzz/domain/models/auth_result.dart';
 import 'package:hex_buzz/domain/models/hex_cell.dart';
 import 'package:hex_buzz/domain/models/level.dart';
 import 'package:hex_buzz/domain/models/progress_state.dart';
+import 'package:hex_buzz/domain/models/user.dart';
+import 'package:hex_buzz/domain/services/auth_repository.dart';
 import 'package:hex_buzz/domain/services/level_repository.dart';
 import 'package:hex_buzz/domain/services/progress_repository.dart';
 import 'package:hex_buzz/main.dart';
+import 'package:hex_buzz/presentation/providers/auth_provider.dart';
 import 'package:hex_buzz/presentation/providers/game_provider.dart';
 import 'package:hex_buzz/presentation/providers/progress_provider.dart';
 
@@ -27,16 +31,48 @@ Level _createTestLevel({int size = 2, String? id}) {
   );
 }
 
+/// Mock auth repository for testing that returns a guest user.
+class _MockAuthRepository implements AuthRepository {
+  final User _guestUser = User.guest();
+
+  @override
+  Future<User?> getCurrentUser() async => _guestUser;
+
+  @override
+  Future<AuthResult> login(String username, String password) async {
+    return AuthResult.success(_guestUser);
+  }
+
+  @override
+  Future<AuthResult> register(String username, String password) async {
+    return AuthResult.success(_guestUser);
+  }
+
+  @override
+  Future<void> logout() async {}
+
+  @override
+  Future<AuthResult> loginAsGuest() async {
+    return AuthResult.success(_guestUser);
+  }
+
+  @override
+  Stream<User?> authStateChanges() {
+    return Stream.value(_guestUser);
+  }
+}
+
 /// Mock progress repository for testing.
 class _MockProgressRepository implements ProgressRepository {
   @override
-  Future<ProgressState> load() async => const ProgressState.empty();
+  Future<ProgressState> loadForUser(String userId) async =>
+      const ProgressState.empty();
 
   @override
-  Future<void> save(ProgressState state) async {}
+  Future<void> saveForUser(String userId, ProgressState state) async {}
 
   @override
-  Future<void> reset() async {}
+  Future<void> resetForUser(String userId) async {}
 }
 
 /// Mock level repository for testing.
@@ -76,6 +112,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          authRepositoryProvider.overrideWithValue(_MockAuthRepository()),
           levelRepositoryProvider.overrideWithValue(_MockLevelRepository()),
           progressRepositoryProvider.overrideWithValue(
             _MockProgressRepository(),

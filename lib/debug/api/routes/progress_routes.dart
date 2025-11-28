@@ -13,7 +13,12 @@ import '../../../domain/services/star_calculator.dart';
 /// - GET /api/progress - Get current progress state
 /// - POST /api/progress/complete - Mark a level as completed
 /// - POST /api/progress/reset - Reset all progress
+///
+/// Uses a default user ID for debug/API purposes since this API is intended
+/// for testing and AI agent interactions, not multi-user scenarios.
 class ProgressRoutes {
+  static const String _defaultUserId = 'api_debug_user';
+
   final ProgressRepository repository;
 
   ProgressRoutes({required this.repository});
@@ -34,7 +39,7 @@ class ProgressRoutes {
   /// Returns the current progress state.
   /// Response: {"totalStars": int, "completedLevels": int, "levels": {...}}
   Future<Response> _handleGetProgress(Request request) async {
-    final state = await repository.load();
+    final state = await repository.loadForUser(_defaultUserId);
     return _jsonResponse(_buildProgressResponse(state));
   }
 
@@ -56,7 +61,7 @@ class ProgressRoutes {
     final timeMs = body['timeMs'] as int;
     final time = Duration(milliseconds: timeMs);
     final stars = StarCalculator.calculateStars(time);
-    final currentState = await repository.load();
+    final currentState = await repository.loadForUser(_defaultUserId);
 
     if (!currentState.isUnlocked(level)) {
       return _errorResponse(
@@ -70,7 +75,7 @@ class ProgressRoutes {
       stars: stars,
       time: time,
     );
-    await repository.save(newState);
+    await repository.saveForUser(_defaultUserId, newState);
 
     return _jsonResponse({
       'success': true,
@@ -122,8 +127,8 @@ class ProgressRoutes {
   /// Resets all progress to initial state.
   /// Returns: {"success": true, "progress": ProgressState}
   Future<Response> _handleReset(Request request) async {
-    await repository.reset();
-    final state = await repository.load();
+    await repository.resetForUser(_defaultUserId);
+    final state = await repository.loadForUser(_defaultUserId);
 
     return _jsonResponse({
       'success': true,

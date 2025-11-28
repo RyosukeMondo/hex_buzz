@@ -11,20 +11,25 @@ import 'package:hex_buzz/domain/services/game_engine.dart';
 import 'package:hex_buzz/domain/services/progress_repository.dart';
 
 /// In-memory implementation of [ProgressRepository] for testing.
+///
+/// Stores progress per-user. Uses 'api_test_user' as default user for API tests.
 class InMemoryProgressRepository implements ProgressRepository {
-  ProgressState _state = const ProgressState.empty();
+  static const String defaultUserId = 'api_test_user';
+  final Map<String, ProgressState> _userProgress = {};
 
   @override
-  Future<ProgressState> load() async => _state;
-
-  @override
-  Future<void> save(ProgressState state) async {
-    _state = state;
+  Future<ProgressState> loadForUser(String userId) async {
+    return _userProgress[userId] ?? const ProgressState.empty();
   }
 
   @override
-  Future<void> reset() async {
-    _state = const ProgressState.empty();
+  Future<void> saveForUser(String userId, ProgressState state) async {
+    _userProgress[userId] = state;
+  }
+
+  @override
+  Future<void> resetForUser(String userId) async {
+    _userProgress.remove(userId);
   }
 }
 

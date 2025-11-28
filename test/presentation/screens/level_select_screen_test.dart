@@ -3,11 +3,15 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hex_buzz/domain/models/auth_result.dart';
 import 'package:hex_buzz/domain/models/hex_cell.dart';
 import 'package:hex_buzz/domain/models/level.dart';
 import 'package:hex_buzz/domain/models/progress_state.dart';
+import 'package:hex_buzz/domain/models/user.dart';
+import 'package:hex_buzz/domain/services/auth_repository.dart';
 import 'package:hex_buzz/domain/services/level_repository.dart';
 import 'package:hex_buzz/domain/services/progress_repository.dart';
+import 'package:hex_buzz/presentation/providers/auth_provider.dart';
 import 'package:hex_buzz/presentation/providers/game_provider.dart';
 import 'package:hex_buzz/presentation/providers/progress_provider.dart';
 import 'package:hex_buzz/presentation/screens/game/game_screen.dart';
@@ -15,24 +19,62 @@ import 'package:hex_buzz/presentation/screens/level_select/level_select_screen.d
 import 'package:hex_buzz/presentation/theme/honey_theme.dart';
 import 'package:hex_buzz/presentation/widgets/level_cell/level_cell_widget.dart';
 
-/// Mock progress repository for testing.
-class MockProgressRepository implements ProgressRepository {
-  ProgressState _state;
-
-  MockProgressRepository([ProgressState? initialState])
-    : _state = initialState ?? const ProgressState.empty();
+/// Mock auth repository for testing that returns a guest user.
+class MockAuthRepository implements AuthRepository {
+  final User _guestUser = User.guest();
 
   @override
-  Future<ProgressState> load() async => _state;
+  Future<User?> getCurrentUser() async => _guestUser;
 
   @override
-  Future<void> save(ProgressState state) async {
-    _state = state;
+  Future<AuthResult> login(String username, String password) async {
+    return AuthResult.success(_guestUser);
   }
 
   @override
-  Future<void> reset() async {
-    _state = const ProgressState.empty();
+  Future<AuthResult> register(String username, String password) async {
+    return AuthResult.success(_guestUser);
+  }
+
+  @override
+  Future<void> logout() async {}
+
+  @override
+  Future<AuthResult> loginAsGuest() async {
+    return AuthResult.success(_guestUser);
+  }
+
+  @override
+  Stream<User?> authStateChanges() {
+    return Stream.value(_guestUser);
+  }
+}
+
+/// Mock progress repository for testing.
+///
+/// Stores progress per-user. Uses 'guest' as default for tests without auth.
+class MockProgressRepository implements ProgressRepository {
+  final Map<String, ProgressState> _userProgress = {};
+
+  MockProgressRepository([ProgressState? initialState]) {
+    if (initialState != null) {
+      _userProgress['guest'] = initialState;
+    }
+  }
+
+  @override
+  Future<ProgressState> loadForUser(String userId) async {
+    return _userProgress[userId] ?? const ProgressState.empty();
+  }
+
+  @override
+  Future<void> saveForUser(String userId, ProgressState state) async {
+    _userProgress[userId] = state;
+  }
+
+  @override
+  Future<void> resetForUser(String userId) async {
+    _userProgress.remove(userId);
   }
 }
 
@@ -87,6 +129,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('LevelSelectScreen', () {
+    late MockAuthRepository mockAuthRepo;
     late MockProgressRepository mockProgressRepo;
     late MockLevelRepository mockLevelRepo;
     late List<Level> testLevels;
@@ -94,6 +137,7 @@ void main() {
     setUp(() {
       // Create 5 test levels
       testLevels = List.generate(5, (i) => createTestLevel(id: 'level-$i'));
+      mockAuthRepo = MockAuthRepository();
       mockLevelRepo = MockLevelRepository(testLevels);
       mockProgressRepo = MockProgressRepository();
     });
@@ -105,6 +149,7 @@ void main() {
 
       return ProviderScope(
         overrides: [
+          authRepositoryProvider.overrideWithValue(mockAuthRepo),
           progressRepositoryProvider.overrideWithValue(mockProgressRepo),
           levelRepositoryProvider.overrideWithValue(mockLevelRepo),
         ],
@@ -181,6 +226,7 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
+              authRepositoryProvider.overrideWithValue(mockAuthRepo),
               progressRepositoryProvider.overrideWithValue(mockProgressRepo),
               levelRepositoryProvider.overrideWithValue(mockLevelRepo),
             ],
@@ -336,6 +382,7 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
+              authRepositoryProvider.overrideWithValue(mockAuthRepo),
               progressRepositoryProvider.overrideWithValue(slowRepo),
               levelRepositoryProvider.overrideWithValue(mockLevelRepo),
             ],
@@ -365,6 +412,7 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
+              authRepositoryProvider.overrideWithValue(mockAuthRepo),
               progressRepositoryProvider.overrideWithValue(errorRepo),
               levelRepositoryProvider.overrideWithValue(mockLevelRepo),
             ],
@@ -386,6 +434,7 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
+              authRepositoryProvider.overrideWithValue(mockAuthRepo),
               progressRepositoryProvider.overrideWithValue(errorRepo),
               levelRepositoryProvider.overrideWithValue(mockLevelRepo),
             ],
@@ -517,6 +566,7 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
+              authRepositoryProvider.overrideWithValue(mockAuthRepo),
               progressRepositoryProvider.overrideWithValue(
                 MockProgressRepository(progressState),
               ),
@@ -547,28 +597,28 @@ void main() {
 /// Repository that throws on load for error testing.
 class _ThrowingProgressRepository implements ProgressRepository {
   @override
-  Future<ProgressState> load() async {
+  Future<ProgressState> loadForUser(String userId) async {
     throw Exception('Failed to load progress');
   }
 
   @override
-  Future<void> save(ProgressState state) async {}
+  Future<void> saveForUser(String userId, ProgressState state) async {}
 
   @override
-  Future<void> reset() async {}
+  Future<void> resetForUser(String userId) async {}
 }
 
 /// Repository that takes time to load for testing loading state.
 class _SlowProgressRepository implements ProgressRepository {
   @override
-  Future<ProgressState> load() async {
+  Future<ProgressState> loadForUser(String userId) async {
     await Future<void>.delayed(const Duration(milliseconds: 100));
     return const ProgressState.empty();
   }
 
   @override
-  Future<void> save(ProgressState state) async {}
+  Future<void> saveForUser(String userId, ProgressState state) async {}
 
   @override
-  Future<void> reset() async {}
+  Future<void> resetForUser(String userId) async {}
 }

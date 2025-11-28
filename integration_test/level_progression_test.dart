@@ -11,11 +11,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hex_buzz/domain/models/auth_result.dart';
 import 'package:hex_buzz/domain/models/hex_cell.dart';
 import 'package:hex_buzz/domain/models/level.dart';
 import 'package:hex_buzz/domain/models/progress_state.dart';
+import 'package:hex_buzz/domain/models/user.dart';
+import 'package:hex_buzz/domain/services/auth_repository.dart';
 import 'package:hex_buzz/domain/services/level_repository.dart';
 import 'package:hex_buzz/domain/services/progress_repository.dart';
+import 'package:hex_buzz/presentation/providers/auth_provider.dart';
 import 'package:hex_buzz/presentation/providers/game_provider.dart';
 import 'package:hex_buzz/presentation/providers/progress_provider.dart';
 import 'package:hex_buzz/presentation/screens/game/game_screen.dart';
@@ -24,24 +28,72 @@ import 'package:hex_buzz/presentation/theme/honey_theme.dart';
 import 'package:hex_buzz/presentation/widgets/completion_overlay/completion_overlay.dart';
 import 'package:hex_buzz/presentation/widgets/level_cell/level_cell_widget.dart';
 
+/// Mock auth repository for testing that returns a guest user.
+class TestAuthRepository implements AuthRepository {
+  final User _guestUser = User.guest();
+
+  @override
+  Future<User?> getCurrentUser() async => _guestUser;
+
+  @override
+  Future<AuthResult> login(String username, String password) async {
+    return AuthResult.success(_guestUser);
+  }
+
+  @override
+  Future<AuthResult> register(String username, String password) async {
+    return AuthResult.success(_guestUser);
+  }
+
+  @override
+  Future<void> logout() async {}
+
+  @override
+  Future<AuthResult> loginAsGuest() async {
+    return AuthResult.success(_guestUser);
+  }
+
+  @override
+  Stream<User?> authStateChanges() {
+    return Stream.value(_guestUser);
+  }
+}
+
 /// In-memory progress repository for E2E testing.
+///
+/// Stores progress per-user. Uses 'guest' as default for tests without auth.
 class TestProgressRepository implements ProgressRepository {
-  ProgressState _state = const ProgressState.empty();
+  final Map<String, ProgressState> _userProgress = {};
 
   @override
-  Future<ProgressState> load() async => _state;
+  Future<ProgressState> loadForUser(String userId) async {
+    return _userProgress[userId] ?? const ProgressState.empty();
+  }
 
   @override
+  Future<void> saveForUser(String userId, ProgressState state) async {
+    _userProgress[userId] = state;
+  }
+
+  @override
+  Future<void> resetForUser(String userId) async {
+    _userProgress.remove(userId);
+  }
+
+  /// Get current state for a specific user (for test assertions).
+  ProgressState getStateForUser(String userId) {
+    return _userProgress[userId] ?? const ProgressState.empty();
+  }
+
+  /// Legacy getter for backward compatibility with existing tests.
+  /// Returns progress for 'guest' user since tests don't set up auth.
+  ProgressState get currentState =>
+      _userProgress['guest'] ?? const ProgressState.empty();
+
+  /// Legacy setter for backward compatibility with existing tests.
   Future<void> save(ProgressState state) async {
-    _state = state;
+    _userProgress['guest'] = state;
   }
-
-  @override
-  Future<void> reset() async {
-    _state = const ProgressState.empty();
-  }
-
-  ProgressState get currentState => _state;
 }
 
 /// Test level repository with simple, solvable levels.
@@ -97,6 +149,7 @@ Level createThreeCellLevel({required String id}) {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  late TestAuthRepository authRepo;
   late TestProgressRepository progressRepo;
   late TestLevelRepository levelRepo;
   late List<Level> testLevels;
@@ -108,6 +161,7 @@ void main() {
       createSimpleLevel(id: 'level-1'),
       createThreeCellLevel(id: 'level-2'),
     ];
+    authRepo = TestAuthRepository();
     levelRepo = TestLevelRepository(testLevels);
     progressRepo = TestProgressRepository();
   });
@@ -115,6 +169,7 @@ void main() {
   Widget createTestApp() {
     return ProviderScope(
       overrides: [
+        authRepositoryProvider.overrideWithValue(authRepo),
         progressRepositoryProvider.overrideWithValue(progressRepo),
         levelRepositoryProvider.overrideWithValue(levelRepo),
       ],

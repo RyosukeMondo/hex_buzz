@@ -81,7 +81,7 @@
   - _Requirements: REQ-5_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter UI Developer | Task: Create AuthScreen with login/register tabs or toggle. Username field (min 3 chars), password field (min 6 chars, obscured). "Play as Guest" button. Form validation with error messages. On success, navigate to LevelSelectScreen | Restrictions: Use HoneyTheme colors. Follow existing screen patterns. No hardcoded strings (prepare for i18n) | Success: Can register new user, login existing user, play as guest. Validation works. Honeybee themed | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 9. Update ProgressProvider for auth integration
+- [x] 9. Update ProgressProvider for auth integration
   - File: `lib/presentation/providers/progress_provider.dart`
   - Load user-specific progress on login
   - Clear progress on logout
