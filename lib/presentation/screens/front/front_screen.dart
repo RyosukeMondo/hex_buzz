@@ -26,17 +26,38 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
   late AnimationController _pulseController;
   late Animation<double> _opacityAnimation;
 
+  /// Whether reduced motion is enabled.
+  bool _reduceMotion = false;
+
   @override
   void initState() {
     super.initState();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
+    );
 
     _opacityAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final shouldReduceMotion = MediaQuery.of(context).disableAnimations;
+
+    if (shouldReduceMotion != _reduceMotion) {
+      _reduceMotion = shouldReduceMotion;
+      if (_reduceMotion) {
+        _pulseController.stop();
+        _pulseController.value = 1.0;
+      } else {
+        _pulseController.repeat(reverse: true);
+      }
+    } else if (!_reduceMotion && !_pulseController.isAnimating) {
+      _pulseController.repeat(reverse: true);
+    }
   }
 
   @override
@@ -56,27 +77,31 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _handleTap,
-      behavior: HitTestBehavior.opaque,
-      child: Scaffold(
-        body: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: _buildBackgroundDecoration(),
-          child: SafeArea(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Spacer(flex: 2),
-                  _buildLogo(),
-                  const SizedBox(height: HoneyTheme.spacingXl),
-                  _buildTitle(),
-                  const Spacer(flex: 2),
-                  _buildTapPrompt(),
-                  const Spacer(),
-                ],
+    return Semantics(
+      label: 'HexBuzz welcome screen. Tap anywhere to start.',
+      button: true,
+      child: GestureDetector(
+        onTap: _handleTap,
+        behavior: HitTestBehavior.opaque,
+        child: Scaffold(
+          body: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: _buildBackgroundDecoration(),
+            child: SafeArea(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Spacer(flex: 2),
+                    _buildLogo(),
+                    const SizedBox(height: HoneyTheme.spacingXl),
+                    _buildTitle(),
+                    const Spacer(flex: 2),
+                    _buildTapPrompt(),
+                    const Spacer(),
+                  ],
+                ),
               ),
             ),
           ),
@@ -170,29 +195,36 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
   }
 
   Widget _buildTapPrompt() {
+    final content = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.touch_app_outlined,
+          color: HoneyTheme.deepHoney,
+          size: HoneyTheme.iconSizeMd,
+        ),
+        const SizedBox(width: HoneyTheme.spacingSm),
+        Text(
+          'Tap to Start',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: HoneyTheme.deepHoney,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+
+    // If reduced motion, show static content without animation.
+    if (_reduceMotion) {
+      return content;
+    }
+
     return AnimatedBuilder(
       animation: _opacityAnimation,
       builder: (context, child) {
         return Opacity(opacity: _opacityAnimation.value, child: child);
       },
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.touch_app_outlined,
-            color: HoneyTheme.deepHoney,
-            size: HoneyTheme.iconSizeMd,
-          ),
-          const SizedBox(width: HoneyTheme.spacingSm),
-          Text(
-            'Tap to Start',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: HoneyTheme.deepHoney,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
+      child: content,
     );
   }
 }

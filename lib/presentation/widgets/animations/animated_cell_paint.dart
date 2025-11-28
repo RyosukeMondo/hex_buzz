@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 /// Used to provide satisfying visual feedback when hex grid cells are visited
 /// during gameplay. The animation runs once when the cell becomes visited.
 ///
+/// Respects system reduced motion settings via [MediaQuery.disableAnimations].
+///
 /// Animation properties:
 /// - Scale: 0.8 -> 1.0
 /// - Opacity: 0.0 -> 1.0
@@ -38,6 +40,9 @@ class _AnimatedCellPaintState extends State<AnimatedCellPaint>
   /// Track if we've already animated to avoid re-triggering on rebuilds.
   bool _hasAnimated = false;
 
+  /// Whether reduced motion is enabled.
+  bool _reduceMotion = false;
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +69,18 @@ class _AnimatedCellPaintState extends State<AnimatedCellPaint>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
+
+    // If reduce motion is enabled and we haven't animated yet, jump to final state.
+    if (_reduceMotion && !_hasAnimated && widget.isVisited) {
+      _controller.value = 1.0;
+      _hasAnimated = true;
+    }
+  }
+
+  @override
   void didUpdateWidget(AnimatedCellPaint oldWidget) {
     super.didUpdateWidget(oldWidget);
 
@@ -71,7 +88,12 @@ class _AnimatedCellPaintState extends State<AnimatedCellPaint>
     // and we haven't animated yet.
     if (widget.isVisited && !oldWidget.isVisited && !_hasAnimated) {
       _hasAnimated = true;
-      _controller.forward(from: 0.0);
+      if (_reduceMotion) {
+        // Skip animation, jump to final state.
+        _controller.value = 1.0;
+      } else {
+        _controller.forward(from: 0.0);
+      }
     }
   }
 
@@ -86,6 +108,11 @@ class _AnimatedCellPaintState extends State<AnimatedCellPaint>
     // If not visited, show nothing (or could show the child with no effect).
     if (!widget.isVisited) {
       return const SizedBox.shrink();
+    }
+
+    // If reduced motion, show static final state.
+    if (_reduceMotion) {
+      return widget.child;
     }
 
     return AnimatedBuilder(

@@ -56,6 +56,9 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
 
+  /// Whether reduced motion is enabled.
+  bool _reduceMotion = false;
+
   @override
   void initState() {
     super.initState();
@@ -77,6 +80,12 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
+  }
+
+  @override
   void dispose() {
     _shakeController.dispose();
     super.dispose();
@@ -85,24 +94,43 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
   void _handleTap() {
     if (widget.isUnlocked) {
       widget.onTap?.call();
-    } else {
+    } else if (!_reduceMotion) {
+      // Only animate shake if reduced motion is not enabled.
       _shakeController.forward(from: 0);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _handleTap,
-      child: AnimatedBuilder(
-        animation: _shakeAnimation,
-        builder: (context, child) {
-          return Transform.translate(
-            offset: Offset(_shakeAnimation.value, 0),
-            child: child,
-          );
-        },
-        child: _buildCell(),
+    final String semanticsLabel;
+    if (widget.isUnlocked) {
+      if (widget.isCompleted) {
+        semanticsLabel =
+            'Level ${widget.levelNumber}, completed with ${widget.stars} '
+            '${widget.stars == 1 ? 'star' : 'stars'}';
+      } else {
+        semanticsLabel = 'Level ${widget.levelNumber}, not completed';
+      }
+    } else {
+      semanticsLabel = 'Level ${widget.levelNumber}, locked';
+    }
+
+    return Semantics(
+      label: semanticsLabel,
+      button: widget.isUnlocked,
+      enabled: widget.isUnlocked,
+      child: GestureDetector(
+        onTap: _handleTap,
+        child: AnimatedBuilder(
+          animation: _shakeAnimation,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(_shakeAnimation.value, 0),
+              child: child,
+            );
+          },
+          child: _buildCell(),
+        ),
       ),
     );
   }
