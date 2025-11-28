@@ -2,7 +2,7 @@
 
 ## Phase 1: Domain Models & Services (Pure Dart)
 
-- [ ] 1.1 Create ProgressState and LevelProgress models
+- [x] 1.1 Create ProgressState and LevelProgress models
   - File: `lib/domain/models/progress_state.dart`
   - Define immutable `LevelProgress` class with `completed`, `stars`, `bestTime`
   - Define `ProgressState` class with level map and computed properties
