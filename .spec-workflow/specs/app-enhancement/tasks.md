@@ -42,7 +42,7 @@
   - _Requirements: REQ-5_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer | Task: Create User and AuthResult models per design spec. User needs: id (String), username (String), createdAt (DateTime), isGuest (bool). AuthResult needs: success (bool), user (User?), errorMessage (String?). Include fromJson/toJson, copyWith, and equality | Restrictions: Follow existing model patterns. Use immutable classes. No external dependencies | Success: Models compile, serialize/deserialize correctly, unit tests pass | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 5. Create AuthRepository interface
+- [x] 5. Create AuthRepository interface
   - File: `lib/domain/services/auth_repository.dart`
   - Define abstract interface for login, register, logout, getCurrentUser, authStateChanges
   - Purpose: Establish contract for authentication implementations
