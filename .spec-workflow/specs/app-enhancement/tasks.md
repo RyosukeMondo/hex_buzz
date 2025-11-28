@@ -157,7 +157,7 @@
   - _Requirements: REQ-8_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Animation Developer | Task: Create AnimatedCellPaint StatefulWidget. Props: isVisited (bool), child (Widget). When isVisited changes to true, animate scale from 0.8→1.0 and opacity 0.0→1.0 over 200ms with Curves.easeOutCubic. Properly dispose AnimationController | Restrictions: Efficient - many cells may animate. Don't block main thread | Success: Cells animate smoothly when visited. No jank. Proper cleanup | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 16. Integrate cell animation into HexGridWidget
+- [x] 16. Integrate cell animation into HexGridWidget
   - File: `lib/presentation/widgets/hex_grid/hex_grid_widget.dart`
   - Wrap visited cell rendering with AnimatedCellPaint
   - Trigger animation when cell added to path
