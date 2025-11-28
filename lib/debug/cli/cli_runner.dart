@@ -5,6 +5,7 @@ import 'package:args/command_runner.dart';
 
 import 'commands/evaluate_command.dart';
 import 'commands/generate_command.dart';
+import 'commands/progress_command.dart';
 import 'commands/validate_command.dart';
 
 /// Base class for CLI commands that output JSON responses.
@@ -65,6 +66,7 @@ class CliRunner extends CommandRunner<int> {
     addCommand(ValidateCommand());
     addCommand(GenerateCommand());
     addCommand(EvaluateCommand());
+    addCommand(ProgressCommand());
   }
 
   /// Runs the CLI with the given arguments.
@@ -118,6 +120,9 @@ Examples:
   honeycomb-cli generate --size 3
   honeycomb-cli generate --size 4 --output level.json
   honeycomb-cli evaluate --file level.json
+  honeycomb-cli progress get
+  honeycomb-cli progress set --level 1 --stars 3
+  honeycomb-cli progress reset
 
 Output is JSON formatted for AI agent parsing.''';
 }
