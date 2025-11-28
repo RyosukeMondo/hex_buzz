@@ -6,6 +6,8 @@ import 'debug/api/server.dart';
 import 'domain/data/test_level.dart';
 import 'domain/models/game_mode.dart';
 import 'domain/services/game_engine.dart';
+import 'domain/services/level_repository.dart';
+import 'presentation/providers/game_provider.dart';
 import 'presentation/screens/game/game_screen.dart';
 
 /// Whether to enable the debug API server.
@@ -16,32 +18,55 @@ const bool _enableApiFromEnv = bool.fromEnvironment(
   defaultValue: false,
 );
 
-/// Global reference to the API server (if running).
-///
-/// Kept as a reference for potential graceful shutdown on app termination.
-// ignore: unused_element
-DebugApiServer? _apiServer;
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Start debug API server if enabled and in debug mode
-  if (kDebugMode && _enableApiFromEnv) {
-    await _startDebugApiServer();
+  // Pre-load level repository for instant level switching
+  final levelRepository = LevelRepository();
+  try {
+    await levelRepository.load();
+    if (kDebugMode) {
+      debugPrint('Loaded pre-generated levels:');
+      for (final size in levelRepository.availableSizes) {
+        debugPrint(
+          '  Size $size: ${levelRepository.getLevelCount(size)} levels',
+        );
+      }
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('Failed to load pre-generated levels: $e');
+      debugPrint('Will use dynamic generation as fallback.');
+    }
   }
 
-  runApp(const ProviderScope(child: HoneycombApp()));
+  // Start debug API server if enabled and in debug mode
+  DebugApiServer? apiServer;
+  if (kDebugMode && _enableApiFromEnv) {
+    apiServer = await _startDebugApiServer();
+  }
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        levelRepositoryProvider.overrideWithValue(levelRepository),
+        if (apiServer != null)
+          debugApiServerProvider.overrideWithValue(apiServer),
+      ],
+      child: const HoneycombApp(),
+    ),
+  );
 }
 
 /// Starts the debug API server on port 8080.
 ///
 /// Creates a dedicated [GameEngine] instance for API interactions.
 /// Only available in debug builds.
-Future<void> _startDebugApiServer() async {
+Future<DebugApiServer> _startDebugApiServer() async {
   final level = getTestLevel();
   final engine = GameEngine(level: level, mode: GameMode.practice);
 
-  _apiServer = await startServer(8080, engine);
+  final server = await startServer(8080, engine);
 
   if (kDebugMode) {
     debugPrint('Debug API server started at http://localhost:8080');
@@ -52,7 +77,12 @@ Future<void> _startDebugApiServer() async {
     debugPrint('  POST /api/game/reset - Reset the game');
     debugPrint('  POST /api/level/validate - Validate a level');
   }
+
+  return server;
 }
+
+/// Provider for the debug API server (available only in debug mode with ENABLE_API).
+final debugApiServerProvider = Provider<DebugApiServer?>((ref) => null);
 
 class HoneycombApp extends StatelessWidget {
   const HoneycombApp({super.key});
