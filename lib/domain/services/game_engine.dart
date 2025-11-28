@@ -33,19 +33,26 @@ class MoveResult {
 /// Uses [PathValidator] for all move validation logic.
 class GameEngine {
   final PathValidator _validator;
+  final DateTime Function() _clock;
   GameState _state;
 
   GameEngine({
     required Level level,
     required GameMode mode,
     PathValidator? validator,
+    DateTime Function()? clock,
   }) : _validator = validator ?? const PathValidator(),
+       _clock = clock ?? DateTime.now,
        _state = GameState.initial(level: level, mode: mode);
 
   /// Creates a GameEngine with an existing game state.
-  GameEngine.fromState({required GameState state, PathValidator? validator})
-    : _validator = validator ?? const PathValidator(),
-      _state = state;
+  GameEngine.fromState({
+    required GameState state,
+    PathValidator? validator,
+    DateTime Function()? clock,
+  }) : _validator = validator ?? const PathValidator(),
+       _clock = clock ?? DateTime.now,
+       _state = state;
 
   /// The current game state.
   GameState get state => _state;
@@ -88,7 +95,7 @@ class GameEngine {
 
     // Start timer on first move
     if (!_state.isStarted) {
-      newStartTime = DateTime.now();
+      newStartTime = _clock();
     }
 
     // Update state
@@ -101,7 +108,7 @@ class GameEngine {
     // Check for win condition
     final winCheck = _validator.checkWinCondition(_state);
     if (winCheck.isWin) {
-      newEndTime = DateTime.now();
+      newEndTime = _clock();
       _state = _state.copyWith(endTime: newEndTime);
       return MoveResult.success(_state, isWin: true);
     }
