@@ -12,6 +12,7 @@ import 'domain/services/level_repository.dart';
 import 'presentation/providers/game_provider.dart';
 import 'presentation/providers/progress_provider.dart';
 import 'presentation/screens/game/game_screen.dart';
+import 'presentation/theme/honey_theme.dart';
 
 /// Whether to enable the debug API server.
 ///
@@ -102,10 +103,7 @@ class HoneycombApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Honeycomb One Pass',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
-        useMaterial3: true,
-      ),
+      theme: HoneyTheme.lightTheme,
       home: const GameScreen(),
     );
   }
