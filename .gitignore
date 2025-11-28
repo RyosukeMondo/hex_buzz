@@ -121,3 +121,4 @@ coverage/
 .coverage
 *.lcov
 test-results/
+tool/deploy/venv/
