@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:honeycomb_one_pass/domain/models/hex_cell.dart';
+import 'package:hex_buzz/domain/models/hex_cell.dart';
 
 void main() {
   group('HexCell', () {

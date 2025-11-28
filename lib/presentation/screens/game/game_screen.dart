@@ -88,7 +88,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (widget.levelIndex != null) {
       return Text('Level ${widget.levelIndex! + 1}');
     }
-    return const Text('Honeycomb One Pass');
+    return const Text('HexBuzz');
   }
 
   Widget? _buildBackButton(BuildContext context) {

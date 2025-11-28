@@ -1,5 +1,5 @@
-name: honeycomb_one_pass
-description: "Honeycomb One Pass - A hexagonal puzzle game where you draw a single path through all cells."
+name: hex_buzz
+description: "HexBuzz - A hexagonal puzzle game where you draw a single path through all cells."
 publish_to: 'none'
 
 version: 1.0.0+1

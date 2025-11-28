@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:honeycomb_one_pass/debug/cli/cli_runner.dart';
+import 'package:hex_buzz/debug/cli/cli_runner.dart';
 
-/// Entry point for the Honeycomb One Pass CLI.
+/// Entry point for the HexBuzz CLI.
 ///
 /// Provides debug and validation tools for AI agent interaction.
 /// All output is JSON formatted for easy parsing.

@@ -2,7 +2,7 @@
 
 ## Phase 1: Core Infrastructure
 
-- [ ] 1. Update app branding to HexBuzz
+- [-] 1. Update app branding to HexBuzz
   - Files: `lib/main.dart`, `pubspec.yaml`, `android/app/src/main/AndroidManifest.xml`, `ios/Runner/Info.plist`
   - Rename app from "Honeycomb One Pass" to "HexBuzz"
   - Update MaterialApp title and any hardcoded strings

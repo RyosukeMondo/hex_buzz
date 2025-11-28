@@ -3,14 +3,14 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:honeycomb_one_pass/domain/models/hex_cell.dart';
-import 'package:honeycomb_one_pass/domain/models/level.dart';
-import 'package:honeycomb_one_pass/domain/models/progress_state.dart';
-import 'package:honeycomb_one_pass/domain/services/level_repository.dart';
-import 'package:honeycomb_one_pass/domain/services/progress_repository.dart';
-import 'package:honeycomb_one_pass/main.dart';
-import 'package:honeycomb_one_pass/presentation/providers/game_provider.dart';
-import 'package:honeycomb_one_pass/presentation/providers/progress_provider.dart';
+import 'package:hex_buzz/domain/models/hex_cell.dart';
+import 'package:hex_buzz/domain/models/level.dart';
+import 'package:hex_buzz/domain/models/progress_state.dart';
+import 'package:hex_buzz/domain/services/level_repository.dart';
+import 'package:hex_buzz/domain/services/progress_repository.dart';
+import 'package:hex_buzz/main.dart';
+import 'package:hex_buzz/presentation/providers/game_provider.dart';
+import 'package:hex_buzz/presentation/providers/progress_provider.dart';
 
 /// Creates a simple test level.
 Level _createTestLevel({int size = 2, String? id}) {
@@ -81,7 +81,7 @@ void main() {
             _MockProgressRepository(),
           ),
         ],
-        child: const HoneycombApp(),
+        child: const HexBuzzApp(),
       ),
     );
 
@@ -89,7 +89,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify app title is displayed
-    expect(find.text('Honeycomb One Pass'), findsOneWidget);
+    expect(find.text('HexBuzz'), findsOneWidget);
 
     // Verify level select screen is shown (grid of level cells)
     // The level select screen doesn't have a reset button - that's on GameScreen

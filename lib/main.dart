@@ -65,7 +65,7 @@ void main() async {
         if (apiServer != null)
           debugApiServerProvider.overrideWithValue(apiServer),
       ],
-      child: const HoneycombApp(),
+      child: const HexBuzzApp(),
     ),
   );
 }
@@ -96,13 +96,13 @@ Future<DebugApiServer> _startDebugApiServer() async {
 /// Provider for the debug API server (available only in debug mode with ENABLE_API).
 final debugApiServerProvider = Provider<DebugApiServer?>((ref) => null);
 
-class HoneycombApp extends StatelessWidget {
-  const HoneycombApp({super.key});
+class HexBuzzApp extends StatelessWidget {
+  const HexBuzzApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Honeycomb One Pass',
+      title: 'HexBuzz',
       theme: HoneyTheme.lightTheme,
       home: const LevelSelectScreen(),
     );

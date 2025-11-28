@@ -25,7 +25,7 @@ void main() {
     ) async {
       final result = await Process.run('dart', [
         'run',
-        'honeycomb_one_pass:cli',
+        'hex_buzz:cli',
         ...args,
       ], workingDirectory: Directory.current.path);
       final output =

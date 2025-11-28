@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:honeycomb_one_pass/domain/models/hex_edge.dart';
+import 'package:hex_buzz/domain/models/hex_edge.dart';
 
 void main() {
   group('HexEdge', () {

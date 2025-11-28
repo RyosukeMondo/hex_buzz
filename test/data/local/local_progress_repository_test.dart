@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:honeycomb_one_pass/data/local/local_progress_repository.dart';
-import 'package:honeycomb_one_pass/domain/models/progress_state.dart';
+import 'package:hex_buzz/data/local/local_progress_repository.dart';
+import 'package:hex_buzz/domain/models/progress_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

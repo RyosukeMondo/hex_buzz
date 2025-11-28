@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:honeycomb_one_pass/domain/models/progress_state.dart';
+import 'package:hex_buzz/domain/models/progress_state.dart';
 
 void main() {
   group('ProgressState', () {

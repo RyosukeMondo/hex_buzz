@@ -1,6 +1,6 @@
 {
-    "name": "honeycomb_one_pass",
-    "short_name": "honeycomb_one_pass",
+    "name": "HexBuzz",
+    "short_name": "HexBuzz",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

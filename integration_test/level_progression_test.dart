@@ -11,18 +11,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:honeycomb_one_pass/domain/models/hex_cell.dart';
-import 'package:honeycomb_one_pass/domain/models/level.dart';
-import 'package:honeycomb_one_pass/domain/models/progress_state.dart';
-import 'package:honeycomb_one_pass/domain/services/level_repository.dart';
-import 'package:honeycomb_one_pass/domain/services/progress_repository.dart';
-import 'package:honeycomb_one_pass/presentation/providers/game_provider.dart';
-import 'package:honeycomb_one_pass/presentation/providers/progress_provider.dart';
-import 'package:honeycomb_one_pass/presentation/screens/game/game_screen.dart';
-import 'package:honeycomb_one_pass/presentation/screens/level_select/level_select_screen.dart';
-import 'package:honeycomb_one_pass/presentation/theme/honey_theme.dart';
-import 'package:honeycomb_one_pass/presentation/widgets/completion_overlay/completion_overlay.dart';
-import 'package:honeycomb_one_pass/presentation/widgets/level_cell/level_cell_widget.dart';
+import 'package:hex_buzz/domain/models/hex_cell.dart';
+import 'package:hex_buzz/domain/models/level.dart';
+import 'package:hex_buzz/domain/models/progress_state.dart';
+import 'package:hex_buzz/domain/services/level_repository.dart';
+import 'package:hex_buzz/domain/services/progress_repository.dart';
+import 'package:hex_buzz/presentation/providers/game_provider.dart';
+import 'package:hex_buzz/presentation/providers/progress_provider.dart';
+import 'package:hex_buzz/presentation/screens/game/game_screen.dart';
+import 'package:hex_buzz/presentation/screens/level_select/level_select_screen.dart';
+import 'package:hex_buzz/presentation/theme/honey_theme.dart';
+import 'package:hex_buzz/presentation/widgets/completion_overlay/completion_overlay.dart';
+import 'package:hex_buzz/presentation/widgets/level_cell/level_cell_widget.dart';
 
 /// In-memory progress repository for E2E testing.
 class TestProgressRepository implements ProgressRepository {
@@ -119,7 +119,7 @@ void main() {
         levelRepositoryProvider.overrideWithValue(levelRepo),
       ],
       child: MaterialApp(
-        title: 'Honeycomb One Pass',
+        title: 'HexBuzz',
         theme: HoneyTheme.lightTheme,
         home: const LevelSelectScreen(),
       ),
@@ -138,7 +138,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(LevelSelectScreen), findsOneWidget);
-      expect(find.text('Honeycomb One Pass'), findsOneWidget);
+      expect(find.text('HexBuzz'), findsOneWidget);
       print('  - Level select screen displayed');
 
       // 2. Verify initial state: Level 1 unlocked, Level 2 locked

@@ -1,6 +1,6 @@
-# honeycomb_one_pass
+# HexBuzz
 
-A new Flutter project.
+A hexagonal puzzle game where you draw a single path through all cells.
 
 ## Getting Started
 

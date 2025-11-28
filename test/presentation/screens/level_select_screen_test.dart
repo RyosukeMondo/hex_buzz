@@ -3,17 +3,17 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:honeycomb_one_pass/domain/models/hex_cell.dart';
-import 'package:honeycomb_one_pass/domain/models/level.dart';
-import 'package:honeycomb_one_pass/domain/models/progress_state.dart';
-import 'package:honeycomb_one_pass/domain/services/level_repository.dart';
-import 'package:honeycomb_one_pass/domain/services/progress_repository.dart';
-import 'package:honeycomb_one_pass/presentation/providers/game_provider.dart';
-import 'package:honeycomb_one_pass/presentation/providers/progress_provider.dart';
-import 'package:honeycomb_one_pass/presentation/screens/game/game_screen.dart';
-import 'package:honeycomb_one_pass/presentation/screens/level_select/level_select_screen.dart';
-import 'package:honeycomb_one_pass/presentation/theme/honey_theme.dart';
-import 'package:honeycomb_one_pass/presentation/widgets/level_cell/level_cell_widget.dart';
+import 'package:hex_buzz/domain/models/hex_cell.dart';
+import 'package:hex_buzz/domain/models/level.dart';
+import 'package:hex_buzz/domain/models/progress_state.dart';
+import 'package:hex_buzz/domain/services/level_repository.dart';
+import 'package:hex_buzz/domain/services/progress_repository.dart';
+import 'package:hex_buzz/presentation/providers/game_provider.dart';
+import 'package:hex_buzz/presentation/providers/progress_provider.dart';
+import 'package:hex_buzz/presentation/screens/game/game_screen.dart';
+import 'package:hex_buzz/presentation/screens/level_select/level_select_screen.dart';
+import 'package:hex_buzz/presentation/theme/honey_theme.dart';
+import 'package:hex_buzz/presentation/widgets/level_cell/level_cell_widget.dart';
 
 /// Mock progress repository for testing.
 class MockProgressRepository implements ProgressRepository {
@@ -120,7 +120,7 @@ void main() {
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        expect(find.text('Honeycomb One Pass'), findsOneWidget);
+        expect(find.text('HexBuzz'), findsOneWidget);
       });
 
       testWidgets('displays scaffold with body', (tester) async {

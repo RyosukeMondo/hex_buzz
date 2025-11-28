@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:honeycomb_one_pass/presentation/widgets/level_cell/level_cell_widget.dart';
-import 'package:honeycomb_one_pass/presentation/theme/honey_theme.dart';
+import 'package:hex_buzz/presentation/widgets/level_cell/level_cell_widget.dart';
+import 'package:hex_buzz/presentation/theme/honey_theme.dart';
 
 void main() {
   group('LevelCellWidget', () {

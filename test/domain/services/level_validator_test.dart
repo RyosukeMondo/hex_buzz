@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:honeycomb_one_pass/domain/models/hex_cell.dart';
-import 'package:honeycomb_one_pass/domain/models/hex_edge.dart';
-import 'package:honeycomb_one_pass/domain/models/level.dart';
-import 'package:honeycomb_one_pass/domain/services/level_validator.dart';
+import 'package:hex_buzz/domain/models/hex_cell.dart';
+import 'package:hex_buzz/domain/models/hex_edge.dart';
+import 'package:hex_buzz/domain/models/level.dart';
+import 'package:hex_buzz/domain/services/level_validator.dart';
 
 void main() {
   late LevelValidator validator;

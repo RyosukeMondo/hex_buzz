@@ -101,7 +101,7 @@ class LevelSelectScreen extends ConsumerWidget {
       child: Column(
         children: [
           Text(
-            'Honeycomb One Pass',
+            'HexBuzz',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               color: HoneyTheme.textPrimary,
               fontWeight: FontWeight.bold,

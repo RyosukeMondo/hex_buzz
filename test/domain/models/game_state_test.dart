@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:honeycomb_one_pass/domain/models/game_mode.dart';
-import 'package:honeycomb_one_pass/domain/models/game_state.dart';
-import 'package:honeycomb_one_pass/domain/models/hex_cell.dart';
-import 'package:honeycomb_one_pass/domain/models/hex_edge.dart';
-import 'package:honeycomb_one_pass/domain/models/level.dart';
+import 'package:hex_buzz/domain/models/game_mode.dart';
+import 'package:hex_buzz/domain/models/game_state.dart';
+import 'package:hex_buzz/domain/models/hex_cell.dart';
+import 'package:hex_buzz/domain/models/hex_edge.dart';
+import 'package:hex_buzz/domain/models/level.dart';
 
 void main() {
   late Level testLevel;

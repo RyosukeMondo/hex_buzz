@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:honeycomb_one_pass/domain/models/game_mode.dart';
+import 'package:hex_buzz/domain/models/game_mode.dart';
 
 void main() {
   group('GameMode', () {

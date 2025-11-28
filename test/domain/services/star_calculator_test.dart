@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:honeycomb_one_pass/domain/services/star_calculator.dart';
+import 'package:hex_buzz/domain/services/star_calculator.dart';
 
 void main() {
   group('StarCalculator', () {

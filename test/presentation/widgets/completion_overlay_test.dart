@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:honeycomb_one_pass/presentation/widgets/completion_overlay/completion_overlay.dart';
-import 'package:honeycomb_one_pass/presentation/theme/honey_theme.dart';
+import 'package:hex_buzz/presentation/widgets/completion_overlay/completion_overlay.dart';
+import 'package:hex_buzz/presentation/theme/honey_theme.dart';
 
 void main() {
   group('CompletionOverlay', () {

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:honeycomb_one_pass/core/logging/logger.dart';
+import 'package:hex_buzz/core/logging/logger.dart';
 
 void main() {
   group('LogLevel', () {

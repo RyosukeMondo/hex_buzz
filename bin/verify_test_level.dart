@@ -1,5 +1,5 @@
-import 'package:honeycomb_one_pass/domain/data/test_level.dart';
-import 'package:honeycomb_one_pass/domain/services/level_validator.dart';
+import 'package:hex_buzz/domain/data/test_level.dart';
+import 'package:hex_buzz/domain/services/level_validator.dart';
 
 /// Script to verify that the test level is solvable.
 void main() {
