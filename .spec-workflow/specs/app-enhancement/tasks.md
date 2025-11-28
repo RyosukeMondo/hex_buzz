@@ -148,7 +148,7 @@
 
 ## Phase 5: Animations
 
-- [ ] 15. Create AnimatedCellPaint widget
+- [x] 15. Create AnimatedCellPaint widget
   - File: `lib/presentation/widgets/animations/animated_cell_paint.dart`
   - Animate cell fill when visited (scale 0.8→1.0, opacity 0.0→1.0)
   - Duration 200ms with easeOutCubic curve
