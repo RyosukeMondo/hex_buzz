@@ -206,7 +206,7 @@
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
   - _Prompt: Implement the task for spec level-selection-ui, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Developer | Task: Modify GameScreen to accept level index, use new CompletionOverlay, add back button | Restrictions: Maintain existing game functionality, update overlay only | Success: Level loads by index, completion shows new overlay, back button works | Instructions: Set task 6.4 to in-progress in tasks.md before starting, use log-implementation tool after completion with artifacts, then mark as complete_
 
-- [ ] 6.5 Update app navigation to use LevelSelectScreen as home
+- [x] 6.5 Update app navigation to use LevelSelectScreen as home
   - File: `lib/main.dart` (modify)
   - Change home from GameScreen to LevelSelectScreen
   - Set up navigation routes
