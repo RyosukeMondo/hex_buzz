@@ -230,7 +230,7 @@
   - _Requirements: REQ-3, REQ-5_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Test Developer | Task: Write widget tests for FrontScreen and AuthScreen. FrontScreen: renders title, tap navigates based on auth state. AuthScreen: form validates min lengths, shows errors, successful submission calls provider. Use pumpWidget with ProviderScope overrides | Restrictions: Mock providers. Test both success and failure paths | Success: Widget tests pass. Key interactions verified. No regressions | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 23. Write integration tests for complete user flows
+- [x] 23. Write integration tests for complete user flows
   - File: `integration_test/app_test.dart`
   - Test: Launch → Front → Auth → Register → Levels → Play → Complete → Progress saved
   - Test: Guest flow with local-only progress
