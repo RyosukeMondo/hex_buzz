@@ -220,7 +220,7 @@
   - _Requirements: REQ-5_
   - _Prompt: Implement the task for spec app-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Flutter Test Developer | Task: Write unit tests for LocalAuthRepository and AuthProvider. Test cases: successful register, duplicate username error, successful login, wrong password error, logout clears state, guest mode, password is hashed (not plaintext in storage). Use mocktail for mocking | Restrictions: Tests must be independent. Mock SharedPreferences | Success: All auth flows tested. Password security verified. 90%+ coverage | After completing: Mark task as [-] in progress before starting, use log-implementation tool with artifacts, then mark [x] complete_
 
-- [ ] 22. Write widget tests for new screens
+- [-] 22. Write widget tests for new screens
   - File: `test/presentation/screens/front_screen_test.dart`, `test/presentation/screens/auth_screen_test.dart`
   - Test FrontScreen tap navigation
   - Test AuthScreen form validation
