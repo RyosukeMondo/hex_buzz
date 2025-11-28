@@ -12,7 +12,7 @@
   - _Requirements: 2.1, 2.2, 2.3, 3.1, 3.2, 3.3_
   - _Prompt: Implement the task for spec level-selection-ui, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer specializing in domain models | Task: Create ProgressState and LevelProgress immutable data classes with JSON serialization, following existing GameState patterns | Restrictions: No Flutter imports, pure Dart only, must be testable without framework | Success: Models compile, JSON round-trip works, `isUnlocked()` logic correct | Instructions: Set task 1.1 to in-progress in tasks.md before starting, use log-implementation tool after completion with artifacts, then mark as complete_
 
-- [ ] 1.2 Create StarCalculator service
+- [x] 1.2 Create StarCalculator service
   - File: `lib/domain/services/star_calculator.dart`
   - Implement time-to-stars conversion: 3★≤10s, 2★≤30s, 1★≤60s, 0★>60s
   - Pure function, no side effects
@@ -21,7 +21,7 @@
   - _Requirements: 3.1, 3.2, 3.3_
   - _Prompt: Implement the task for spec level-selection-ui, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Dart Developer | Task: Create StarCalculator with static method `calculateStars(Duration time)` returning 0-3 | Restrictions: Pure Dart, no dependencies, boundary conditions must be exact (10.000s = 3★, 10.001s = 2★) | Success: All threshold boundaries correct, function is pure | Instructions: Set task 1.2 to in-progress in tasks.md before starting, use log-implementation tool after completion with artifacts, then mark as complete_
 
-- [ ] 1.3 Create ProgressRepository interface
+- [x] 1.3 Create ProgressRepository interface
   - File: `lib/domain/services/progress_repository.dart`
   - Define abstract interface with `load()`, `save()`, `reset()` methods
   - Purpose: Abstract persistence interface for dependency injection

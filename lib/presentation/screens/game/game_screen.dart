@@ -74,45 +74,17 @@ class GameScreen extends ConsumerWidget {
       bottom: 0,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 4,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
+        decoration: _bottomControlsDecoration(context),
         child: Row(
           children: [
-            // Progress indicator
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Progress: $visitedCount / $cellCount',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  LinearProgressIndicator(
-                    value: cellCount > 0 ? visitedCount / cellCount : 0,
-                    backgroundColor: Colors.grey[300],
-                  ),
-                ],
-              ),
-            ),
+            _buildProgressIndicator(context, visitedCount, cellCount),
             const SizedBox(width: 16),
-            // Retry button
             OutlinedButton.icon(
               onPressed: () => notifier.reset(),
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Retry'),
             ),
             const SizedBox(width: 8),
-            // Next button
             FilledButton.icon(
               onPressed: () => notifier.generateNewLevel(),
               icon: const Icon(Icons.skip_next, size: 18),
@@ -120,6 +92,39 @@ class GameScreen extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  BoxDecoration _bottomControlsDecoration(BuildContext context) {
+    return BoxDecoration(
+      color: Theme.of(context).colorScheme.surface,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.1),
+          blurRadius: 4,
+          offset: const Offset(0, -2),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProgressIndicator(BuildContext context, int visited, int total) {
+    return Expanded(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Progress: $visited / $total',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 4),
+          LinearProgressIndicator(
+            value: total > 0 ? visited / total : 0,
+            backgroundColor: Colors.grey[300],
+          ),
+        ],
       ),
     );
   }
@@ -143,8 +148,7 @@ class GameScreen extends ConsumerWidget {
 
   Widget _buildCompletionOverlay(BuildContext context, WidgetRef ref) {
     final gameState = ref.read(gameProvider);
-    final elapsedTime = gameState.elapsedTime;
-    final formattedTime = _formatDuration(elapsedTime);
+    final formattedTime = _formatDuration(gameState.elapsedTime);
     final notifier = ref.read(gameProvider.notifier);
 
     return Container(
@@ -159,39 +163,47 @@ class GameScreen extends ConsumerWidget {
               children: [
                 const Icon(Icons.celebration, size: 64, color: Colors.amber),
                 const SizedBox(height: 16),
-                Text(
-                  'Complete!',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                _buildCompletionTitle(context),
                 const SizedBox(height: 8),
                 Text(
                   'Time: $formattedTime',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 24),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () => notifier.reset(),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Play Again'),
-                    ),
-                    const SizedBox(width: 16),
-                    FilledButton.icon(
-                      onPressed: () => notifier.generateNewLevel(),
-                      icon: const Icon(Icons.skip_next),
-                      label: const Text('Next Level'),
-                    ),
-                  ],
-                ),
+                _buildCompletionButtons(notifier),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCompletionTitle(BuildContext context) {
+    return Text(
+      'Complete!',
+      style: Theme.of(
+        context,
+      ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+    );
+  }
+
+  Widget _buildCompletionButtons(GameNotifier notifier) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        OutlinedButton.icon(
+          onPressed: () => notifier.reset(),
+          icon: const Icon(Icons.refresh),
+          label: const Text('Play Again'),
+        ),
+        const SizedBox(width: 16),
+        FilledButton.icon(
+          onPressed: () => notifier.generateNewLevel(),
+          icon: const Icon(Icons.skip_next),
+          label: const Text('Next Level'),
+        ),
+      ],
     );
   }
 
