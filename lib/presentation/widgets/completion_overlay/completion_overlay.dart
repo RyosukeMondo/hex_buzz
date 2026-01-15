@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../theme/honey_theme.dart';
+import '../assets/game_assets.dart';
 
 /// Overlay displayed when a level is completed.
 ///
@@ -194,20 +195,37 @@ class _CompletionOverlayState extends State<CompletionOverlay>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black54,
-      child: Center(
-        child: AnimatedBuilder(
-          animation: Listenable.merge([_cardScale, _cardOpacity]),
-          builder: (context, child) {
-            return Opacity(
-              opacity: _cardOpacity.value,
-              child: Transform.scale(scale: _cardScale.value, child: child),
-            );
-          },
-          child: _buildCard(context),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Semi-transparent background with victory image
+        Container(
+          color: Colors.black54,
+          child: Opacity(
+            opacity: 0.3,
+            child: Image.asset(
+              GameAssetPaths.victoryBackground,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+          ),
         ),
-      ),
+        // Centered card
+        Center(
+          child: AnimatedBuilder(
+            animation: Listenable.merge([_cardScale, _cardOpacity]),
+            builder: (context, child) {
+              return Opacity(
+                opacity: _cardOpacity.value,
+                child: Transform.scale(scale: _cardScale.value, child: child),
+              );
+            },
+            child: _buildCard(context),
+          ),
+        ),
+      ],
     );
   }
 
@@ -234,7 +252,16 @@ class _CompletionOverlayState extends State<CompletionOverlay>
   Widget _buildTitle(BuildContext context) {
     return Column(
       children: [
-        Icon(Icons.emoji_events, size: 48, color: HoneyTheme.honeyGold),
+        AssetImageWithFallback(
+          assetPath: GameAssetPaths.trophyIcon,
+          width: 64,
+          height: 64,
+          fallback: Icon(
+            Icons.emoji_events,
+            size: 48,
+            color: HoneyTheme.honeyGold,
+          ),
+        ),
         const SizedBox(height: 8),
         Text(
           'Level Complete!',
@@ -265,22 +292,30 @@ class _CompletionOverlayState extends State<CompletionOverlay>
                   final scale = isFilled ? _starScales[index].value : 1.0;
                   return Transform.scale(
                     scale: scale == 0.0 ? 1.0 : scale,
-                    child: Icon(
-                      isFilled ? Icons.star : Icons.star_border,
-                      color: isFilled
-                          ? HoneyTheme.starFilled
-                          : HoneyTheme.starEmpty,
-                      size: 48,
-                      semanticLabel: isFilled
-                          ? 'Star earned'
-                          : 'Star not earned',
-                    ),
+                    child: _buildStar(isFilled),
                   );
                 },
               ),
             );
           }),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStar(bool isFilled) {
+    const size = 48.0;
+    return AssetImageWithFallback(
+      assetPath: isFilled
+          ? GameAssetPaths.starFilled
+          : GameAssetPaths.starEmpty,
+      width: size,
+      height: size,
+      fallback: Icon(
+        isFilled ? Icons.star : Icons.star_border,
+        color: isFilled ? HoneyTheme.starFilled : HoneyTheme.starEmpty,
+        size: size,
+        semanticLabel: isFilled ? 'Star earned' : 'Star not earned',
       ),
     );
   }

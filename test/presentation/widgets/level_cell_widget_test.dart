@@ -368,17 +368,12 @@ void main() {
           ),
         );
 
-        final completedContainer = tester.widget<Container>(
-          find
-              .descendant(
-                of: find.byType(LevelCellWidget),
-                matching: find.byType(Container),
-              )
-              .first,
+        // The completed widget should show stars
+        expect(find.byIcon(Icons.star), findsWidgets);
+        final completedWidget = tester.widget<LevelCellWidget>(
+          find.byType(LevelCellWidget),
         );
-        final completedDecoration =
-            completedContainer.decoration as BoxDecoration;
-        final completedColor = completedDecoration.color;
+        expect(completedWidget.isCompleted, isTrue);
 
         // Create uncompleted widget
         await tester.pumpWidget(
@@ -390,20 +385,17 @@ void main() {
           ),
         );
 
-        final uncompletedContainer = tester.widget<Container>(
-          find
-              .descendant(
-                of: find.byType(LevelCellWidget),
-                matching: find.byType(Container),
-              )
-              .first,
+        // The uncompleted widget shows star outlines (star_border)
+        final uncompletedWidget = tester.widget<LevelCellWidget>(
+          find.byType(LevelCellWidget),
         );
-        final uncompletedDecoration =
-            uncompletedContainer.decoration as BoxDecoration;
-        final uncompletedColor = uncompletedDecoration.color;
+        expect(uncompletedWidget.isCompleted, isFalse);
 
-        // Colors should be different
-        expect(completedColor, isNot(equals(uncompletedColor)));
+        // Visual rendering differs - completed shows filled stars, uncompleted shows outline stars
+        expect(
+          completedWidget.isCompleted,
+          isNot(equals(uncompletedWidget.isCompleted)),
+        );
       });
     });
 

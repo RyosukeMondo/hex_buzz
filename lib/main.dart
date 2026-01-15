@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'data/local/local_auth_repository.dart';
 import 'data/local/local_progress_repository.dart';
 import 'debug/api/server.dart';
 import 'domain/data/test_level.dart';
 import 'domain/models/game_mode.dart';
 import 'domain/services/game_engine.dart';
 import 'domain/services/level_repository.dart';
+import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/game_provider.dart';
 import 'presentation/providers/progress_provider.dart';
 import 'presentation/screens/auth/auth_screen.dart';
@@ -57,11 +59,12 @@ void main() async {
     }
   }
 
-  // Initialize progress repository for player progress persistence
+  // Initialize repositories for persistence
   final prefs = await SharedPreferences.getInstance();
   final progressRepository = LocalProgressRepository(prefs);
+  final authRepository = LocalAuthRepository(prefs);
   if (kDebugMode) {
-    debugPrint('Progress repository initialized');
+    debugPrint('Progress and Auth repositories initialized');
   }
 
   // Start debug API server if enabled and in debug mode
@@ -75,6 +78,7 @@ void main() async {
       overrides: [
         levelRepositoryProvider.overrideWithValue(levelRepository),
         progressRepositoryProvider.overrideWithValue(progressRepository),
+        authRepositoryProvider.overrideWithValue(authRepository),
         if (apiServer != null)
           debugApiServerProvider.overrideWithValue(apiServer),
       ],

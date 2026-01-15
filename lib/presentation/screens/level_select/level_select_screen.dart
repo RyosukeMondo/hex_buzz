@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/progress_provider.dart';
 import '../../theme/honey_theme.dart';
+import '../../widgets/assets/game_assets.dart';
 import '../../widgets/level_cell/level_cell_widget.dart';
 
 /// Main level selection screen displaying a scrollable grid of levels.
@@ -97,6 +98,11 @@ class LevelSelectScreen extends ConsumerWidget {
             HoneyTheme.honeyGold,
             HoneyTheme.honeyGoldLight.withValues(alpha: 0.8),
           ],
+        ),
+        image: const DecorationImage(
+          image: AssetImage(GameAssetPaths.headerBanner),
+          fit: BoxFit.cover,
+          opacity: 0.3,
         ),
         boxShadow: [
           BoxShadow(

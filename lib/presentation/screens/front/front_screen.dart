@@ -84,53 +84,84 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
         onTap: _handleTap,
         behavior: HitTestBehavior.opaque,
         child: Scaffold(
-          body: Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: _buildBackgroundDecoration(),
-            child: SafeArea(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Spacer(flex: 2),
-                    _buildLogo(),
-                    const SizedBox(height: HoneyTheme.spacingXl),
-                    _buildTitle(),
-                    const Spacer(flex: 2),
-                    _buildTapPrompt(),
-                    const Spacer(),
-                  ],
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              _buildBackgroundWithImage(),
+              SafeArea(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Spacer(flex: 2),
+                      _buildLogo(),
+                      const SizedBox(height: HoneyTheme.spacingMd),
+                      _buildBeeMascot(),
+                      const SizedBox(height: HoneyTheme.spacingXl),
+                      _buildTitle(),
+                      const Spacer(flex: 2),
+                      _buildTapPrompt(),
+                      const Spacer(),
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  BoxDecoration _buildBackgroundDecoration() {
-    return BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          HoneyTheme.warmCream,
-          HoneyTheme.honeyGoldLight.withValues(alpha: 0.3),
-          HoneyTheme.warmCream,
-        ],
-        stops: const [0.0, 0.5, 1.0],
-      ),
+  Widget _buildBackgroundWithImage() {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Gradient base
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                HoneyTheme.warmCream,
+                HoneyTheme.honeyGoldLight.withValues(alpha: 0.3),
+                HoneyTheme.warmCream,
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ),
+          ),
+        ),
+        // Background image overlay
+        Opacity(
+          opacity: 0.4,
+          child: Image.asset(
+            GameAssetPaths.splashBackground,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildLogo() {
     return AssetImageWithFallback(
       assetPath: GameAssetPaths.appIcon,
-      width: 120,
-      height: 120,
+      width: 140,
+      height: 140,
       fallback: _buildFallbackLogo(),
+    );
+  }
+
+  Widget _buildBeeMascot() {
+    return AssetImageWithFallback(
+      assetPath: GameAssetPaths.beeMascot,
+      width: 80,
+      height: 80,
+      fallback: const SizedBox.shrink(),
     );
   }
 

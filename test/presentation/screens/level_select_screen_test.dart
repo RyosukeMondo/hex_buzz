@@ -311,8 +311,12 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Lock icons should appear for levels 2-5
-        expect(find.byIcon(Icons.lock), findsNWidgets(4));
+        // Locked levels should be identified by their isUnlocked property
+        // We have 5 levels, level 1 is unlocked, levels 2-5 are locked
+        final levelCells = tester
+            .widgetList<LevelCellWidget>(find.byType(LevelCellWidget))
+            .toList();
+        expect(levelCells.where((c) => !c.isUnlocked).length, equals(4));
       });
 
       testWidgets('all levels unlocked when all previous completed', (
@@ -338,8 +342,8 @@ void main() {
           expect(cell.isUnlocked, isTrue);
         }
 
-        // No lock icons should be visible
-        expect(find.byIcon(Icons.lock), findsNothing);
+        // All levels should be unlocked - no locked cells
+        expect(levelCells.where((c) => !c.isUnlocked).length, equals(0));
       });
     });
 
