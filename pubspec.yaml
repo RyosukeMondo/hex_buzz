@@ -81,8 +81,23 @@ msix_config:
   display_name: HexBuzz
   publisher_display_name: HexBuzz Games
   identity_name: com.hexbuzz.hexbuzz
+  # Publisher CN must be obtained from Microsoft Partner Center after creating account
+  # Format: CN=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+  # Replace with actual publisher ID from Partner Center before building for store
+  publisher: CN=YourPublisherID
   msix_version: 1.0.0.0
   logo_path: assets/icons/app_icon.png
+  start_menu_icon_path: assets/icons/app_icon.png
+  tile_icon_path: assets/icons/app_icon.png
+  icons_background_color: transparent
+  architecture: x64
   capabilities: internetClient
   store: true
-  languages: en-us
+  languages: en-us, ja-jp
+  protocol_activation: hexbuzz
+  # Windows version support
+  windows_build_version: 10.0.17763.0
+  # Store-specific settings
+  certificate_subject: CN=HexBuzz Games
+  certificate_password:
+  install_certificate: false

@@ -24,9 +24,9 @@ build/windows/x64/runner/Release/hex_buzz.msix
 |----------|-------|
 | App Name | HexBuzz |
 | Display Name | HexBuzz |
-| Identity Name | `com.yourcompany.hexbuzz` (Update this) |
-| Publisher Display Name | Your Publisher Name (Update this) |
-| Publisher ID | `CN=YourPublisherID` (Get from Partner Center) |
+| Identity Name | `com.hexbuzz.hexbuzz` |
+| Publisher Display Name | HexBuzz Games |
+| Publisher ID | `CN=YourPublisherID` (Get from Partner Center and update in pubspec.yaml) |
 
 ## File Locations
 
@@ -57,25 +57,32 @@ build/windows/x64/runner/Release/hex_buzz.msix
 
 ### Update MSIX Config in pubspec.yaml
 
-The MSIX configuration has been added to `pubspec.yaml`. Update these values:
+The MSIX configuration has been configured in `pubspec.yaml`. Before building for the Store, update the `publisher` value:
 
 ```yaml
 msix_config:
   display_name: HexBuzz
-  publisher_display_name: Your Name or Company  # UPDATE THIS
-  identity_name: com.yourname.hexbuzz           # UPDATE THIS
+  publisher_display_name: HexBuzz Games
+  identity_name: com.hexbuzz.hexbuzz
+  publisher: CN=YourPublisherID                 # UPDATE THIS from Partner Center
   msix_version: 1.0.0.0
   logo_path: assets/icons/app_icon.png
-  capabilities: internetClient
-  publisher: CN=YourPublisherID                 # UPDATE THIS from Partner Center
-  store: true
+  start_menu_icon_path: assets/icons/app_icon.png
+  tile_icon_path: assets/icons/app_icon.png
+  icons_background_color: transparent
   architecture: x64
+  capabilities: internetClient
+  store: true
+  languages: en-us, ja-jp
+  protocol_activation: hexbuzz
+  windows_build_version: 10.0.17763.0
 ```
 
 **Important**:
-- `identity_name` must be unique across the entire Microsoft Store
-- `publisher` must match exactly from Partner Center (including CN= prefix)
+- `identity_name` must be unique across the entire Microsoft Store (currently: `com.hexbuzz.hexbuzz`)
+- `publisher` must match exactly from Partner Center (including CN= prefix) - **UPDATE THIS BEFORE BUILDING**
 - `msix_version` format is Major.Minor.Build.Revision (e.g., 1.0.0.0)
+- `windows_build_version` targets Windows 10 version 1809 (October 2018 Update) and later
 
 ## Version Management
 
@@ -325,14 +332,25 @@ Common capabilities:
 
 ### Custom Protocol Handler
 
-To launch app from URLs:
+The app is configured with protocol activation:
 
 ```yaml
 msix_config:
   protocol_activation: hexbuzz
 ```
 
-Users can launch app via `hexbuzz://` URLs.
+Users can launch app via `hexbuzz://` URLs (e.g., `hexbuzz://daily-challenge`).
+
+### Windows Icons Configuration
+
+Windows-specific icons have been created in multiple sizes:
+- **44x44**: Small tile icon
+- **71x71**: Medium tile icon
+- **150x150**: Wide tile icon
+- **310x310**: Large tile icon
+- **620x620**: Store logo (high DPI)
+
+Icons are located in `assets/icons/windows/` and automatically included in the MSIX package.
 
 ## For AI Agents
 
