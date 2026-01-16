@@ -76,6 +76,15 @@ class AuthNotifier extends AsyncNotifier<User?> {
     state = const AsyncValue.data(null);
   }
 
+  /// Signs out the current user (alias for logout).
+  ///
+  /// Clears the auth state and sets user to null.
+  Future<void> signOut() async {
+    state = const AsyncValue.loading();
+    await _repository.signOut();
+    state = const AsyncValue.data(null);
+  }
+
   /// Creates a guest session for local-only play.
   ///
   /// Guest users can play the game but their progress is only stored locally.

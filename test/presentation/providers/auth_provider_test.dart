@@ -333,6 +333,74 @@ void main() {
       });
     });
 
+    group('signOut', () {
+      test('signOut clears user state', () async {
+        when(
+          () => mockRepository.getCurrentUser(),
+        ).thenAnswer((_) async => testUser);
+        when(() => mockRepository.signOut()).thenAnswer((_) async {});
+
+        await container.read(authProvider.future);
+
+        // Verify user is logged in
+        expect(container.read(authProvider).value, testUser);
+
+        // Perform signOut
+        final notifier = container.read(authProvider.notifier);
+        await notifier.signOut();
+
+        verify(() => mockRepository.signOut()).called(1);
+
+        final state = container.read(authProvider);
+        expect(state.value, isNull);
+      });
+
+      test('signOut is idempotent (no error when not logged in)', () async {
+        when(
+          () => mockRepository.getCurrentUser(),
+        ).thenAnswer((_) async => null);
+        when(() => mockRepository.signOut()).thenAnswer((_) async {});
+
+        await container.read(authProvider.future);
+
+        final notifier = container.read(authProvider.notifier);
+        await notifier.signOut();
+
+        verify(() => mockRepository.signOut()).called(1);
+
+        final state = container.read(authProvider);
+        expect(state.value, isNull);
+      });
+
+      test('signOut sets loading state during operation', () async {
+        when(
+          () => mockRepository.getCurrentUser(),
+        ).thenAnswer((_) async => testUser);
+        when(() => mockRepository.signOut()).thenAnswer((_) async {
+          await Future.delayed(const Duration(milliseconds: 50));
+        });
+
+        await container.read(authProvider.future);
+
+        final notifier = container.read(authProvider.notifier);
+
+        // Start signOut but don't await
+        final future = notifier.signOut();
+
+        // Check loading state immediately
+        await Future.delayed(Duration.zero);
+        final loadingState = container.read(authProvider);
+        expect(loadingState.isLoading, isTrue);
+
+        // Wait for completion
+        await future;
+
+        final finalState = container.read(authProvider);
+        expect(finalState.isLoading, isFalse);
+        expect(finalState.value, isNull);
+      });
+    });
+
     group('playAsGuest', () {
       test('playAsGuest creates guest user session', () async {
         when(
