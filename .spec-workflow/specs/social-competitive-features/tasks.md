@@ -172,7 +172,7 @@
 
 ## Phase 5: Presentation Layer - State Management
 
-- [ ] 5.1 Create AuthProvider (Riverpod)
+- [x] 5.1 Create AuthProvider (Riverpod)
   - File: `lib/presentation/providers/auth_provider.dart`
   - Implement `AsyncNotifier<User?>` with `signInWithGoogle()` and `signOut()` methods
   - Wire to `AuthRepository`
@@ -182,7 +182,7 @@
   - _Requirements: 1.1, 1.4, 1.5, 1.6_
   - _Prompt: Role: Flutter Developer with Riverpod expertise | Task: Create AuthProvider in lib/presentation/providers/auth_provider.dart as AsyncNotifier managing User authentication state, implementing signInWithGoogle and signOut methods, wiring to AuthRepository | Restrictions: Follow existing provider patterns from GameProvider, handle loading/error states, persist auth state | Success: Provider compiles, auth state reactive, sign-in/out methods work, state persists_
 
-- [ ] 5.2 Create LeaderboardProvider (Riverpod)
+- [x] 5.2 Create LeaderboardProvider (Riverpod)
   - File: `lib/presentation/providers/leaderboard_provider.dart`
   - Implement `AsyncNotifier<List<LeaderboardEntry>>` with `refresh()` and `submitScore()` methods
   - Wire to `LeaderboardRepository` and `AuthProvider`
@@ -192,7 +192,7 @@
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
   - _Prompt: Role: Flutter Developer with Riverpod expertise | Task: Create LeaderboardProvider in lib/presentation/providers/leaderboard_provider.dart managing leaderboard state with methods for refresh and submitScore, integrating with LeaderboardRepository and AuthProvider | Restrictions: Handle loading/error states, implement pagination if needed, auto-refresh on foreground | Success: Leaderboard state reactive, auto-refresh works, pagination if implemented, error handling robust_
 
-- [ ] 5.3 Create DailyChallengeProvider (Riverpod)
+- [x] 5.3 Create DailyChallengeProvider (Riverpod)
   - File: `lib/presentation/providers/daily_challenge_provider.dart`
   - Implement `AsyncNotifier<DailyChallenge?>` with methods to load today's challenge and submit completion
   - Wire to `DailyChallengeRepository`
@@ -202,7 +202,7 @@
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
   - _Prompt: Role: Flutter Developer with Riverpod expertise | Task: Create DailyChallengeProvider in lib/presentation/providers/daily_challenge_provider.dart managing daily challenge state, loading today's challenge, handling completion submissions, with automatic daily refresh check | Restrictions: Handle timezone properly (UTC), invalidate cache at midnight, handle "already completed" state | Success: Daily challenge loads correctly, completion submissions work, daily refresh works, timezone handling correct_
 
-- [ ] 5.4 Initialize providers in main.dart
+- [x] 5.4 Initialize providers in main.dart
   - File: `lib/main.dart` (modify)
   - Override repository providers with Firebase implementations
   - Initialize Firebase before running app
@@ -214,7 +214,7 @@
 
 ## Phase 6: Presentation Layer - UI Components
 
-- [ ] 6.1 Create AuthScreen (Welcome/Sign-In)
+- [x] 6.1 Create AuthScreen (Welcome/Sign-In)
   - File: `lib/presentation/screens/auth/auth_screen.dart`
   - Display welcome message with "Sign in with Google" button
   - Follow Google's branding guidelines for sign-in button
@@ -225,7 +225,7 @@
   - _Requirements: 1.1, 1.2, 1.7_
   - _Prompt: Role: Flutter UI Developer | Task: Create AuthScreen in lib/presentation/screens/auth/auth_screen.dart with welcome message, Google Sign-In button following Google's brand guidelines, loading states, error handling, using HoneyTheme styling and AuthProvider | Restrictions: Follow Google Sign-In button guidelines, use existing theme, handle all auth states, accessible | Success: Screen looks polished, Google button compliant, loading states smooth, errors user-friendly_
 
-- [ ] 6.2 Create LeaderboardScreen
+- [x] 6.2 Create LeaderboardScreen
   - File: `lib/presentation/screens/leaderboard/leaderboard_screen.dart`
   - Display scrollable list of leaderboard entries
   - Highlight current user's rank
@@ -247,7 +247,7 @@
   - _Requirements: 2.2_
   - _Prompt: Role: Flutter Widget Developer | Task: Create LeaderboardEntryWidget in lib/presentation/widgets/leaderboard_entry_widget.dart displaying rank badge, user avatar, username, stars with special styling for top 3 (gold/silver/bronze medals) and highlighting for current user | Restrictions: Stateless widget, accept entry via props, use HoneyTheme, handle null avatars | Success: Entry displays beautifully, top 3 badges distinct, user highlighting clear, performant in list_
 
-- [ ] 6.4 Create DailyChallengeScreen
+- [x] 6.4 Create DailyChallengeScreen
   - File: `lib/presentation/screens/daily_challenge/daily_challenge_screen.dart`
   - Display challenge metadata (date, difficulty, completion count)
   - Show game grid for the challenge level
@@ -258,7 +258,7 @@
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
   - _Prompt: Role: Flutter Screen Developer | Task: Create DailyChallengeScreen in lib/presentation/screens/daily_challenge/daily_challenge_screen.dart integrating daily challenge metadata, game grid (reusing HexGridWidget), completion status, and post-completion leaderboard display | Restrictions: Reuse existing game widgets, show challenge info prominently, handle completed vs not-completed states | Success: Challenge screen functional, metadata clear, game integration seamless, leaderboard shows after completion_
 
-- [ ] 6.5 Update LevelSelectScreen to include navigation buttons
+- [x] 6.5 Update LevelSelectScreen to include navigation buttons
   - File: `lib/presentation/screens/level_select/level_select_screen.dart` (modify)
   - Add "Leaderboard" button in header
   - Add "Daily Challenge" button in header with notification badge if not completed
@@ -277,7 +277,7 @@
   - _Requirements: 2.4_
   - _Prompt: Role: Flutter Developer | Task: Modify GameScreen in lib/presentation/screens/game/game_screen.dart to automatically submit scores to LeaderboardProvider after level completion, show rank change notification if user's rank improved | Restrictions: Only submit if user logged in, don't block completion overlay, handle submission errors gracefully | Success: Scores submitted automatically, rank change notification appears, no disruption to existing flow_
 
-- [ ] 6.7 Create notification settings screen
+- [x] 6.7 Create notification settings screen
   - File: `lib/presentation/screens/settings/notification_settings_screen.dart`
   - Allow users to toggle notification types (daily challenge, rank change, re-engagement)
   - Show notification permission status
@@ -289,7 +289,7 @@
 
 ## Phase 7: Cloud Functions (Server-Side Logic)
 
-- [ ] 7.1 Setup Cloud Functions project
+- [x] 7.1 Setup Cloud Functions project
   - Directory: `functions/`
   - Initialize with `firebase init functions` (TypeScript)
   - Install dependencies: `firebase-admin`, `firebase-functions`
@@ -299,7 +299,7 @@
   - _Requirements: 6.1_
   - _Prompt: Role: Backend Developer with Cloud Functions expertise | Task: Initialize Firebase Cloud Functions project in functions/ directory using TypeScript, install firebase-admin and firebase-functions packages, setup tsconfig.json and package.json | Restrictions: Use TypeScript, follow Firebase Functions best practices, setup proper error handling | Success: Functions project initialized, TypeScript compiles, can deploy test function_
 
-- [ ] 7.2 Implement onScoreUpdate trigger function
+- [x] 7.2 Implement onScoreUpdate trigger function
   - File: `functions/src/index.ts`
   - Triggered when document written to `scoreSubmissions` collection
   - Update user's total stars in `users` and `leaderboard` collections
@@ -310,7 +310,7 @@
   - _Requirements: 2.4, 2.7, 4.4_
   - _Prompt: Role: Backend Developer with Firestore triggers expertise | Task: Implement onScoreUpdate Cloud Function triggered on scoreSubmissions collection writes, updating user total stars in users and leaderboard collections, recomputing ranks in batch, sending notification if rank changed ±10 ranks | Restrictions: Use batched writes for efficiency, handle concurrent submissions, implement proper error handling and logging | Success: Function deploys successfully, score updates trigger correctly, ranks recomputed accurately, notifications sent on significant changes_
 
-- [ ] 7.3 Implement generateDailyChallenge scheduled function
+- [x] 7.3 Implement generateDailyChallenge scheduled function
   - File: `functions/src/index.ts`
   - Scheduled to run daily at 00:00 UTC
   - Generate or select a level for daily challenge
@@ -321,7 +321,7 @@
   - _Requirements: 3.1, 3.2, 6.4_
   - _Prompt: Role: Backend Developer with Cloud Scheduler expertise | Task: Implement generateDailyChallenge scheduled Cloud Function running at 00:00 UTC, generating or selecting a level for the daily challenge and storing in dailyChallenges collection with date as document ID | Restrictions: Use Cloud Scheduler (pubsub.schedule), ensure idempotency (don't duplicate if runs twice), port level generation from Dart or use curated pool | Success: Function runs daily at 00:00 UTC, new challenge created reliably, stored correctly in Firestore, handles failures gracefully_
 
-- [ ] 7.4 Implement sendDailyChallengeNotifications function
+- [x] 7.4 Implement sendDailyChallengeNotifications function
   - File: `functions/src/index.ts`
   - Triggered after generateDailyChallenge completes
   - Send FCM notification to all users subscribed to daily challenge topic
@@ -331,7 +331,7 @@
   - _Requirements: 4.3_
   - _Prompt: Role: Backend Developer with FCM expertise | Task: Implement sendDailyChallengeNotifications Cloud Function triggered after daily challenge generation, sending FCM topic message to all users subscribed to "daily_challenge" topic with notification title "New Daily Challenge!" and deep link | Restrictions: Use FCM topic messaging for efficiency, include deep link data, handle send failures gracefully | Success: Function triggers after challenge generation, notifications sent to all subscribed users, deep links work, failures logged_
 
-- [ ] 7.5 Implement onUserCreated trigger function
+- [x] 7.5 Implement onUserCreated trigger function
   - File: `functions/src/index.ts`
   - Triggered when new user document created in `users` collection
   - Initialize leaderboard entry with 0 stars
@@ -352,7 +352,7 @@
 
 ## Phase 8: Debug/CLI Layer (AI Agent Support)
 
-- [ ] 8.1 Create auth CLI command
+- [x] 8.1 Create auth CLI command
   - File: `lib/debug/cli/commands/auth_command.dart`
   - Implement subcommands: `login --token <google-token>`, `logout`, `whoami`
   - Output JSON for AI agent parsing
@@ -361,7 +361,7 @@
   - _Requirements: 7.1, 7.2, 7.3_
   - _Prompt: Role: CLI Developer | Task: Create AuthCommand in lib/debug/cli/commands/auth_command.dart with subcommands for login (accepting Google ID token), logout, and whoami (showing current user), outputting JSON for each operation | Restrictions: Follow existing CLI command patterns, handle errors, output structured JSON | Success: All auth subcommands work, JSON output parseable, errors handled gracefully_
 
-- [ ] 8.2 Create leaderboard CLI command
+- [x] 8.2 Create leaderboard CLI command
   - File: `lib/debug/cli/commands/leaderboard_command.dart`
   - Implement subcommands: `get --top N`, `submit --stars N`
   - Output JSON for AI agent parsing
@@ -370,7 +370,7 @@
   - _Requirements: 7.4, 7.5_
   - _Prompt: Role: CLI Developer | Task: Create LeaderboardCommand in lib/debug/cli/commands/leaderboard_command.dart with subcommands to get top N players and submit scores, outputting JSON | Restrictions: Support pagination with --top flag, require authentication for submit, output JSON | Success: Leaderboard commands work, JSON output correct, submission requires auth_
 
-- [ ] 8.3 Create daily-challenge CLI command
+- [x] 8.3 Create daily-challenge CLI command
   - File: `lib/debug/cli/commands/daily_challenge_command.dart`
   - Implement subcommands: `generate --date YYYY-MM-DD`, `get-today`, `complete --stars N --time MS`
   - Output JSON for AI agent parsing
@@ -379,7 +379,7 @@
   - _Requirements: 7.6, 7.7_
   - _Prompt: Role: CLI Developer | Task: Create DailyChallengeCommand in lib/debug/cli/commands/daily_challenge_command.dart with subcommands for generating challenges (admin), getting today's challenge, and submitting completions, outputting JSON | Restrictions: Require admin auth for generate, handle date parsing, output JSON | Success: All subcommands work, challenge generation works, completions recorded_
 
-- [ ] 8.4 Create notify CLI command
+- [x] 8.4 Create notify CLI command
   - File: `lib/debug/cli/commands/notify_command.dart`
   - Implement subcommand: `test --user-id <uid> --message <text>`
   - Send test notification to specific user
@@ -388,7 +388,7 @@
   - _Requirements: 7.8_
   - _Prompt: Role: CLI Developer | Task: Create NotifyCommand in lib/debug/cli/commands/notify_command.dart with test subcommand to send notification to specific user by user ID for testing purposes | Restrictions: Require admin auth, validate user ID exists, send via FCM | Success: Test notifications sent successfully, received on device, command outputs confirmation_
 
-- [ ] 8.5 Register all CLI commands in CliRunner
+- [x] 8.5 Register all CLI commands in CliRunner
   - File: `lib/debug/cli/cli_runner.dart` (modify)
   - Add AuthCommand, LeaderboardCommand, DailyChallengeCommand, NotifyCommand
   - Purpose: Make commands available in CLI
@@ -396,7 +396,7 @@
   - _Requirements: All CLI requirements_
   - _Prompt: Role: CLI Developer | Task: Register all new CLI commands (AuthCommand, LeaderboardCommand, DailyChallengeCommand, NotifyCommand) in CliRunner in lib/debug/cli/cli_runner.dart | Restrictions: Follow existing pattern, maintain alphabetical order | Success: All commands available via CLI, help text shows all commands_
 
-- [ ] 8.6 Create auth REST API routes
+- [x] 8.6 Create auth REST API routes
   - File: `lib/debug/api/routes/auth_routes.dart`
   - Implement endpoints: `POST /api/auth/google`, `POST /api/auth/logout`, `GET /api/auth/me`
   - Return JSON responses
@@ -405,7 +405,7 @@
   - _Requirements: 7.9_
   - _Prompt: Role: API Developer | Task: Create auth REST API routes in lib/debug/api/routes/auth_routes.dart with endpoints for Google authentication, logout, and getting current user, returning JSON responses | Restrictions: Follow existing API route patterns, use proper HTTP status codes, validate inputs | Success: All endpoints work, return proper JSON, status codes correct_
 
-- [ ] 8.7 Create leaderboard REST API routes
+- [x] 8.7 Create leaderboard REST API routes
   - File: `lib/debug/api/routes/leaderboard_routes.dart`
   - Implement endpoints: `GET /api/leaderboard?limit=N`, `POST /api/scores`
   - Return JSON responses
@@ -414,7 +414,7 @@
   - _Requirements: 7.10, 7.11_
   - _Prompt: Role: API Developer | Task: Create leaderboard REST API routes in lib/debug/api/routes/leaderboard_routes.dart with endpoints to get leaderboard and submit scores, returning JSON | Restrictions: Support query parameters, require auth for POST, paginate results | Success: Leaderboard endpoint works, score submission works, pagination correct_
 
-- [ ] 8.8 Create daily-challenge REST API routes
+- [x] 8.8 Create daily-challenge REST API routes
   - File: `lib/debug/api/routes/daily_challenge_routes.dart`
   - Implement endpoints: `GET /api/daily-challenge`, `POST /api/daily-challenge/complete`
   - Return JSON responses
@@ -423,7 +423,7 @@
   - _Requirements: 7.12, 7.13_
   - _Prompt: Role: API Developer | Task: Create daily challenge REST API routes in lib/debug/api/routes/daily_challenge_routes.dart with endpoints to get today's challenge and submit completions, returning JSON | Restrictions: Handle date/time properly, require auth, validate completion data | Success: Challenge endpoint returns today's data, completion submission works_
 
-- [ ] 8.9 Register all API routes in server
+- [x] 8.9 Register all API routes in server
   - File: `lib/debug/api/server.dart` (modify)
   - Mount auth, leaderboard, and daily challenge routes
   - Purpose: Make API endpoints available
