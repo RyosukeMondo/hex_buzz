@@ -28,6 +28,7 @@ import 'presentation/screens/game/game_screen.dart';
 import 'presentation/screens/leaderboard/leaderboard_screen.dart';
 import 'presentation/screens/level_select/level_select_screen.dart';
 import 'presentation/theme/honey_theme.dart';
+import 'platform/windows/window_config.dart';
 
 /// Route names for navigation.
 class AppRoutes {
@@ -51,6 +52,9 @@ const bool _enableApiFromEnv = bool.fromEnvironment(
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Windows window configuration
+  await WindowConfig.initialize();
 
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

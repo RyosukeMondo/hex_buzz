@@ -40,6 +40,7 @@ class _AnimatedButtonState extends State<AnimatedButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
+  bool _isHovered = false;
 
   @override
   void initState() {
@@ -83,23 +84,34 @@ class _AnimatedButtonState extends State<AnimatedButton>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: _onTapCancel,
-      onTap: widget.onTap,
-      onLongPress: widget.onLongPress,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          // If animations disabled, just show static child.
-          if (!_shouldAnimate) {
-            return child!;
-          }
-          return Transform.scale(scale: _scaleAnimation.value, child: child);
-        },
-        child: widget.child,
+    return MouseRegion(
+      cursor: widget.onTap != null || widget.onLongPress != null
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTapDown: _onTapDown,
+        onTapUp: _onTapUp,
+        onTapCancel: _onTapCancel,
+        onTap: widget.onTap,
+        onLongPress: widget.onLongPress,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            // If animations disabled, just show static child.
+            if (!_shouldAnimate) {
+              return child!;
+            }
+            return Transform.scale(scale: _scaleAnimation.value, child: child);
+          },
+          child: AnimatedOpacity(
+            opacity: _isHovered && _shouldAnimate ? 0.9 : 1.0,
+            duration: const Duration(milliseconds: 150),
+            child: widget.child,
+          ),
+        ),
       ),
     );
   }

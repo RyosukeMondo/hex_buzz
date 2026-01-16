@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/progress_state.dart';
 import '../../../domain/models/user.dart';
 import '../../../main.dart';
+import '../../../platform/windows/keyboard_shortcuts.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/daily_challenge_provider.dart';
 import '../../providers/game_provider.dart';
@@ -26,34 +27,40 @@ class LevelSelectScreen extends ConsumerWidget {
     final levelRepository = ref.watch(levelRepositoryProvider);
     final totalLevels = levelRepository.totalLevelCount;
 
-    return Scaffold(
-      body: SafeArea(
-        child: progressAsync.when(
-          data: (progressState) => _buildContent(
-            context,
-            ref,
-            progressState,
-            totalLevels,
-            authAsync.valueOrNull,
-          ),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: HoneyTheme.iconSizeLg,
-                  color: Colors.red,
-                ),
-                const SizedBox(height: HoneyTheme.spacingLg),
-                Text('Error loading progress: $error'),
-                const SizedBox(height: HoneyTheme.spacingLg),
-                ElevatedButton(
-                  onPressed: () => ref.invalidate(progressProvider),
-                  child: const Text('Retry'),
-                ),
-              ],
+    return KeyboardShortcuts(
+      onBack: () {
+        // Navigate back to front screen (Escape)
+        Navigator.of(context).pushReplacementNamed(AppRoutes.front);
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: progressAsync.when(
+            data: (progressState) => _buildContent(
+              context,
+              ref,
+              progressState,
+              totalLevels,
+              authAsync.valueOrNull,
+            ),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: HoneyTheme.iconSizeLg,
+                    color: Colors.red,
+                  ),
+                  const SizedBox(height: HoneyTheme.spacingLg),
+                  Text('Error loading progress: $error'),
+                  const SizedBox(height: HoneyTheme.spacingLg),
+                  ElevatedButton(
+                    onPressed: () => ref.invalidate(progressProvider),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

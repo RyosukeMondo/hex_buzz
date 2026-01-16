@@ -6,6 +6,7 @@ import '../../../domain/models/game_mode.dart';
 import '../../../domain/models/hex_cell.dart';
 import '../../../domain/services/star_calculator.dart';
 import '../../../main.dart';
+import '../../../platform/windows/keyboard_shortcuts.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/daily_challenge_provider.dart';
 import '../../providers/game_provider.dart';
@@ -176,34 +177,45 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
     final gameState = ref.watch(gameProvider);
     final visitedCells = gameState.path.toSet();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: _buildTitle(),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        leading: _buildBackButton(context),
-        actions: [
-          // Reset button
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.read(gameProvider.notifier).reset(),
-            tooltip: 'Reset (same level)',
-          ),
-          // New level button (only in practice mode, not daily challenge)
-          if (widget.levelIndex == null && !widget.isDailyChallenge)
+    return KeyboardShortcuts(
+      onUndo: () {
+        // Undo last move (Ctrl+Z)
+        final notifier = ref.read(gameProvider.notifier);
+        notifier.undo();
+      },
+      onBack: () {
+        // Navigate back to level select (Escape)
+        _navigateToLevelSelect(context);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: _buildTitle(),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          leading: _buildBackButton(context),
+          actions: [
+            // Reset button
             IconButton(
-              icon: const Icon(Icons.skip_next),
-              onPressed: () =>
-                  ref.read(gameProvider.notifier).generateNewLevel(),
-              tooltip: 'New Level',
+              icon: const Icon(Icons.refresh),
+              onPressed: () => ref.read(gameProvider.notifier).reset(),
+              tooltip: 'Reset (same level)',
             ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          _buildGameGrid(ref, gameState, visitedCells),
-          _buildBottomControls(context, ref),
-          if (gameState.isComplete) _buildCompletionOverlay(context, ref),
-        ],
+            // New level button (only in practice mode, not daily challenge)
+            if (widget.levelIndex == null && !widget.isDailyChallenge)
+              IconButton(
+                icon: const Icon(Icons.skip_next),
+                onPressed: () =>
+                    ref.read(gameProvider.notifier).generateNewLevel(),
+                tooltip: 'New Level',
+              ),
+          ],
+        ),
+        body: Stack(
+          children: [
+            _buildGameGrid(ref, gameState, visitedCells),
+            _buildBottomControls(context, ref),
+            if (gameState.isComplete) _buildCompletionOverlay(context, ref),
+          ],
+        ),
       ),
     );
   }

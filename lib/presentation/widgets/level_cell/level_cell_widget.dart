@@ -59,6 +59,9 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
   /// Whether reduced motion is enabled.
   bool _reduceMotion = false;
 
+  /// Whether the mouse is hovering over this cell.
+  bool _isHovered = false;
+
   @override
   void initState() {
     super.initState();
@@ -119,17 +122,31 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
       label: semanticsLabel,
       button: widget.isUnlocked,
       enabled: widget.isUnlocked,
-      child: GestureDetector(
-        onTap: _handleTap,
-        child: AnimatedBuilder(
-          animation: _shakeAnimation,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(_shakeAnimation.value, 0),
-              child: child,
-            );
-          },
-          child: _buildCell(),
+      child: MouseRegion(
+        cursor: widget.isUnlocked
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.forbidden,
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: GestureDetector(
+          onTap: _handleTap,
+          child: AnimatedBuilder(
+            animation: _shakeAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(_shakeAnimation.value, 0),
+                child: child,
+              );
+            },
+            child: AnimatedScale(
+              scale: _isHovered && widget.isUnlocked && !_reduceMotion
+                  ? 1.05
+                  : 1.0,
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeInOut,
+              child: _buildCell(),
+            ),
+          ),
         ),
       ),
     );
@@ -162,6 +179,16 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
             height: widget.size,
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(HoneyTheme.radiusMd),
+            ),
+          ),
+        // Hover highlight overlay for unlocked levels
+        if (widget.isUnlocked && _isHovered)
+          Container(
+            width: widget.size,
+            height: widget.size,
+            decoration: BoxDecoration(
+              color: HoneyTheme.honeyGold.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(HoneyTheme.radiusMd),
             ),
           ),
