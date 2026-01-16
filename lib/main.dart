@@ -1,8 +1,11 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'data/firebase/firebase_daily_challenge_repository.dart';
+import 'data/firebase/firebase_leaderboard_repository.dart';
 import 'data/local/local_auth_repository.dart';
 import 'data/local/local_progress_repository.dart';
 import 'debug/api/server.dart';
@@ -11,7 +14,9 @@ import 'domain/models/game_mode.dart';
 import 'domain/services/game_engine.dart';
 import 'domain/services/level_repository.dart';
 import 'presentation/providers/auth_provider.dart';
+import 'presentation/providers/daily_challenge_provider.dart';
 import 'presentation/providers/game_provider.dart';
+import 'presentation/providers/leaderboard_provider.dart';
 import 'presentation/providers/progress_provider.dart';
 import 'presentation/screens/auth/auth_screen.dart';
 import 'presentation/screens/front/front_screen.dart';
@@ -40,34 +45,18 @@ const bool _enableApiFromEnv = bool.fromEnvironment(
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Pre-load level repository for instant level switching
-  final levelRepository = LevelRepository();
-  try {
-    await levelRepository.load();
-    if (kDebugMode) {
-      debugPrint('Loaded pre-generated levels:');
-      for (final size in levelRepository.availableSizes) {
-        debugPrint(
-          '  Size $size: ${levelRepository.getLevelCount(size)} levels',
-        );
-      }
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('Failed to load pre-generated levels: $e');
-      debugPrint('Will use dynamic generation as fallback.');
-    }
-  }
+  // Initialize Firebase
+  await Firebase.initializeApp();
+  if (kDebugMode) debugPrint('Firebase initialized');
 
-  // Initialize repositories for persistence
-  final prefs = await SharedPreferences.getInstance();
-  final progressRepository = LocalProgressRepository(prefs);
-  final authRepository = LocalAuthRepository(prefs);
-  if (kDebugMode) {
-    debugPrint('Progress and Auth repositories initialized');
-  }
+  // Initialize all repositories
+  final levelRepository = await _initializeLevelRepository();
+  final (progressRepository, authRepository) =
+      await _initializeLocalRepositories();
+  final (leaderboardRepository, dailyChallengeRepository) =
+      _initializeFirebaseRepositories();
 
-  // Start debug API server if enabled and in debug mode
+  // Start debug API server if enabled
   DebugApiServer? apiServer;
   if (kDebugMode && _enableApiFromEnv) {
     apiServer = await _startDebugApiServer();
@@ -79,12 +68,55 @@ void main() async {
         levelRepositoryProvider.overrideWithValue(levelRepository),
         progressRepositoryProvider.overrideWithValue(progressRepository),
         authRepositoryProvider.overrideWithValue(authRepository),
+        leaderboardRepositoryProvider.overrideWithValue(leaderboardRepository),
+        dailyChallengeRepositoryProvider.overrideWithValue(
+          dailyChallengeRepository,
+        ),
         if (apiServer != null)
           debugApiServerProvider.overrideWithValue(apiServer),
       ],
       child: const HexBuzzApp(),
     ),
   );
+}
+
+/// Initializes and pre-loads the level repository.
+Future<LevelRepository> _initializeLevelRepository() async {
+  final repository = LevelRepository();
+  try {
+    await repository.load();
+    if (kDebugMode) {
+      debugPrint('Loaded pre-generated levels:');
+      for (final size in repository.availableSizes) {
+        debugPrint('  Size $size: ${repository.getLevelCount(size)} levels');
+      }
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('Failed to load pre-generated levels: $e');
+      debugPrint('Will use dynamic generation as fallback.');
+    }
+  }
+  return repository;
+}
+
+/// Initializes local storage repositories.
+Future<(LocalProgressRepository, LocalAuthRepository)>
+_initializeLocalRepositories() async {
+  final prefs = await SharedPreferences.getInstance();
+  final progressRepo = LocalProgressRepository(prefs);
+  final authRepo = LocalAuthRepository(prefs);
+  if (kDebugMode) debugPrint('Local repositories initialized');
+  return (progressRepo, authRepo);
+}
+
+/// Initializes Firebase repositories.
+(FirebaseLeaderboardRepository, FirebaseDailyChallengeRepository)
+_initializeFirebaseRepositories() {
+  final leaderboard = FirebaseLeaderboardRepository();
+  final dailyChallenge = FirebaseDailyChallengeRepository();
+  if (kDebugMode) debugPrint('Firebase repositories initialized');
+  return (leaderboard, dailyChallenge);
 }
 
 /// Starts the debug API server on port 8080.
