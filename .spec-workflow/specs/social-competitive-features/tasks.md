@@ -161,7 +161,7 @@
   - _Requirements: 4.1, 5.5_
   - _Prompt: Role: Flutter Developer with Windows platform expertise | Task: Implement WNSNotificationService in lib/platform/windows/wns_notification_service.dart using Windows Notification Service (WNS) via flutter_local_notifications, handling Windows-specific notification display and interactions | Restrictions: Windows-only implementation, use platform channels if needed, handle Windows notification format | Success: Notifications display correctly on Windows, clicks navigate to app, Windows notification center integration works_
 
-- [ ] 4.6 Write integration tests for Firebase repositories
+- [x] 4.6 Write integration tests for Firebase repositories
   - Files: `test/data/firebase/firebase_auth_repository_test.dart`, `test/data/firebase/firestore_leaderboard_repository_test.dart`, `test/data/firebase/firestore_daily_challenge_repository_test.dart`
   - Use Firebase emulators for testing
   - Test all operations with real Firebase API calls (against emulator)
