@@ -7,9 +7,15 @@ import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_router/shelf_router.dart';
 
 import '../../core/logging/logger.dart';
+import '../../domain/services/auth_repository.dart';
+import '../../domain/services/daily_challenge_repository.dart';
 import '../../domain/services/game_engine.dart';
+import '../../domain/services/leaderboard_repository.dart';
 import '../../domain/services/progress_repository.dart';
+import 'routes/auth_routes.dart';
+import 'routes/daily_challenge_routes.dart';
 import 'routes/game_routes.dart';
+import 'routes/leaderboard_routes.dart';
 import 'routes/level_routes.dart';
 import 'routes/progress_routes.dart';
 
@@ -21,6 +27,9 @@ class DebugApiServer {
   DebugApiServer({
     required this.engine,
     this.progressRepository,
+    this.authRepository,
+    this.leaderboardRepository,
+    this.dailyChallengeRepository,
     this.port = 8080,
     Logger? logger,
   }) : _logger = logger ?? LoggerFactory.create('api-server');
@@ -30,6 +39,15 @@ class DebugApiServer {
 
   /// Optional progress repository for progress API endpoints.
   final ProgressRepository? progressRepository;
+
+  /// Optional auth repository for authentication API endpoints.
+  final AuthRepository? authRepository;
+
+  /// Optional leaderboard repository for leaderboard API endpoints.
+  final LeaderboardRepository? leaderboardRepository;
+
+  /// Optional daily challenge repository for daily challenge API endpoints.
+  final DailyChallengeRepository? dailyChallengeRepository;
 
   /// The port to listen on.
   final int port;
@@ -91,6 +109,30 @@ class DebugApiServer {
     if (progressRepository != null) {
       final progressRoutes = ProgressRoutes(repository: progressRepository!);
       router.mount('/api/progress/', progressRoutes.router.call);
+    }
+
+    // Auth routes (if repository is available)
+    if (authRepository != null) {
+      final authRoutes = AuthRoutes(repository: authRepository!);
+      router.mount('/api/auth/', authRoutes.router.call);
+    }
+
+    // Leaderboard routes (if repositories are available)
+    if (leaderboardRepository != null && authRepository != null) {
+      final leaderboardRoutes = LeaderboardRoutes(
+        repository: leaderboardRepository!,
+        authRepository: authRepository!,
+      );
+      router.mount('/api/leaderboard/', leaderboardRoutes.router.call);
+    }
+
+    // Daily challenge routes (if repositories are available)
+    if (dailyChallengeRepository != null && authRepository != null) {
+      final dailyChallengeRoutes = DailyChallengeRoutes(
+        repository: dailyChallengeRepository!,
+        authRepository: authRepository!,
+      );
+      router.mount('/api/daily-challenge/', dailyChallengeRoutes.router.call);
     }
 
     final pipeline = const Pipeline()
@@ -188,18 +230,28 @@ class DebugApiServer {
 
 /// Starts the debug API server with the given engine.
 ///
-/// Optionally accepts a [ProgressRepository] to enable progress API endpoints.
+/// Optionally accepts repositories to enable various API endpoints:
+/// - [ProgressRepository] for progress API endpoints
+/// - [AuthRepository] for authentication API endpoints
+/// - [LeaderboardRepository] for leaderboard API endpoints
+/// - [DailyChallengeRepository] for daily challenge API endpoints
 ///
 /// Returns a [DebugApiServer] instance that can be used to stop the server.
 Future<DebugApiServer> startServer(
   int port,
   GameEngine engine, {
   ProgressRepository? progressRepository,
+  AuthRepository? authRepository,
+  LeaderboardRepository? leaderboardRepository,
+  DailyChallengeRepository? dailyChallengeRepository,
 }) async {
   final server = DebugApiServer(
     engine: engine,
     port: port,
     progressRepository: progressRepository,
+    authRepository: authRepository,
+    leaderboardRepository: leaderboardRepository,
+    dailyChallengeRepository: dailyChallengeRepository,
   );
   await server.start();
   return server;
