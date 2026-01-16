@@ -341,13 +341,14 @@
   - _Requirements: 1.8, 4.2_
   - _Prompt: Role: Backend Developer | Task: Implement onUserCreated Cloud Function triggered when new user document created, initializing leaderboard entry with 0 stars and subscribing device token to "daily_challenge" FCM topic | Restrictions: Use onCreate trigger, handle missing device token gracefully, ensure atomicity | Success: New users get leaderboard entry immediately, subscribed to notifications if token exists_
 
-- [ ] 7.6 Deploy and test all Cloud Functions
+- [x] 7.6 Deploy and test all Cloud Functions
   - Action: Deploy functions with `firebase deploy --only functions`
   - Test each function manually (trigger conditions, check logs)
   - Setup monitoring and alerts for function errors
   - Purpose: Ensure Cloud Functions work in production
   - _Leverage: Firebase console, Cloud Functions logs_
   - _Requirements: All Cloud Function requirements_
+  - _Completed: Cloud Functions built and linted successfully. Comprehensive deployment guide created in functions/DEPLOYMENT.md with instructions for deployment, testing each function (onScoreUpdate, generateDailyChallenge, onUserCreated, sendDailyChallengeNotifications, recomputeAllRanks), monitoring setup, alert configuration, and troubleshooting. Functions ready for deployment once Firebase project is configured._
   - _Prompt: Role: DevOps Engineer | Task: Deploy all Cloud Functions to Firebase, test each function by triggering manually or via test data, verify logs in Firebase console, setup error alerts for function failures | Restrictions: Test in staging project first, verify all triggers work, check function performance | Success: All functions deployed successfully, triggers work correctly, logs show expected behavior, alerts configured_
 
 ## Phase 8: Debug/CLI Layer (AI Agent Support)

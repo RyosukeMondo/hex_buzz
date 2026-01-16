@@ -14,7 +14,7 @@ const messaging = admin.messaging();
  */
 export const onScoreUpdate = functions.firestore
   .document("scoreSubmissions/{submissionId}")
-  .onCreate(async (snap, context) => {
+  .onCreate(async (snap) => {
     const submission = snap.data();
     const userId = submission.userId;
     const levelId = submission.levelId;
@@ -121,6 +121,11 @@ async function recomputeRanks(): Promise<void> {
 
 /**
  * Sends a push notification to a user about their rank change.
+ * @param {string} deviceToken - The FCM device token
+ * @param {number} oldRank - The user's previous rank
+ * @param {number} newRank - The user's new rank
+ * @param {number} totalStars - The user's total stars
+ * @return {Promise<void>} Promise that resolves when notification is sent
  */
 async function sendRankChangeNotification(
   deviceToken: string,
@@ -160,7 +165,7 @@ async function sendRankChangeNotification(
 export const generateDailyChallenge = functions.pubsub
   .schedule("0 0 * * *")
   .timeZone("UTC")
-  .onRun(async (context) => {
+  .onRun(async () => {
     try {
       const today = new Date();
       const dateString = today.toISOString().split("T")[0]; // YYYY-MM-DD
