@@ -152,7 +152,7 @@
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7_
   - _Prompt: Role: Flutter Developer with FCM expertise | Task: Implement FCMNotificationService in lib/data/firebase/fcm_notification_service.dart using firebase_messaging for Android/iOS/Web, handling permissions, token registration, message receiving, and storing device token in Firestore | Restrictions: Request permissions appropriately per platform, handle background messages, implement proper error handling | Success: Notifications work on all platforms (Android/iOS/Web), permissions handled gracefully, tokens stored in Firestore, messages received in foreground and background_
 
-- [ ] 4.5 Implement WNSNotificationService (Windows)
+- [x] 4.5 Implement WNSNotificationService (Windows)
   - File: `lib/platform/windows/wns_notification_service.dart`
   - Implement `NotificationService` interface using Windows Notification Service
   - Integrate with `flutter_local_notifications` for Windows
