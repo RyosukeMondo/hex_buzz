@@ -78,7 +78,7 @@
 
 ## Phase 3: Domain Services (Interfaces)
 
-- [ ] 3.1 Create AuthRepository interface
+- [x] 3.1 Create AuthRepository interface
   - File: `lib/domain/services/auth_repository.dart`
   - Define abstract interface with methods: `signInWithGoogle()`, `signOut()`, `authStateChanges` stream, `getCurrentUser()`
   - Purpose: Abstract authentication interface for DI
@@ -86,7 +86,7 @@
   - _Requirements: 1.1, 1.2, 1.5, 1.6_
   - _Prompt: Role: Software Architect | Task: Create AuthRepository interface in lib/domain/services/auth_repository.dart with abstract methods for signInWithGoogle(), signOut(), authStateChanges stream, and getCurrentUser() | Restrictions: Pure Dart interface, no implementation, return Future/Stream types appropriately | Success: Interface compiles, method signatures match requirements, documentation clear_
 
-- [ ] 3.2 Create LeaderboardRepository interface
+- [x] 3.2 Create LeaderboardRepository interface
   - File: `lib/domain/services/leaderboard_repository.dart`
   - Define abstract interface with methods: `getTopPlayers()`, `getUserRank()`, `submitScore()`, `getDailyChallengeLeaderboard()`, `watchLeaderboard()` stream
   - Purpose: Abstract leaderboard interface for DI
@@ -94,7 +94,7 @@
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
   - _Prompt: Role: Software Architect | Task: Create LeaderboardRepository interface in lib/domain/services/leaderboard_repository.dart with abstract methods for getTopPlayers, getUserRank, submitScore, getDailyChallengeLeaderboard, and watchLeaderboard stream | Restrictions: Pure Dart interface, use Future/Stream, include pagination parameters | Success: Interface compiles, all leaderboard operations covered_
 
-- [ ] 3.3 Create DailyChallengeRepository interface
+- [x] 3.3 Create DailyChallengeRepository interface
   - File: `lib/domain/services/daily_challenge_repository.dart`
   - Define abstract interface with methods: `getTodaysChallenge()`, `submitChallengeCompletion()`, `getChallengeLeaderboard()`, `hasCompletedToday()`
   - Purpose: Abstract daily challenge interface for DI
@@ -102,7 +102,7 @@
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
   - _Prompt: Role: Software Architect | Task: Create DailyChallengeRepository interface in lib/domain/services/daily_challenge_repository.dart with abstract methods for getTodaysChallenge, submitChallengeCompletion, getChallengeLeaderboard, hasCompletedToday | Restrictions: Pure Dart interface, no implementation details | Success: Interface compiles, daily challenge workflow complete_
 
-- [ ] 3.4 Create NotificationService interface
+- [x] 3.4 Create NotificationService interface
   - File: `lib/domain/services/notification_service.dart`
   - Define abstract interface with methods: `initialize()`, `getDeviceToken()`, `subscribeToTopic()`, `unsubscribeFromTopic()`, `onMessageReceived` stream, `requestPermission()`
   - Purpose: Abstract notification interface for DI
