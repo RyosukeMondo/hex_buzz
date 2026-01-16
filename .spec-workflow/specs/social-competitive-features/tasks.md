@@ -11,7 +11,7 @@
   - _Requirements: 6.1_
   - _Prompt: Role: DevOps Engineer with Firebase expertise | Task: Create Firebase project and configure all required services (Auth with Google provider, Firestore, Cloud Functions, FCM), then add Firebase configuration files to Flutter app for all platforms (android/app/google-services.json, ios/Runner/GoogleService-Info.plist, web Firebase config) and install Flutter Firebase dependencies | Restrictions: Use Firebase Console for setup, follow Flutter Firebase setup documentation exactly, ensure all platform configs are correct | Success: Firebase project created with all services enabled, Flutter app successfully initializes Firebase on all platforms, no configuration errors_
 
-- [ ] 1.2 Design and implement Firestore schema
+- [x] 1.2 Design and implement Firestore schema
   - File: `firestore.rules`
   - Create Firestore collections: `users`, `leaderboard`, `dailyChallenges`, `scoreSubmissions`
   - Design schema with proper indexes for queries
@@ -21,7 +21,7 @@
   - _Requirements: 6.2, 6.3, 6.6_
   - _Prompt: Role: Database Architect with Firestore expertise | Task: Implement Firestore schema in firestore.rules following the design document, creating collections for users, leaderboard, dailyChallenges, and scoreSubmissions with proper security rules that allow users to read/write their own data, read-only access to leaderboards, and prevent direct writes to computed fields | Restrictions: Follow security best practices, use server timestamps, implement proper validation rules | Success: Security rules deploy without errors, test queries work correctly, unauthorized access is blocked_
 
-- [ ] 1.3 Create composite indexes for Firestore queries
+- [x] 1.3 Create composite indexes for Firestore queries
   - File: `firestore.indexes.json`
   - Create indexes for leaderboard queries (totalStars DESC, updatedAt DESC)
   - Create indexes for daily challenge ranking (stars DESC, time ASC)
