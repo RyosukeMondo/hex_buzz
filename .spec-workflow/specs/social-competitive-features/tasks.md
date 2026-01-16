@@ -142,7 +142,7 @@
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
   - _Prompt: Role: Flutter Developer with Firestore expertise | Task: Implement FirestoreDailyChallengeRepository in lib/data/firebase/firestore_daily_challenge_repository.dart handling daily challenge operations including fetching today's challenge, submitting completions, retrieving leaderboards, with local caching | Restrictions: Cache challenge for current day, invalidate at 00:00 UTC, handle timezone properly | Success: Daily challenge loads quickly, completion submissions work, leaderboard accurate, cache invalidation correct_
 
-- [ ] 4.4 Implement FCMNotificationService (mobile/web)
+- [x] 4.4 Implement FCMNotificationService (mobile/web)
   - File: `lib/data/firebase/fcm_notification_service.dart`
   - Implement `NotificationService` interface using `firebase_messaging`
   - Handle notification permissions, token management, message receiving
