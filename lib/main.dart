@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data/firebase/firebase_auth_repository.dart';
+import 'firebase_options.dart';
 import 'data/firebase/firebase_daily_challenge_repository.dart';
 import 'data/firebase/firebase_leaderboard_repository.dart';
 import 'data/local/local_progress_repository.dart';
@@ -50,7 +51,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   if (kDebugMode) debugPrint('Firebase initialized');
 
   // Initialize all repositories
