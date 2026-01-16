@@ -125,9 +125,194 @@ The MSIX file will be created at:
 build/windows/x64/runner/Release/hex_buzz.msix
 ```
 
-## Testing Locally (Optional)
+## Windows App Certification Kit (WACK) Testing
 
-Before submitting to the Store, test the MSIX package:
+**CRITICAL**: Before submitting to the Store, you MUST pass WACK tests. Microsoft requires all apps to pass WACK certification.
+
+### Quick Start
+
+```powershell
+# Automated testing (recommended)
+.\run_wack_tests.ps1 -BuildFirst
+
+# Or run on existing MSIX
+.\run_wack_tests.ps1
+```
+
+### What is WACK?
+
+The Windows App Certification Kit (WACK) validates:
+- App manifest compliance
+- Package structure integrity
+- Performance requirements (launch time, memory usage)
+- Security best practices
+- Platform compatibility
+
+**Duration**: 15-30 minutes
+
+**Pass Requirement**: ALL tests must pass for Store submission
+
+### Installation
+
+WACK is included with Windows SDK:
+
+1. **Via Visual Studio**:
+   - Install Visual Studio 2019 or later
+   - Select "Windows 10/11 SDK" during installation
+
+2. **Standalone**:
+   - Download from: https://developer.microsoft.com/windows/downloads/windows-sdk/
+   - Select "Windows App Certification Kit" component
+
+3. **Verify**:
+   ```powershell
+   Get-Command appcert.exe
+   # Should show: C:\Program Files (x86)\Windows Kits\10\App Certification Kit\appcert.exe
+   ```
+
+### Running WACK Tests
+
+#### Method 1: Automated Script (Recommended)
+
+Use the provided PowerShell script:
+
+```powershell
+# Run with existing MSIX
+.\run_wack_tests.ps1
+
+# Build MSIX first, then test
+.\run_wack_tests.ps1 -BuildFirst
+
+# Test custom MSIX location
+.\run_wack_tests.ps1 -MsixPath "path\to\custom.msix"
+
+# Don't open HTML report automatically
+.\run_wack_tests.ps1 -OpenReport:$false
+```
+
+**Features**:
+- Automatic build option
+- Colored output with detailed results
+- HTML report auto-opens
+- Administrator check
+- Duration tracking
+- Failure details with suggestions
+
+#### Method 2: GUI
+
+1. Press Windows key, type "Windows App Cert Kit"
+2. Select "Validate Store App"
+3. Browse to: `build\windows\x64\runner\Release\hex_buzz.msix`
+4. Choose save location for results
+5. Click "Next" to run tests (15-30 minutes)
+6. Review results and HTML report
+
+#### Method 3: Command Line
+
+```powershell
+$wackPath = "C:\Program Files (x86)\Windows Kits\10\App Certification Kit\appcert.exe"
+$msixPath = "build\windows\x64\runner\Release\hex_buzz.msix"
+$reportPath = "wack_results\report.xml"
+
+& $wackPath test -apptype metroapp `
+    -appxpackagepath $msixPath `
+    -reportoutputpath $reportPath
+```
+
+### Common WACK Failures
+
+#### 1. Publisher ID Mismatch
+**Error**: "Package signature validation failed"
+
+**Fix**: Update `publisher` in `pubspec.yaml` with actual Partner Center publisher ID:
+```yaml
+msix_config:
+  publisher: CN=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX  # From Partner Center
+```
+
+#### 2. Slow Launch Time
+**Error**: "Performance test failed - Launch time exceeded 5 seconds"
+
+**Fix**:
+- Optimize `main()` initialization
+- Move heavy operations to lazy loading
+- Profile with Flutter DevTools
+
+#### 3. Missing Logo Resources
+**Error**: "App manifest validation error - Missing logo"
+
+**Fix**: Verify all icon assets exist:
+```bash
+ls assets/icons/
+```
+
+#### 4. Invalid Capabilities
+**Error**: "Capability not allowed for this app type"
+
+**Fix**: Use only necessary capabilities:
+```yaml
+msix_config:
+  capabilities: internetClient  # Only what you need
+```
+
+#### 5. Minimum Version Requirement
+**Error**: "App doesn't meet minimum Windows version"
+
+**Fix**:
+```yaml
+msix_config:
+  windows_build_version: 10.0.17763.0  # Windows 10 1809+
+```
+
+### WACK Test Categories
+
+| Test Category | What It Checks | Pass Criteria |
+|--------------|----------------|---------------|
+| App Manifest | Manifest structure, values, capabilities | Valid XML, correct IDs |
+| Package Sanity | Package structure, file integrity | All files present, valid signatures |
+| Performance | Launch time, suspend/resume, memory | Launch <5s, proper lifecycle |
+| Resources | Icons, logos, splash screens | All referenced files exist |
+| Security | API usage, deprecated functions | No insecure APIs |
+| Binary Analysis | PE headers, compiler flags | Valid binaries, security flags |
+| Platform | Architecture, API compatibility | Correct arch (x64), valid APIs |
+
+### After WACK Passes
+
+- [ ] Review any warnings (not blockers, but should fix)
+- [ ] Verify MSIX installs and runs correctly
+- [ ] Test on Windows 10 1809 and Windows 11
+- [ ] Check Event Viewer for runtime errors
+- [ ] Ensure all game features work
+- [ ] Proceed to store submission
+
+### If WACK Fails
+
+1. **Review detailed report**: Check XML/HTML report in `wack_results/`
+2. **Consult guide**: See `docs/WACK_TESTING_GUIDE.md` for detailed solutions
+3. **Fix issues**: Update code or configuration
+4. **Rebuild**: `flutter pub run msix:create`
+5. **Re-test**: Run WACK again
+6. **Iterate**: Repeat until all tests pass
+
+### Important Notes
+
+- **Administrator**: Run PowerShell as Admin for best results
+- **No interruption**: Don't use computer during testing (affects performance metrics)
+- **Clean state**: Close all apps before testing
+- **Multiple runs**: Some tests can be flaky; run 2-3 times to verify
+- **Windows version**: Test on Windows 10 1809+ for compatibility
+
+### Detailed Documentation
+
+For comprehensive WACK testing guide, see:
+- **Full guide**: `docs/WACK_TESTING_GUIDE.md`
+- **CI/CD integration**: GitHub Actions example included
+- **Troubleshooting**: Common issues and solutions
+- **Manual testing**: Checklist after WACK passes
+
+## Testing Locally (Manual Verification)
+
+After WACK passes, manually verify the package:
 
 1. **Install locally**:
    - Double-click the `.msix` file
@@ -139,6 +324,8 @@ Before submitting to the Store, test the MSIX package:
    - Test all game features
    - Verify saved progress works
    - Check for crashes or errors
+   - Test window resizing
+   - Verify keyboard shortcuts (Ctrl+Z, Escape)
 
 3. **Uninstall** (if needed):
    - Settings → Apps → HexBuzz → Uninstall
