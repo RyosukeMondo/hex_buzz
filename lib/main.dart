@@ -14,10 +14,12 @@ import 'domain/data/test_level.dart';
 import 'domain/models/game_mode.dart';
 import 'domain/services/game_engine.dart';
 import 'domain/services/level_repository.dart';
+import 'domain/services/notification_service.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/daily_challenge_provider.dart';
 import 'presentation/providers/game_provider.dart';
 import 'presentation/providers/leaderboard_provider.dart';
+import 'presentation/providers/notification_provider.dart';
 import 'presentation/providers/progress_provider.dart';
 import 'presentation/screens/auth/auth_screen.dart';
 import 'presentation/screens/daily_challenge/daily_challenge_screen.dart';
@@ -54,12 +56,18 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   if (kDebugMode) debugPrint('Firebase initialized');
 
+  // Initialize SharedPreferences (needed for notification preferences)
+  final sharedPreferences = await SharedPreferences.getInstance();
+
   // Initialize all repositories
   final levelRepository = await _initializeLevelRepository();
   final progressRepository = await _initializeProgressRepository();
   final authRepository = _initializeAuthRepository();
   final (leaderboardRepository, dailyChallengeRepository) =
       _initializeFirebaseRepositories();
+
+  // Initialize notification service (without user ID initially)
+  final notificationService = createNotificationService();
 
   // Start debug API server if enabled
   DebugApiServer? apiServer;
@@ -77,12 +85,17 @@ void main() async {
         dailyChallengeRepositoryProvider.overrideWithValue(
           dailyChallengeRepository,
         ),
+        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+        notificationServiceProvider.overrideWithValue(notificationService),
         if (apiServer != null)
           debugApiServerProvider.overrideWithValue(apiServer),
       ],
       child: const HexBuzzApp(),
     ),
   );
+
+  // Initialize notification service after app is running
+  _initializeNotificationService(notificationService, sharedPreferences);
 }
 
 /// Initializes and pre-loads the level repository.
@@ -154,6 +167,56 @@ Future<DebugApiServer> _startDebugApiServer() async {
 
 /// Provider for the debug API server (available only in debug mode with ENABLE_API).
 final debugApiServerProvider = Provider<DebugApiServer?>((ref) => null);
+
+/// Initializes the notification service and subscribes to user-enabled topics.
+///
+/// This function is called after the app starts to set up push notification
+/// handling. It initializes the notification service, requests permissions,
+/// and subscribes to topics based on user preferences stored in SharedPreferences.
+void _initializeNotificationService(
+  NotificationService notificationService,
+  SharedPreferences prefs,
+) async {
+  try {
+    // Request permission and initialize
+    final hasPermission = await notificationService.requestPermission();
+    if (!hasPermission) {
+      if (kDebugMode) {
+        debugPrint(
+          'Notification permission not granted, skipping initialization',
+        );
+      }
+      return;
+    }
+
+    final initialized = await notificationService.initialize();
+    if (!initialized) {
+      if (kDebugMode) debugPrint('Failed to initialize notification service');
+      return;
+    }
+
+    if (kDebugMode) debugPrint('Notification service initialized');
+
+    // Subscribe to enabled topics based on user preferences
+    await initializeNotificationSubscriptions(notificationService, prefs);
+
+    // Listen to incoming notification messages
+    notificationService.onMessageReceived.listen((message) {
+      if (kDebugMode) {
+        debugPrint('Notification received: $message');
+      }
+      // TODO: Handle notification navigation and UI display
+      // For example:
+      // - Navigate to leaderboard on rank change notification
+      // - Navigate to daily challenge on new challenge notification
+      // - Show foreground notification toast/snackbar
+    });
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('Error initializing notification service: $e');
+    }
+  }
+}
 
 class HexBuzzApp extends StatelessWidget {
   const HexBuzzApp({super.key});

@@ -1,28 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../domain/services/notification_service.dart';
+import '../../providers/notification_provider.dart';
 import '../../theme/honey_theme.dart';
-
-/// Notification preferences keys for SharedPreferences.
-class NotificationPrefs {
-  static const String dailyChallengeKey = 'notification_daily_challenge';
-  static const String rankChangeKey = 'notification_rank_change';
-  static const String reEngagementKey = 'notification_re_engagement';
-}
-
-/// Provider for SharedPreferences instance.
-final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
-  throw UnimplementedError('SharedPreferences must be overridden in main.dart');
-});
-
-/// Provider for NotificationService instance.
-final notificationServiceProvider = Provider<NotificationService>((ref) {
-  throw UnimplementedError(
-    'NotificationService must be overridden in main.dart',
-  );
-});
 
 /// Notification settings screen allowing users to control notification preferences.
 ///
