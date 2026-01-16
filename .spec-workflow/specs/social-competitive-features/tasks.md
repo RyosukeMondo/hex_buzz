@@ -268,7 +268,7 @@
   - _Requirements: 1.4, 2.1, 3.1_
   - _Prompt: Role: Flutter Developer | Task: Modify LevelSelectScreen in lib/presentation/screens/level_select/level_select_screen.dart to add Leaderboard and Daily Challenge buttons in header, show user avatar/name when logged in, add notification badge on Daily Challenge if not completed today | Restrictions: Maintain existing layout, add buttons without cluttering, use icons for buttons, show badges appropriately | Success: Navigation buttons accessible, daily challenge badge shows correctly, user info displays when logged in_
 
-- [ ] 6.6 Update GameScreen to submit scores after completion
+- [x] 6.6 Update GameScreen to submit scores after completion
   - File: `lib/presentation/screens/game/game_screen.dart` (modify)
   - After level completion, submit score to LeaderboardProvider
   - Show rank change notification if rank improved
