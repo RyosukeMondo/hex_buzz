@@ -129,29 +129,80 @@ class LevelSelectScreen extends ConsumerWidget {
 
   Widget _buildTitleRow(BuildContext context, WidgetRef ref, User? user) {
     final isLoggedIn = user != null;
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(width: isLoggedIn ? 40 : 0),
+            Expanded(
+              child: Text(
+                'HexBuzz',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: HoneyTheme.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            isLoggedIn
+                ? IconButton(
+                    onPressed: () => _handleLogout(context, ref),
+                    icon: const Icon(Icons.logout),
+                    color: HoneyTheme.textPrimary,
+                    tooltip: 'Logout',
+                  )
+                : const SizedBox(width: 40),
+          ],
+        ),
+        const SizedBox(height: HoneyTheme.spacingMd),
+        _buildNavigationButtons(context),
+      ],
+    );
+  }
+
+  Widget _buildNavigationButtons(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        SizedBox(width: isLoggedIn ? 40 : 0),
-        Expanded(
-          child: Text(
-            'HexBuzz',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: HoneyTheme.textPrimary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        _buildNavButton(
+          context,
+          label: 'Daily Challenge',
+          icon: Icons.event,
+          onPressed: () =>
+              Navigator.of(context).pushNamed(AppRoutes.dailyChallenge),
         ),
-        isLoggedIn
-            ? IconButton(
-                onPressed: () => _handleLogout(context, ref),
-                icon: const Icon(Icons.logout),
-                color: HoneyTheme.textPrimary,
-                tooltip: 'Logout',
-              )
-            : const SizedBox(width: 40),
+        const SizedBox(width: HoneyTheme.spacingMd),
+        _buildNavButton(
+          context,
+          label: 'Leaderboard',
+          icon: Icons.leaderboard,
+          onPressed: () =>
+              Navigator.of(context).pushNamed(AppRoutes.leaderboard),
+        ),
       ],
+    );
+  }
+
+  Widget _buildNavButton(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: HoneyTheme.brownAccent,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(
+          horizontal: HoneyTheme.spacingMd,
+          vertical: HoneyTheme.spacingSm,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 
