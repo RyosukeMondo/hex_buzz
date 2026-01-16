@@ -2,29 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hex_buzz/domain/models/auth_result.dart';
 import 'package:hex_buzz/domain/models/user.dart';
-import 'package:hex_buzz/domain/services/auth_repository.dart';
 import 'package:hex_buzz/presentation/providers/auth_provider.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockAuthRepository extends Mock implements AuthRepository {}
+import 'auth_test_helpers.dart';
 
 void main() {
   late MockAuthRepository mockRepository;
   late ProviderContainer container;
-
-  final testUser = User(
-    id: 'test-id',
-    username: 'testuser',
-    createdAt: DateTime(2024, 1, 1),
-    isGuest: false,
-  );
-
-  final guestUser = User(
-    id: 'guest',
-    username: 'Guest',
-    createdAt: DateTime(2024, 1, 1),
-    isGuest: true,
-  );
 
   setUp(() {
     mockRepository = MockAuthRepository();
