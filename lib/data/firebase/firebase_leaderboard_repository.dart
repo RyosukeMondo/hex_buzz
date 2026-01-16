@@ -34,7 +34,7 @@ class FirebaseLeaderboardRepository implements LeaderboardRepository {
         final skipSnapshot = await _firestore
             .collection('leaderboard')
             .orderBy('totalStars', descending: true)
-            .orderBy('lastUpdated', descending: false)
+            .orderBy('updatedAt', descending: false)
             .limit(offset)
             .get();
 
@@ -54,7 +54,17 @@ class FirebaseLeaderboardRepository implements LeaderboardRepository {
       for (var doc in snapshot.docs) {
         try {
           final data = doc.data() as Map<String, dynamic>;
-          final entry = LeaderboardEntry.fromJson({...data, 'rank': rank});
+          // Convert Timestamp to ISO string for LeaderboardEntry.fromJson
+          final updatedAt = data['updatedAt'];
+          final updatedAtStr = updatedAt is Timestamp
+              ? updatedAt.toDate().toIso8601String()
+              : updatedAt?.toString() ?? DateTime.now().toIso8601String();
+
+          final entry = LeaderboardEntry.fromJson({
+            ...data,
+            'updatedAt': updatedAtStr,
+            'rank': rank,
+          });
           entries.add(entry);
           rank++;
         } catch (e) {
@@ -95,7 +105,17 @@ class FirebaseLeaderboardRepository implements LeaderboardRepository {
 
       final rank = (higherRankCount.count ?? 0) + 1;
 
-      return LeaderboardEntry.fromJson({...userData, 'rank': rank});
+      // Convert Timestamp to ISO string
+      final updatedAt = userData['updatedAt'];
+      final updatedAtStr = updatedAt is Timestamp
+          ? updatedAt.toDate().toIso8601String()
+          : updatedAt?.toString() ?? DateTime.now().toIso8601String();
+
+      return LeaderboardEntry.fromJson({
+        ...userData,
+        'updatedAt': updatedAtStr,
+        'rank': rank,
+      });
     } catch (e) {
       return null;
     }
@@ -214,7 +234,17 @@ class FirebaseLeaderboardRepository implements LeaderboardRepository {
           for (var doc in snapshot.docs) {
             try {
               final data = doc.data();
-              final entry = LeaderboardEntry.fromJson({...data, 'rank': rank});
+              // Convert Timestamp to ISO string
+              final updatedAt = data['updatedAt'];
+              final updatedAtStr = updatedAt is Timestamp
+                  ? updatedAt.toDate().toIso8601String()
+                  : updatedAt?.toString() ?? DateTime.now().toIso8601String();
+
+              final entry = LeaderboardEntry.fromJson({
+                ...data,
+                'updatedAt': updatedAtStr,
+                'rank': rank,
+              });
               entries.add(entry);
               rank++;
             } catch (e) {

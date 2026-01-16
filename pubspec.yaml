@@ -47,6 +47,7 @@ dev_dependencies:
 
   # Mocking for tests
   mocktail: ^1.0.4
+  fake_cloud_firestore: ^3.0.6
 
   # Integration testing
   integration_test:
