@@ -2,16 +2,60 @@
 
 Welcome to HexBuzz, a hexagonal puzzle game where you draw a single path through all cells!
 
+## Quick Start
+
+**New to HexBuzz?** Here's how to get started in 30 seconds:
+
+1. **Launch the app** on your device (Android, iOS, Web, or Windows)
+2. **Tap anywhere** on the welcome screen to begin
+3. **Choose**: Play as guest or sign in with Google
+4. **Select a level** from the grid
+5. **Tap hexagonal cells** to draw your path through all cells
+6. **Complete the puzzle** to earn stars!
+
+**Want to compete?** Sign in with Google to access:
+- 🏆 Global leaderboards
+- 📅 Daily challenges
+- ☁️ Cloud sync across devices
+- 🔔 Rank change notifications
+
 ## Table of Contents
 
 1. [Getting Started](#getting-started)
+   - [Installation](#installation)
+   - [First Launch](#first-launch)
 2. [Game Basics](#game-basics)
+   - [Objective](#objective)
+   - [How to Play](#how-to-play)
+   - [Controls](#controls)
+   - [Star Ratings](#star-ratings)
 3. [Authentication](#authentication)
+   - [Sign In with Google](#sign-in-with-google)
+   - [What's Included with Sign In](#whats-included-with-sign-in)
+   - [Sign Out](#sign-out)
 4. [Leaderboards](#leaderboards)
+   - [Global Leaderboard](#global-leaderboard)
+   - [Daily Challenge Leaderboard](#daily-challenge-leaderboard)
 5. [Daily Challenges](#daily-challenges)
+   - [What Are Daily Challenges?](#what-are-daily-challenges)
+   - [Playing Daily Challenges](#playing-daily-challenges)
+   - [Daily Challenge Scoring](#daily-challenge-scoring)
+   - [Notifications](#notifications)
 6. [Notification Settings](#notification-settings)
+   - [Managing Notifications](#managing-notifications)
+   - [Permission Requirements](#permission-requirements)
 7. [Game Modes](#game-modes)
+   - [Practice Mode](#practice-mode)
+   - [Level Progression](#level-progression)
 8. [Tips and Strategies](#tips-and-strategies)
+   - [General Tips](#general-tips)
+   - [Advanced Strategies](#advanced-strategies)
+   - [Earning 3 Stars](#earning-3-stars)
+9. [Platform-Specific Features](#platform-specific-features)
+10. [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq)
+11. [Troubleshooting](#troubleshooting)
+12. [Support](#support)
+13. [Privacy](#privacy)
 
 ## Getting Started
 
@@ -46,10 +90,16 @@ The goal of HexBuzz is to draw a single continuous path through all hexagonal ce
 
 ### Controls
 
+#### Touch/Mouse Controls
 - **Tap/Click**: Select a cell to add it to your path
-- **Undo**: Use the undo button (or Ctrl+Z on Windows) to step back
-- **Reset**: Clear the entire path and start over
-- **Back**: Return to the level selection screen
+- **Undo Button**: Tap to step back one move
+- **Reset Button**: Clear the entire path and start over
+- **Back Button**: Return to the level selection screen
+
+#### Keyboard Shortcuts (Windows/Desktop)
+- **Ctrl+Z**: Undo last move
+- **Escape**: Go back to previous screen
+- **Hover**: Mouse hover highlights interactive elements
 
 ### Star Ratings
 
@@ -159,6 +209,12 @@ HexBuzz needs notification permission to send you alerts. If you declined permis
 2. Tap **Request Permission**
 3. Grant the permission in your device settings
 
+**Platform Notes:**
+- **Android**: Permission requested when first needed; can be managed in app settings
+- **iOS**: Must be granted explicitly; go to Settings → HexBuzz → Notifications
+- **Web**: Browser notification permission; click "Allow" in browser prompt
+- **Windows**: Windows notification settings; check Windows Settings → Notifications
+
 ## Game Modes
 
 ### Practice Mode
@@ -203,6 +259,50 @@ To achieve 3-star ratings:
 - Learn from failed attempts
 - Study optimal solutions for similar puzzles
 
+## Frequently Asked Questions (FAQ)
+
+### General Questions
+
+**Q: Is HexBuzz free to play?**
+A: Yes! HexBuzz is completely free with ad-supported monetization.
+
+**Q: Do I need an internet connection?**
+A: No, you can play all levels offline as a guest. Internet is only required for online features like leaderboards, daily challenges, and cloud sync.
+
+**Q: Can I play across multiple devices?**
+A: Yes! Sign in with Google on all devices to sync your progress automatically.
+
+**Q: How often do daily challenges refresh?**
+A: A new daily challenge is available every day at midnight UTC.
+
+**Q: Can I replay daily challenges?**
+A: Yes, you can replay the daily challenge multiple times to improve your score and leaderboard position.
+
+**Q: What determines my leaderboard rank?**
+A: Your rank is based on total stars earned across all levels. The more stars you collect, the higher your rank.
+
+### Gameplay Questions
+
+**Q: How do I get 3 stars on a level?**
+A: Earn 3 stars by completing the puzzle with optimal efficiency (minimal moves and quick completion time).
+
+**Q: Can I undo moves?**
+A: Yes! Use the undo button or press Ctrl+Z (Windows) to step back through your moves.
+
+**Q: Is there a time limit?**
+A: No time limits in regular play. Take your time to solve each puzzle. Daily challenges track completion time for leaderboard ranking.
+
+### Account & Privacy
+
+**Q: What data does HexBuzz collect?**
+A: We only collect: Google account info (email, name, avatar), game scores, and device notification tokens (if granted). See our [Privacy Policy](https://hexbuzz.web.app/privacy-policy.html) for details.
+
+**Q: Can I delete my account?**
+A: Yes, you can request account deletion and data removal. Contact support or see the Privacy Policy for instructions.
+
+**Q: Why does HexBuzz need Google Sign-In?**
+A: Google Sign-In provides secure authentication and enables cloud features like leaderboards, daily challenges, and cross-device sync.
+
 ## Troubleshooting
 
 ### Game Issues
@@ -211,25 +311,67 @@ To achieve 3-star ratings:
 - **Solution**: Ensure you're signed in with Google for cloud sync
 
 **Problem**: Notifications not working
-- **Solution**: Check notification settings and device permissions
+- **Solution**: Check notification settings and device permissions (see Platform Notes above)
 
 **Problem**: Leaderboard not updating
 - **Solution**: Pull down to refresh, or check your internet connection
 
+**Problem**: Game crashes or freezes
+- **Solution**: Restart the app. If issues persist, try reinstalling (your cloud progress will be preserved if signed in)
+
+**Problem**: Daily challenge not appearing
+- **Solution**: Check your internet connection and ensure it's past midnight UTC. Pull to refresh the challenge screen.
+
 ### Account Issues
 
 **Problem**: Can't sign in
-- **Solution**: Ensure you have an active internet connection and valid Google account
+- **Solution**: Ensure you have an active internet connection and valid Google account. Try signing out of Google in your browser/device and signing back in.
 
 **Problem**: Progress lost after reinstall
 - **Solution**: Sign in with the same Google account to restore cloud progress
 
+**Problem**: Wrong account signed in
+- **Solution**: Sign out from the level selection screen (tap your avatar), then sign in with the correct Google account
+
+### Performance Issues
+
+**Problem**: App running slowly
+- **Solution**: Try disabling visual effects in settings. Ensure your device meets minimum requirements.
+
+**Problem**: High battery usage
+- **Solution**: Disable visual effects and reduce screen brightness. Close background apps.
+
+**Problem**: Large file size (Windows)
+- **Solution**: This is normal for Windows MSIX packages. Ensure you have adequate storage space.
+
+## Platform-Specific Features
+
+### Windows Desktop
+
+- **Window Resizing**: Fully resizable window (minimum 720×480)
+- **Keyboard Shortcuts**: Full support for Ctrl+Z (undo) and Escape (back)
+- **Mouse Hover**: Interactive elements highlight on hover
+- **Native Window Controls**: Standard Windows minimize, maximize, close buttons
+
+### Mobile (Android/iOS)
+
+- **Touch Optimized**: Large touch targets for comfortable play
+- **Portrait/Landscape**: Automatically adapts to device orientation
+- **Haptic Feedback**: Subtle vibrations for game events (if enabled in device settings)
+
+### Web Browser
+
+- **Cross-Browser**: Works in Chrome, Firefox, Safari, Edge
+- **No Installation**: Play instantly without downloading
+- **Same Features**: Full feature parity with native apps
+- **Cloud Sync**: Progress syncs when signed in
+
 ## Support
 
 For additional help or to report issues:
-- Visit our support page
-- Contact us through the app settings
-- Join our community forums
+- Check our [Privacy Policy](https://hexbuzz.web.app/privacy-policy.html) for data handling information
+- Review our [Terms of Service](https://hexbuzz.web.app/terms-of-service.html) for usage guidelines
+- Report technical issues through the GitHub repository
 
 ## Privacy
 
