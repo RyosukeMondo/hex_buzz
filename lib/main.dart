@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'data/firebase/firebase_auth_repository.dart';
 import 'data/firebase/firebase_daily_challenge_repository.dart';
 import 'data/firebase/firebase_leaderboard_repository.dart';
-import 'data/local/local_auth_repository.dart';
 import 'data/local/local_progress_repository.dart';
 import 'debug/api/server.dart';
 import 'domain/data/test_level.dart';
@@ -55,8 +55,8 @@ void main() async {
 
   // Initialize all repositories
   final levelRepository = await _initializeLevelRepository();
-  final (progressRepository, authRepository) =
-      await _initializeLocalRepositories();
+  final progressRepository = await _initializeProgressRepository();
+  final authRepository = _initializeAuthRepository();
   final (leaderboardRepository, dailyChallengeRepository) =
       _initializeFirebaseRepositories();
 
@@ -104,14 +104,19 @@ Future<LevelRepository> _initializeLevelRepository() async {
   return repository;
 }
 
-/// Initializes local storage repositories.
-Future<(LocalProgressRepository, LocalAuthRepository)>
-_initializeLocalRepositories() async {
+/// Initializes local progress repository.
+Future<LocalProgressRepository> _initializeProgressRepository() async {
   final prefs = await SharedPreferences.getInstance();
   final progressRepo = LocalProgressRepository(prefs);
-  final authRepo = LocalAuthRepository(prefs);
-  if (kDebugMode) debugPrint('Local repositories initialized');
-  return (progressRepo, authRepo);
+  if (kDebugMode) debugPrint('Progress repository initialized');
+  return progressRepo;
+}
+
+/// Initializes Firebase auth repository.
+FirebaseAuthRepository _initializeAuthRepository() {
+  final authRepo = FirebaseAuthRepository();
+  if (kDebugMode) debugPrint('Firebase auth repository initialized');
+  return authRepo;
 }
 
 /// Initializes Firebase repositories.
