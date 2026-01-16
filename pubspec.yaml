@@ -54,6 +54,9 @@ dev_dependencies:
     sdk: flutter
   flutter_launcher_icons: ^0.13.1
 
+  # Windows MSIX packaging
+  msix: ^3.16.8
+
 flutter_launcher_icons:
   android: true
   ios: true
@@ -70,3 +73,13 @@ flutter:
     - assets/levels/
     - assets/images/
     - assets/icons/
+
+msix_config:
+  display_name: HexBuzz
+  publisher_display_name: HexBuzz Games
+  identity_name: com.hexbuzz.hexbuzz
+  msix_version: 1.0.0.0
+  logo_path: assets/icons/app_icon.png
+  capabilities: internetClient
+  store: true
+  languages: en-us
