@@ -32,7 +32,7 @@
 
 ## Phase 2: Domain Models (Pure Dart)
 
-- [ ] 2.1 Enhance User model with social fields
+- [x] 2.1 Enhance User model with social fields
   - File: `lib/domain/models/user.dart` (modify existing)
   - Add fields: `uid`, `email`, `displayName`, `photoURL`, `totalStars`, `rank`, `createdAt`, `lastLoginAt`
   - Add JSON serialization for Firestore
@@ -41,7 +41,7 @@
   - _Requirements: 1.1, 1.4, 2.2_
   - _Prompt: Role: Dart Developer | Task: Enhance existing User model in lib/domain/models/user.dart by adding fields for uid, email, displayName, photoURL, totalStars, rank, createdAt, lastLoginAt with JSON serialization methods (toJson/fromJson) for Firestore integration | Restrictions: Pure Dart only, no Flutter/Firebase imports, maintain immutability, keep existing fields backward compatible | Success: Model compiles, JSON serialization works both ways, all fields properly typed_
 
-- [ ] 2.2 Create AuthResult model
+- [x] 2.2 Create AuthResult model
   - File: `lib/domain/models/auth_result.dart`
   - Define sealed class with `success(User)` and `failure(String error)` cases
   - Purpose: Type-safe authentication result
@@ -49,7 +49,7 @@
   - _Requirements: 1.7_
   - _Prompt: Role: Dart Developer | Task: Create AuthResult model in lib/domain/models/auth_result.dart as a sealed class with success and failure cases, where success contains User and failure contains error message | Restrictions: Pure Dart, use const constructors, make it a sealed class or use factory pattern | Success: Model compiles, pattern matching works, immutable_
 
-- [ ] 2.3 Create LeaderboardEntry model
+- [x] 2.3 Create LeaderboardEntry model
   - File: `lib/domain/models/leaderboard_entry.dart`
   - Define fields: `userId`, `username`, `avatarUrl`, `totalStars`, `rank`, `updatedAt`, optional `completionTime` and `stars` for daily challenges
   - Add JSON serialization for Firestore
@@ -58,7 +58,7 @@
   - _Requirements: 2.2, 2.3, 3.4_
   - _Prompt: Role: Dart Developer | Task: Create LeaderboardEntry model in lib/domain/models/leaderboard_entry.dart with fields for userId, username, avatarUrl, totalStars, rank, updatedAt, and optional completionTime/stars for daily challenges, including JSON serialization | Restrictions: Pure Dart, immutable, JSON round-trip must preserve all fields | Success: Model compiles, serialization works, optional fields handled correctly_
 
-- [ ] 2.4 Create DailyChallenge model
+- [x] 2.4 Create DailyChallenge model
   - File: `lib/domain/models/daily_challenge.dart`
   - Define fields: `id` (date string), `date`, `level` (Level model), `completionCount`, optional user data (`userBestTime`, `userStars`, `userRank`)
   - Add JSON serialization
@@ -67,7 +67,7 @@
   - _Requirements: 3.1, 3.2, 3.4_
   - _Prompt: Role: Dart Developer | Task: Create DailyChallenge model in lib/domain/models/daily_challenge.dart with fields for id (date YYYY-MM-DD), date, level (Level model), completionCount, and optional user completion data (userBestTime, userStars, userRank), including JSON serialization | Restrictions: Pure Dart, reuse existing Level model, handle optional fields properly | Success: Model compiles, Level integration works, JSON serialization handles nested Level_
 
-- [ ] 2.5 Write unit tests for all new models
+- [x] 2.5 Write unit tests for all new models
   - Files: `test/domain/models/user_test.dart`, `test/domain/models/auth_result_test.dart`, `test/domain/models/leaderboard_entry_test.dart`, `test/domain/models/daily_challenge_test.dart`
   - Test JSON serialization/deserialization
   - Test model equality and copying
