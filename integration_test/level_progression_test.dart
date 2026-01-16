@@ -46,6 +46,14 @@ class TestAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AuthResult> signInWithGoogle() async {
+    return AuthSuccess(_guestUser);
+  }
+
+  @override
+  Future<void> signOut() async {}
+
+  @override
   Future<void> logout() async {}
 
   @override

@@ -76,6 +76,25 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AuthResult> signInWithGoogle() async {
+    // Mock Google Sign-In for testing
+    final user = User(
+      id: 'google_${DateTime.now().millisecondsSinceEpoch}',
+      username: 'TestUser',
+      createdAt: DateTime.now(),
+      isGuest: false,
+    );
+    _currentUser = user;
+    _authController.add(user);
+    return AuthSuccess(user);
+  }
+
+  @override
+  Future<void> signOut() async {
+    await logout();
+  }
+
+  @override
   Future<void> logout() async {
     _currentUser = null;
     _authController.add(null);

@@ -88,6 +88,19 @@ class LocalAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AuthResult> signInWithGoogle() async {
+    // Google Sign-In not supported in local auth repository
+    return const AuthFailure(
+      'Google Sign-In not supported in local mode. Use Firebase auth repository.',
+    );
+  }
+
+  @override
+  Future<void> signOut() async {
+    await logout();
+  }
+
+  @override
   Future<void> logout() async {
     await _prefs.remove(_currentUserKey);
     _authStateController.add(null);

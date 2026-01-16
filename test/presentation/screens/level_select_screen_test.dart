@@ -1,15 +1,9 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hex_buzz/domain/models/auth_result.dart';
 import 'package:hex_buzz/domain/models/hex_cell.dart';
 import 'package:hex_buzz/domain/models/level.dart';
 import 'package:hex_buzz/domain/models/progress_state.dart';
-import 'package:hex_buzz/domain/models/user.dart';
-import 'package:hex_buzz/domain/services/auth_repository.dart';
-import 'package:hex_buzz/domain/services/level_repository.dart';
 import 'package:hex_buzz/domain/services/progress_repository.dart';
 import 'package:hex_buzz/main.dart';
 import 'package:hex_buzz/presentation/providers/auth_provider.dart';
@@ -20,95 +14,7 @@ import 'package:hex_buzz/presentation/screens/level_select/level_select_screen.d
 import 'package:hex_buzz/presentation/theme/honey_theme.dart';
 import 'package:hex_buzz/presentation/widgets/level_cell/level_cell_widget.dart';
 
-/// Mock auth repository for testing that returns a guest user.
-class MockAuthRepository implements AuthRepository {
-  final User _guestUser = User.guest();
-
-  @override
-  Future<User?> getCurrentUser() async => _guestUser;
-
-  @override
-  Future<AuthResult> login(String username, String password) async {
-    return AuthSuccess(_guestUser);
-  }
-
-  @override
-  Future<AuthResult> register(String username, String password) async {
-    return AuthSuccess(_guestUser);
-  }
-
-  @override
-  Future<void> logout() async {}
-
-  @override
-  Future<AuthResult> loginAsGuest() async {
-    return AuthSuccess(_guestUser);
-  }
-
-  @override
-  Stream<User?> authStateChanges() {
-    return Stream.value(_guestUser);
-  }
-}
-
-/// Mock progress repository for testing.
-///
-/// Stores progress per-user. Uses 'guest' as default for tests without auth.
-class MockProgressRepository implements ProgressRepository {
-  final Map<String, ProgressState> _userProgress = {};
-
-  MockProgressRepository([ProgressState? initialState]) {
-    if (initialState != null) {
-      _userProgress['guest'] = initialState;
-    }
-  }
-
-  @override
-  Future<ProgressState> loadForUser(String userId) async {
-    return _userProgress[userId] ?? const ProgressState.empty();
-  }
-
-  @override
-  Future<void> saveForUser(String userId, ProgressState state) async {
-    _userProgress[userId] = state;
-  }
-
-  @override
-  Future<void> resetForUser(String userId) async {
-    _userProgress.remove(userId);
-  }
-}
-
-/// Mock level repository for testing.
-class MockLevelRepository extends LevelRepository {
-  final List<Level> _levels;
-
-  MockLevelRepository(this._levels);
-
-  @override
-  bool get isLoaded => true; // Always loaded for tests
-
-  @override
-  int get totalLevelCount => _levels.length;
-
-  @override
-  Future<void> load() async {
-    // No-op, already loaded
-  }
-
-  @override
-  Level? getLevelByIndex(int index) {
-    if (index < 0 || index >= _levels.length) return null;
-    return _levels[index];
-  }
-
-  @override
-  Level? getRandomLevel(int size) {
-    final matching = _levels.where((l) => l.size == size).toList();
-    if (matching.isEmpty) return null;
-    return matching[Random().nextInt(matching.length)];
-  }
-}
+import 'test_mocks.dart';
 
 /// Creates a simple test level.
 Level createTestLevel({int size = 2, String? id}) {
