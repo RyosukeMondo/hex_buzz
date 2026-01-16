@@ -381,11 +381,11 @@ class DailyChallengeScreen extends ConsumerWidget {
     WidgetRef ref,
     DailyChallenge challenge,
   ) {
-    // TODO: Extend GameProvider to support starting with a specific Level
-    // For now, just navigate to game screen
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => const GameScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => GameScreen(dailyChallenge: challenge),
+      ),
+    );
   }
 
   String _formatDate(DateTime date) {

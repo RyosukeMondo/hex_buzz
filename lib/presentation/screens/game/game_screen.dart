@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../domain/models/daily_challenge.dart';
+import '../../../domain/models/game_mode.dart';
 import '../../../domain/models/hex_cell.dart';
 import '../../../domain/services/star_calculator.dart';
 import '../../../main.dart';
@@ -16,11 +18,17 @@ import '../../widgets/hex_grid/hex_grid_widget.dart';
 /// Accepts an optional [levelIndex] parameter to load a specific level.
 /// When [levelIndex] is provided, the game tracks progress and displays
 /// star ratings on completion.
+///
+/// Accepts an optional [dailyChallenge] parameter to play the daily challenge.
+/// When provided, this takes precedence over [levelIndex].
 class GameScreen extends ConsumerStatefulWidget {
   /// Index of the level to load (null for random/practice mode).
   final int? levelIndex;
 
-  const GameScreen({super.key, this.levelIndex});
+  /// Daily challenge to play (null for regular levels).
+  final DailyChallenge? dailyChallenge;
+
+  const GameScreen({super.key, this.levelIndex, this.dailyChallenge});
 
   @override
   ConsumerState<GameScreen> createState() => _GameScreenState();
@@ -50,6 +58,44 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Wrap in ProviderScope if daily challenge to override config
+    if (widget.dailyChallenge != null) {
+      return ProviderScope(
+        overrides: [
+          gameConfigProvider.overrideWithValue(
+            GameConfig(
+              level: widget.dailyChallenge!.level,
+              mode: GameMode.daily,
+              isDailyChallenge: true,
+            ),
+          ),
+        ],
+        child: _GameScreenContent(
+          levelIndex: widget.levelIndex,
+          isDailyChallenge: true,
+        ),
+      );
+    }
+
+    return _GameScreenContent(
+      levelIndex: widget.levelIndex,
+      isDailyChallenge: false,
+    );
+  }
+}
+
+/// Internal content widget for GameScreen.
+class _GameScreenContent extends ConsumerWidget {
+  final int? levelIndex;
+  final bool isDailyChallenge;
+
+  const _GameScreenContent({
+    required this.levelIndex,
+    required this.isDailyChallenge,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final gameState = ref.watch(gameProvider);
     final visitedCells = gameState.path.toSet();
 
@@ -65,8 +111,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             onPressed: () => ref.read(gameProvider.notifier).reset(),
             tooltip: 'Reset (same level)',
           ),
-          // New level button (only in practice mode)
-          if (widget.levelIndex == null)
+          // New level button (only in practice mode, not daily challenge)
+          if (levelIndex == null && !isDailyChallenge)
             IconButton(
               icon: const Icon(Icons.skip_next),
               onPressed: () =>
@@ -86,8 +132,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 
   Widget _buildTitle() {
-    if (widget.levelIndex != null) {
-      return Text('Level ${widget.levelIndex! + 1}');
+    if (isDailyChallenge) {
+      return const Text('Daily Challenge');
+    }
+    if (levelIndex != null) {
+      return Text('Level ${levelIndex! + 1}');
     }
     return const Text('HexBuzz');
   }
@@ -139,8 +188,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Retry'),
             ),
-            // Only show Next button in practice mode
-            if (widget.levelIndex == null) ...[
+            // Only show Next button in practice mode (not daily challenge)
+            if (levelIndex == null && !isDailyChallenge) ...[
               const SizedBox(width: 8),
               FilledButton.icon(
                 onPressed: () => notifier.generateNewLevel(),
@@ -210,23 +259,24 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final stars = StarCalculator.calculateStars(elapsedTime);
     final repository = ref.read(levelRepositoryProvider);
     final hasNextLevel =
-        widget.levelIndex != null &&
-        widget.levelIndex! + 1 < repository.totalLevelCount;
+        levelIndex != null && levelIndex! + 1 < repository.totalLevelCount;
 
     return CompletionOverlay(
       stars: stars,
       completionTime: elapsedTime,
-      hasNextLevel: hasNextLevel,
-      onNextLevel: hasNextLevel ? () => _goToNextLevel(context) : null,
+      hasNextLevel: hasNextLevel && !isDailyChallenge,
+      onNextLevel: hasNextLevel && !isDailyChallenge
+          ? () => _goToNextLevel(context, levelIndex)
+          : null,
       onReplay: () => ref.read(gameProvider.notifier).reset(),
       onLevelSelect: () => _navigateToLevelSelect(context),
     );
   }
 
-  void _goToNextLevel(BuildContext context) {
-    if (widget.levelIndex == null) return;
+  void _goToNextLevel(BuildContext context, int? currentIndex) {
+    if (currentIndex == null) return;
 
-    final nextIndex = widget.levelIndex! + 1;
+    final nextIndex = currentIndex + 1;
     Navigator.of(
       context,
     ).pushReplacementNamed(AppRoutes.game, arguments: nextIndex);
