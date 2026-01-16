@@ -3,8 +3,16 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 
+import '../../domain/services/auth_repository.dart';
+import '../../domain/services/daily_challenge_repository.dart';
+import '../../domain/services/leaderboard_repository.dart';
+import '../../domain/services/notification_service.dart';
+import 'commands/auth_command.dart';
+import 'commands/daily_challenge_command.dart';
 import 'commands/evaluate_command.dart';
 import 'commands/generate_command.dart';
+import 'commands/leaderboard_command.dart';
+import 'commands/notify_command.dart';
 import 'commands/progress_command.dart';
 import 'commands/validate_command.dart';
 
@@ -51,11 +59,15 @@ abstract class JsonCommand extends Command<int> {
 ///
 /// Provides a command-based interface with JSON output for AI agent interaction.
 class CliRunner extends CommandRunner<int> {
-  CliRunner()
-    : super(
-        'honeycomb-cli',
-        'Honeycomb One Pass CLI - Debug and validation tools',
-      ) {
+  CliRunner({
+    AuthRepository? authRepository,
+    LeaderboardRepository? leaderboardRepository,
+    DailyChallengeRepository? dailyChallengeRepository,
+    NotificationService? notificationService,
+  }) : super(
+         'honeycomb-cli',
+         'Honeycomb One Pass CLI - Debug and validation tools',
+       ) {
     argParser.addFlag(
       'version',
       abbr: 'v',
@@ -63,10 +75,25 @@ class CliRunner extends CommandRunner<int> {
       help: 'Show version information',
     );
 
+    // Core game commands
     addCommand(ValidateCommand());
     addCommand(GenerateCommand());
     addCommand(EvaluateCommand());
     addCommand(ProgressCommand());
+
+    // Social & competitive features commands (optional)
+    if (authRepository != null) {
+      addCommand(AuthCommand(authRepository));
+    }
+    if (leaderboardRepository != null) {
+      addCommand(LeaderboardCommand(leaderboardRepository));
+    }
+    if (dailyChallengeRepository != null) {
+      addCommand(DailyChallengeCommand(dailyChallengeRepository));
+    }
+    if (notificationService != null) {
+      addCommand(NotifyCommand(notificationService));
+    }
   }
 
   /// Runs the CLI with the given arguments.
@@ -115,6 +142,7 @@ class CliRunner extends CommandRunner<int> {
   String get usageFooter => '''
 
 Examples:
+  # Game commands
   honeycomb-cli validate --file level.json
   honeycomb-cli validate --level '{"size":3,"cells":[...]}'
   honeycomb-cli generate --size 3
@@ -123,6 +151,27 @@ Examples:
   honeycomb-cli progress get
   honeycomb-cli progress set --level 1 --stars 3
   honeycomb-cli progress reset
+
+  # Authentication commands
+  honeycomb-cli auth login --token <google-token>
+  honeycomb-cli auth logout
+  honeycomb-cli auth whoami
+
+  # Leaderboard commands
+  honeycomb-cli leaderboard get --top 10
+  honeycomb-cli leaderboard get --top 20 --daily
+  honeycomb-cli leaderboard submit --stars 3 --level 5 --time 12345
+  honeycomb-cli leaderboard rank
+
+  # Daily challenge commands
+  honeycomb-cli daily-challenge get-today
+  honeycomb-cli daily-challenge complete --stars 3 --time 12345
+  honeycomb-cli daily-challenge check-completed
+
+  # Notification commands
+  honeycomb-cli notify test --message "Test message"
+  honeycomb-cli notify get-token
+  honeycomb-cli notify request-permission
 
 Output is JSON formatted for AI agent parsing.''';
 }
