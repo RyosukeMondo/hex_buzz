@@ -112,7 +112,7 @@
 
 ## Phase 4: Data Layer - Firebase Implementations
 
-- [ ] 4.1 Implement FirebaseAuthRepository
+- [x] 4.1 Implement FirebaseAuthRepository
   - File: `lib/data/firebase/firebase_auth_repository.dart`
   - Implement `AuthRepository` interface using `firebase_auth` and `google_sign_in`
   - Handle Google OAuth flow with error handling
