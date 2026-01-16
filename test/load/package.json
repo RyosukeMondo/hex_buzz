@@ -1,0 +1,28 @@
+{
+  "name": "hex-buzz-load-tests",
+  "version": "1.0.0",
+  "description": "Load testing suite for HexBuzz Firebase Cloud Functions and Firestore",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:score-submission": "node --experimental-modules src/test-score-submission.js",
+    "test:daily-challenge": "node --experimental-modules src/test-daily-challenge.js",
+    "test:leaderboard": "node --experimental-modules src/test-leaderboard.js",
+    "test:notifications": "node --experimental-modules src/test-notifications.js",
+    "test:all": "npm run test:score-submission && npm run test:leaderboard && npm run test:daily-challenge",
+    "test:concurrent": "node --experimental-modules src/test-concurrent-users.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase": "^10.8.0",
+    "chalk": "^5.3.0",
+    "cli-progress": "^3.12.0",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
