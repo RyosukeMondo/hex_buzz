@@ -132,7 +132,7 @@
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7_
   - _Prompt: Role: Flutter Developer with Firestore expertise | Task: Implement FirestoreLeaderboardRepository in lib/data/firebase/firestore_leaderboard_repository.dart using cloud_firestore, implementing all leaderboard operations with pagination (50 per page), local caching (5-minute TTL), and offline support | Restrictions: Use Firestore best practices, implement efficient queries, handle offline gracefully, minimize reads | Success: Leaderboard loads in <2 seconds, pagination works, offline mode shows cached data, queries optimized_
 
-- [ ] 4.3 Implement FirestoreDailyChallengeRepository
+- [x] 4.3 Implement FirestoreDailyChallengeRepository
   - File: `lib/data/firebase/firestore_daily_challenge_repository.dart`
   - Implement `DailyChallengeRepository` interface using `cloud_firestore`
   - Handle today's challenge retrieval and completion submission
