@@ -19,8 +19,10 @@ import 'presentation/providers/game_provider.dart';
 import 'presentation/providers/leaderboard_provider.dart';
 import 'presentation/providers/progress_provider.dart';
 import 'presentation/screens/auth/auth_screen.dart';
+import 'presentation/screens/daily_challenge/daily_challenge_screen.dart';
 import 'presentation/screens/front/front_screen.dart';
 import 'presentation/screens/game/game_screen.dart';
+import 'presentation/screens/leaderboard/leaderboard_screen.dart';
 import 'presentation/screens/level_select/level_select_screen.dart';
 import 'presentation/theme/honey_theme.dart';
 
@@ -30,6 +32,8 @@ class AppRoutes {
   static const String auth = '/auth';
   static const String levels = '/levels';
   static const String game = '/game';
+  static const String leaderboard = '/leaderboard';
+  static const String dailyChallenge = '/daily-challenge';
 
   AppRoutes._();
 }
@@ -183,6 +187,12 @@ class HexBuzzApp extends StatelessWidget {
           settings,
           isForward,
         );
+
+      case AppRoutes.leaderboard:
+        return _buildRoute(const LeaderboardScreen(), settings, isForward);
+
+      case AppRoutes.dailyChallenge:
+        return _buildRoute(const DailyChallengeScreen(), settings, isForward);
 
       default:
         return _buildRoute(const FrontScreen(), settings, isForward);
