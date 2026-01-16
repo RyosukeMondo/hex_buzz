@@ -122,7 +122,7 @@
   - _Requirements: 1.1, 1.2, 1.3, 1.5, 1.7, 1.8_
   - _Prompt: Role: Flutter Developer with Firebase Auth expertise | Task: Implement FirebaseAuthRepository in lib/data/firebase/firebase_auth_repository.dart using firebase_auth and google_sign_in packages, implementing Google OAuth flow with error handling and automatic user profile creation/update in Firestore | Restrictions: Follow Firebase Auth best practices, handle all error cases, store user securely, implement proper token refresh | Success: Google Sign-In works end-to-end, user profile synced to Firestore, session persists across app restarts, all error scenarios handled_
 
-- [ ] 4.2 Implement FirestoreLeaderboardRepository
+- [x] 4.2 Implement FirestoreLeaderboardRepository
   - File: `lib/data/firebase/firestore_leaderboard_repository.dart`
   - Implement `LeaderboardRepository` interface using `cloud_firestore`
   - Implement pagination for leaderboard queries
