@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:hex_buzz/data/local/local_auth_repository.dart';
 import 'package:hex_buzz/data/local/local_progress_repository.dart';
+import 'package:hex_buzz/domain/models/auth_result.dart';
 import 'package:hex_buzz/domain/models/progress_state.dart';
 import 'package:hex_buzz/domain/services/level_repository.dart';
 import 'package:hex_buzz/main.dart';
@@ -99,9 +100,10 @@ void main() {
       final authNotifier = container.read(authProvider.notifier);
       final result = await authNotifier.playAsGuest();
 
-      expect(result.success, isTrue);
-      expect(result.user, isNotNull);
-      expect(result.user!.isGuest, isTrue);
+      expect(result, isA<AuthSuccess>());
+      final success = result as AuthSuccess;
+      expect(success.user, isNotNull);
+      expect(success.user.isGuest, isTrue);
     });
 
     test('login flow completes without error', () async {
@@ -115,14 +117,14 @@ void main() {
         'testuser',
         'password123',
       );
-      expect(registerResult.success, isTrue);
+      expect(registerResult, isA<AuthSuccess>());
 
       // Then logout
       await authNotifier.logout();
 
       // Then login
       final loginResult = await authNotifier.login('testuser', 'password123');
-      expect(loginResult.success, isTrue);
+      expect(loginResult, isA<AuthSuccess>());
     });
 
     test('progress repository can save and load', () async {

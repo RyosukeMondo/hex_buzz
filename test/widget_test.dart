@@ -40,12 +40,12 @@ class _MockAuthRepository implements AuthRepository {
 
   @override
   Future<AuthResult> login(String username, String password) async {
-    return AuthResult.success(_guestUser);
+    return AuthSuccess(_guestUser);
   }
 
   @override
   Future<AuthResult> register(String username, String password) async {
-    return AuthResult.success(_guestUser);
+    return AuthSuccess(_guestUser);
   }
 
   @override
@@ -53,7 +53,7 @@ class _MockAuthRepository implements AuthRepository {
 
   @override
   Future<AuthResult> loginAsGuest() async {
-    return AuthResult.success(_guestUser);
+    return AuthSuccess(_guestUser);
   }
 
   @override

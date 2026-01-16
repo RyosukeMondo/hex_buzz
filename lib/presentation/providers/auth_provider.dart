@@ -36,11 +36,12 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
     final result = await _repository.login(username, password);
 
-    if (result.success && result.user != null) {
-      state = AsyncValue.data(result.user);
-    } else {
-      // Restore to no user state on failure
-      state = const AsyncValue.data(null);
+    switch (result) {
+      case AuthSuccess(:final user):
+        state = AsyncValue.data(user);
+      case AuthFailure():
+        // Restore to no user state on failure
+        state = const AsyncValue.data(null);
     }
 
     return result;
@@ -55,11 +56,12 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
     final result = await _repository.register(username, password);
 
-    if (result.success && result.user != null) {
-      state = AsyncValue.data(result.user);
-    } else {
-      // Restore to no user state on failure
-      state = const AsyncValue.data(null);
+    switch (result) {
+      case AuthSuccess(:final user):
+        state = AsyncValue.data(user);
+      case AuthFailure():
+        // Restore to no user state on failure
+        state = const AsyncValue.data(null);
     }
 
     return result;
@@ -82,11 +84,12 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
     final result = await _repository.loginAsGuest();
 
-    if (result.success && result.user != null) {
-      state = AsyncValue.data(result.user);
-    } else {
-      // Restore to no user state on failure
-      state = const AsyncValue.data(null);
+    switch (result) {
+      case AuthSuccess(:final user):
+        state = AsyncValue.data(user);
+      case AuthFailure():
+        // Restore to no user state on failure
+        state = const AsyncValue.data(null);
     }
 
     return result;

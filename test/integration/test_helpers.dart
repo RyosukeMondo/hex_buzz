@@ -37,13 +37,13 @@ class MockAuthRepository implements AuthRepository {
   @override
   Future<AuthResult> register(String username, String password) async {
     if (username.length < 3) {
-      return const AuthResult.failure('Username must be at least 3 characters');
+      return const AuthFailure('Username must be at least 3 characters');
     }
     if (password.length < 6) {
-      return const AuthResult.failure('Password must be at least 6 characters');
+      return const AuthFailure('Password must be at least 6 characters');
     }
     if (_users.containsKey(username.toLowerCase())) {
-      return const AuthResult.failure('Username already taken');
+      return const AuthFailure('Username already taken');
     }
 
     final user = User(
@@ -59,20 +59,20 @@ class MockAuthRepository implements AuthRepository {
     );
     _currentUser = user;
     _authController.add(user);
-    return AuthResult.success(user);
+    return AuthSuccess(user);
   }
 
   @override
   Future<AuthResult> login(String username, String password) async {
     final stored = _users[username.toLowerCase()];
-    if (stored == null) return const AuthResult.failure('User not found');
+    if (stored == null) return const AuthFailure('User not found');
     if (stored.password != password) {
-      return const AuthResult.failure('Invalid password');
+      return const AuthFailure('Invalid password');
     }
 
     _currentUser = stored.user;
     _authController.add(stored.user);
-    return AuthResult.success(stored.user);
+    return AuthSuccess(stored.user);
   }
 
   @override
@@ -86,7 +86,7 @@ class MockAuthRepository implements AuthRepository {
     final guestUser = User.guest();
     _currentUser = guestUser;
     _authController.add(guestUser);
-    return AuthResult.success(guestUser);
+    return AuthSuccess(guestUser);
   }
 
   @override

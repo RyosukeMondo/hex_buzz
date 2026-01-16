@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hex_buzz/data/local/local_auth_repository.dart';
+import 'package:hex_buzz/domain/models/auth_result.dart';
 import 'package:hex_buzz/domain/models/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -26,11 +27,10 @@ void main() {
       test('registers a new user successfully', () async {
         final result = await repository.register('testuser', 'password123');
 
-        expect(result.success, isTrue);
-        expect(result.user, isNotNull);
-        expect(result.user!.username, 'testuser');
-        expect(result.user!.isGuest, isFalse);
-        expect(result.errorMessage, isNull);
+        expect(result, isA<AuthSuccess>());
+        final successResult = result as AuthSuccess;
+        expect(successResult.user.username, 'testuser');
+        expect(successResult.user.isGuest, isFalse);
       });
 
       test('sets current user after successful registration', () async {
@@ -62,9 +62,9 @@ void main() {
 
         final result = await repository.register('existinguser', 'newpassword');
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'Username already taken');
-        expect(result.user, isNull);
+        expect(result, isA<AuthFailure>());
+        final failureResult = result as AuthFailure;
+        expect(failureResult.error, 'Username already taken');
       });
 
       test('usernames are case-insensitive for uniqueness', () async {
@@ -72,22 +72,25 @@ void main() {
 
         final result = await repository.register('testuser', 'password456');
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'Username already taken');
+        expect(result, isA<AuthFailure>());
+        final failureResult = result as AuthFailure;
+        expect(failureResult.error, 'Username already taken');
       });
 
       test('fails when username is too short', () async {
         final result = await repository.register('ab', 'password123');
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'Username must be at least 3 characters');
+        expect(result, isA<AuthFailure>());
+        final failureResult = result as AuthFailure;
+        expect(failureResult.error, 'Username must be at least 3 characters');
       });
 
       test('fails when password is too short', () async {
         final result = await repository.register('testuser', '12345');
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'Password must be at least 6 characters');
+        expect(result, isA<AuthFailure>());
+        final failureResult = result as AuthFailure;
+        expect(failureResult.error, 'Password must be at least 6 characters');
       });
 
       test('creates user with unique ID', () async {
@@ -95,13 +98,16 @@ void main() {
         await repository.logout();
         final result2 = await repository.register('user2', 'password456');
 
-        expect(result1.user!.id, isNot(equals(result2.user!.id)));
+        final user1 = (result1 as AuthSuccess).user;
+        final user2 = (result2 as AuthSuccess).user;
+        expect(user1.id, isNot(equals(user2.id)));
       });
 
       test('preserves original username casing', () async {
         final result = await repository.register('TestUser', 'password123');
 
-        expect(result.user!.username, 'TestUser');
+        final user = (result as AuthSuccess).user;
+        expect(user.username, 'TestUser');
       });
     });
 
@@ -114,9 +120,9 @@ void main() {
       test('logs in existing user successfully', () async {
         final result = await repository.login('testuser', 'password123');
 
-        expect(result.success, isTrue);
-        expect(result.user, isNotNull);
-        expect(result.user!.username, 'testuser');
+        expect(result, isA<AuthSuccess>());
+        final user = (result as AuthSuccess).user;
+        expect(user.username, 'testuser');
       });
 
       test('sets current user after successful login', () async {
@@ -146,23 +152,25 @@ void main() {
       test('fails with wrong password', () async {
         final result = await repository.login('testuser', 'wrongpassword');
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'Invalid password');
-        expect(result.user, isNull);
+        expect(result, isA<AuthFailure>());
+        final failureResult = result as AuthFailure;
+        expect(failureResult.error, 'Invalid password');
       });
 
       test('fails when user not found', () async {
         final result = await repository.login('nonexistent', 'password123');
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'User not found');
+        expect(result, isA<AuthFailure>());
+        final failureResult = result as AuthFailure;
+        expect(failureResult.error, 'User not found');
       });
 
       test('login is case-insensitive for username', () async {
         final result = await repository.login('TESTUSER', 'password123');
 
-        expect(result.success, isTrue);
-        expect(result.user!.username, 'testuser');
+        expect(result, isA<AuthSuccess>());
+        final user = (result as AuthSuccess).user;
+        expect(user.username, 'testuser');
       });
     });
 
@@ -248,11 +256,11 @@ void main() {
       test('creates a guest user successfully', () async {
         final result = await repository.loginAsGuest();
 
-        expect(result.success, isTrue);
-        expect(result.user, isNotNull);
-        expect(result.user!.isGuest, isTrue);
-        expect(result.user!.username, 'Guest');
-        expect(result.user!.id, 'guest');
+        expect(result, isA<AuthSuccess>());
+        final user = (result as AuthSuccess).user;
+        expect(user.isGuest, isTrue);
+        expect(user.username, 'Guest');
+        expect(user.id, 'guest');
       });
 
       test('sets current user after guest login', () async {
@@ -331,7 +339,7 @@ void main() {
         // Login should produce same hash comparison
         final result = await repository.login('testuser', 'password123');
 
-        expect(result.success, isTrue);
+        expect(result, isA<AuthSuccess>());
       });
     });
 
@@ -345,8 +353,9 @@ void main() {
 
         final result = await newRepository.login('persistuser', 'password123');
 
-        expect(result.success, isTrue);
-        expect(result.user!.username, 'persistuser');
+        expect(result, isA<AuthSuccess>());
+        final user = (result as AuthSuccess).user;
+        expect(user.username, 'persistuser');
 
         newRepository.dispose();
       });
@@ -370,8 +379,9 @@ void main() {
 
         final result = await repository.login('anyone', 'password123');
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'User not found');
+        expect(result, isA<AuthFailure>());
+        final failureResult = result as AuthFailure;
+        expect(failureResult.error, 'User not found');
       });
     });
 
@@ -409,22 +419,25 @@ void main() {
       test('handles empty username', () async {
         final result = await repository.register('', 'password123');
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'Username must be at least 3 characters');
+        expect(result, isA<AuthFailure>());
+        final failureResult = result as AuthFailure;
+        expect(failureResult.error, 'Username must be at least 3 characters');
       });
 
       test('handles empty password', () async {
         final result = await repository.register('testuser', '');
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'Password must be at least 6 characters');
+        expect(result, isA<AuthFailure>());
+        final failureResult = result as AuthFailure;
+        expect(failureResult.error, 'Password must be at least 6 characters');
       });
 
       test('handles special characters in username', () async {
         final result = await repository.register('user@name!', 'password123');
 
-        expect(result.success, isTrue);
-        expect(result.user!.username, 'user@name!');
+        expect(result, isA<AuthSuccess>());
+        final user = (result as AuthSuccess).user;
+        expect(user.username, 'user@name!');
       });
 
       test('handles special characters in password', () async {
@@ -433,7 +446,7 @@ void main() {
 
         final result = await repository.login('testuser', 'p@ss!w0rd#');
 
-        expect(result.success, isTrue);
+        expect(result, isA<AuthSuccess>());
       });
 
       test('handles unicode characters in password', () async {
@@ -442,7 +455,7 @@ void main() {
 
         final result = await repository.login('testuser', 'пароль123');
 
-        expect(result.success, isTrue);
+        expect(result, isA<AuthSuccess>());
       });
 
       test('handles very long username', () async {
@@ -450,8 +463,9 @@ void main() {
 
         final result = await repository.register(longUsername, 'password123');
 
-        expect(result.success, isTrue);
-        expect(result.user!.username, longUsername);
+        expect(result, isA<AuthSuccess>());
+        final user = (result as AuthSuccess).user;
+        expect(user.username, longUsername);
       });
 
       test('handles very long password', () async {
@@ -462,7 +476,7 @@ void main() {
 
         final result = await repository.login('testuser', longPassword);
 
-        expect(result.success, isTrue);
+        expect(result, isA<AuthSuccess>());
       });
     });
   });

@@ -293,7 +293,7 @@ void main() {
       ) async {
         when(
           () => mockAuthRepository.login('testuser', 'password123'),
-        ).thenAnswer((_) async => AuthResult.success(testUser));
+        ).thenAnswer((_) async => AuthSuccess(testUser));
 
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
@@ -320,9 +320,7 @@ void main() {
       testWidgets('shows error message on login failure', (tester) async {
         when(
           () => mockAuthRepository.login('testuser', 'wrongpassword'),
-        ).thenAnswer(
-          (_) async => AuthResult.failure('Invalid username or password'),
-        );
+        ).thenAnswer((_) async => AuthFailure('Invalid username or password'));
 
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
@@ -351,7 +349,7 @@ void main() {
       ) async {
         when(
           () => mockAuthRepository.register('newuser', 'password123'),
-        ).thenAnswer((_) async => AuthResult.success(testUser));
+        ).thenAnswer((_) async => AuthSuccess(testUser));
 
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
@@ -388,9 +386,7 @@ void main() {
       ) async {
         when(
           () => mockAuthRepository.register('existinguser', 'password123'),
-        ).thenAnswer(
-          (_) async => AuthResult.failure('Username already exists'),
-        );
+        ).thenAnswer((_) async => AuthFailure('Username already exists'));
 
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
@@ -426,7 +422,7 @@ void main() {
         final guestUser = User.guest();
         when(
           () => mockAuthRepository.loginAsGuest(),
-        ).thenAnswer((_) async => AuthResult.success(guestUser));
+        ).thenAnswer((_) async => AuthSuccess(guestUser));
 
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
@@ -515,7 +511,7 @@ void main() {
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
         // Complete the login to clean up
-        loginCompleter.complete(AuthResult.success(testUser));
+        loginCompleter.complete(AuthSuccess(testUser));
         await tester.pumpAndSettle();
       });
     });

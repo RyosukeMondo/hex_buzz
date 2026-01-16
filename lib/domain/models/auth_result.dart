@@ -1,80 +1,74 @@
 import 'user.dart';
 
-/// Represents the result of an authentication operation.
+/// Type-safe authentication result for Firebase authentication operations.
 ///
-/// Contains success status, the authenticated user (if successful),
-/// and an error message (if unsuccessful).
-class AuthResult {
-  final bool success;
-  final User? user;
-  final String? errorMessage;
-
-  const AuthResult({required this.success, this.user, this.errorMessage});
-
-  /// Creates a successful authentication result.
-  const AuthResult.success(User this.user)
-    : success = true,
-      errorMessage = null;
-
-  /// Creates a failed authentication result with an error message.
-  const AuthResult.failure(String this.errorMessage)
-    : success = false,
-      user = null;
-
-  /// Creates a copy with optional updated fields.
-  AuthResult copyWith({
-    bool? success,
-    User? user,
-    String? errorMessage,
-    bool clearUser = false,
-    bool clearErrorMessage = false,
-  }) {
-    return AuthResult(
-      success: success ?? this.success,
-      user: clearUser ? null : (user ?? this.user),
-      errorMessage: clearErrorMessage
-          ? null
-          : (errorMessage ?? this.errorMessage),
-    );
-  }
+/// This sealed class represents the result of authentication operations,
+/// providing compile-time exhaustive pattern matching for success and failure cases.
+sealed class AuthResult {
+  const AuthResult();
 
   /// Serializes the auth result to JSON.
-  Map<String, dynamic> toJson() {
-    return {
-      'success': success,
-      if (user != null) 'user': user!.toJson(),
-      if (errorMessage != null) 'errorMessage': errorMessage,
-    };
-  }
+  Map<String, dynamic> toJson();
 
   /// Creates an AuthResult from JSON data.
   factory AuthResult.fromJson(Map<String, dynamic> json) {
-    return AuthResult(
-      success: json['success'] as bool,
-      user: json['user'] != null
-          ? User.fromJson(json['user'] as Map<String, dynamic>)
-          : null,
-      errorMessage: json['errorMessage'] as String?,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is AuthResult &&
-        other.success == success &&
-        other.user == user &&
-        other.errorMessage == errorMessage;
-  }
-
-  @override
-  int get hashCode => Object.hash(success, user, errorMessage);
-
-  @override
-  String toString() {
+    final success = json['success'] as bool;
     if (success) {
-      return 'AuthResult.success(user: $user)';
+      return AuthSuccess(User.fromJson(json['user'] as Map<String, dynamic>));
+    } else {
+      return AuthFailure(json['errorMessage'] as String);
     }
-    return 'AuthResult.failure(errorMessage: $errorMessage)';
   }
+}
+
+/// Successful authentication result containing the authenticated user.
+final class AuthSuccess extends AuthResult {
+  /// The authenticated user data.
+  final User user;
+
+  const AuthSuccess(this.user);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {'success': true, 'user': user.toJson()};
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AuthSuccess &&
+          runtimeType == other.runtimeType &&
+          user == other.user;
+
+  @override
+  int get hashCode => user.hashCode;
+
+  @override
+  String toString() => 'AuthSuccess(user: $user)';
+}
+
+/// Failed authentication result containing an error message.
+final class AuthFailure extends AuthResult {
+  /// The error message describing the authentication failure.
+  final String error;
+
+  const AuthFailure(this.error);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {'success': false, 'errorMessage': error};
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AuthFailure &&
+          runtimeType == other.runtimeType &&
+          error == other.error;
+
+  @override
+  int get hashCode => error.hashCode;
+
+  @override
+  String toString() => 'AuthFailure(error: $error)';
 }

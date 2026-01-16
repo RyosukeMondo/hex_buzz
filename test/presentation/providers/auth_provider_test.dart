@@ -83,7 +83,7 @@ void main() {
         ).thenAnswer((_) async => null);
         when(
           () => mockRepository.login('testuser', 'password123'),
-        ).thenAnswer((_) async => AuthResult.success(testUser));
+        ).thenAnswer((_) async => AuthSuccess(testUser));
 
         // Initialize
         await container.read(authProvider.future);
@@ -92,8 +92,9 @@ void main() {
         final notifier = container.read(authProvider.notifier);
         final result = await notifier.login('testuser', 'password123');
 
-        expect(result.success, isTrue);
-        expect(result.user, testUser);
+        expect(result, isA<AuthSuccess>());
+        final user = (result as AuthSuccess).user;
+        expect(user, testUser);
 
         final state = container.read(authProvider);
         expect(state.value, testUser);
@@ -105,15 +106,16 @@ void main() {
         ).thenAnswer((_) async => null);
         when(
           () => mockRepository.login('testuser', 'wrongpassword'),
-        ).thenAnswer((_) async => const AuthResult.failure('Invalid password'));
+        ).thenAnswer((_) async => const AuthFailure('Invalid password'));
 
         await container.read(authProvider.future);
 
         final notifier = container.read(authProvider.notifier);
         final result = await notifier.login('testuser', 'wrongpassword');
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'Invalid password');
+        expect(result, isA<AuthFailure>());
+        final error = (result as AuthFailure).error;
+        expect(error, 'Invalid password');
 
         final state = container.read(authProvider);
         expect(state.value, isNull);
@@ -125,15 +127,16 @@ void main() {
         ).thenAnswer((_) async => null);
         when(
           () => mockRepository.login('nonexistent', 'password123'),
-        ).thenAnswer((_) async => const AuthResult.failure('User not found'));
+        ).thenAnswer((_) async => const AuthFailure('User not found'));
 
         await container.read(authProvider.future);
 
         final notifier = container.read(authProvider.notifier);
         final result = await notifier.login('nonexistent', 'password123');
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'User not found');
+        expect(result, isA<AuthFailure>());
+        final error = (result as AuthFailure).error;
+        expect(error, 'User not found');
       });
 
       test('login sets loading state during operation', () async {
@@ -142,7 +145,7 @@ void main() {
         ).thenAnswer((_) async => null);
         when(() => mockRepository.login(any(), any())).thenAnswer((_) async {
           await Future.delayed(const Duration(milliseconds: 50));
-          return AuthResult.success(testUser);
+          return AuthSuccess(testUser);
         });
 
         await container.read(authProvider.future);
@@ -173,15 +176,16 @@ void main() {
         ).thenAnswer((_) async => null);
         when(
           () => mockRepository.register('newuser', 'password123'),
-        ).thenAnswer((_) async => AuthResult.success(testUser));
+        ).thenAnswer((_) async => AuthSuccess(testUser));
 
         await container.read(authProvider.future);
 
         final notifier = container.read(authProvider.notifier);
         final result = await notifier.register('newuser', 'password123');
 
-        expect(result.success, isTrue);
-        expect(result.user, testUser);
+        expect(result, isA<AuthSuccess>());
+        final user = (result as AuthSuccess).user;
+        expect(user, testUser);
 
         final state = container.read(authProvider);
         expect(state.value, testUser);
@@ -193,17 +197,16 @@ void main() {
         ).thenAnswer((_) async => null);
         when(
           () => mockRepository.register('existinguser', 'password123'),
-        ).thenAnswer(
-          (_) async => const AuthResult.failure('Username already taken'),
-        );
+        ).thenAnswer((_) async => const AuthFailure('Username already taken'));
 
         await container.read(authProvider.future);
 
         final notifier = container.read(authProvider.notifier);
         final result = await notifier.register('existinguser', 'password123');
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'Username already taken');
+        expect(result, isA<AuthFailure>());
+        final error = (result as AuthFailure).error;
+        expect(error, 'Username already taken');
 
         final state = container.read(authProvider);
         expect(state.value, isNull);
@@ -214,9 +217,8 @@ void main() {
           () => mockRepository.getCurrentUser(),
         ).thenAnswer((_) async => null);
         when(() => mockRepository.register('ab', 'password123')).thenAnswer(
-          (_) async => const AuthResult.failure(
-            'Username must be at least 3 characters',
-          ),
+          (_) async =>
+              const AuthFailure('Username must be at least 3 characters'),
         );
 
         await container.read(authProvider.future);
@@ -224,8 +226,9 @@ void main() {
         final notifier = container.read(authProvider.notifier);
         final result = await notifier.register('ab', 'password123');
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'Username must be at least 3 characters');
+        expect(result, isA<AuthFailure>());
+        final error = (result as AuthFailure).error;
+        expect(error, 'Username must be at least 3 characters');
       });
 
       test('registration validates password length', () async {
@@ -233,9 +236,8 @@ void main() {
           () => mockRepository.getCurrentUser(),
         ).thenAnswer((_) async => null);
         when(() => mockRepository.register('testuser', '12345')).thenAnswer(
-          (_) async => const AuthResult.failure(
-            'Password must be at least 6 characters',
-          ),
+          (_) async =>
+              const AuthFailure('Password must be at least 6 characters'),
         );
 
         await container.read(authProvider.future);
@@ -243,8 +245,9 @@ void main() {
         final notifier = container.read(authProvider.notifier);
         final result = await notifier.register('testuser', '12345');
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'Password must be at least 6 characters');
+        expect(result, isA<AuthFailure>());
+        final error = (result as AuthFailure).error;
+        expect(error, 'Password must be at least 6 characters');
       });
 
       test('register sets loading state during operation', () async {
@@ -253,7 +256,7 @@ void main() {
         ).thenAnswer((_) async => null);
         when(() => mockRepository.register(any(), any())).thenAnswer((_) async {
           await Future.delayed(const Duration(milliseconds: 50));
-          return AuthResult.success(testUser);
+          return AuthSuccess(testUser);
         });
 
         await container.read(authProvider.future);
@@ -352,15 +355,16 @@ void main() {
         ).thenAnswer((_) async => null);
         when(
           () => mockRepository.loginAsGuest(),
-        ).thenAnswer((_) async => AuthResult.success(guestUser));
+        ).thenAnswer((_) async => AuthSuccess(guestUser));
 
         await container.read(authProvider.future);
 
         final notifier = container.read(authProvider.notifier);
         final result = await notifier.playAsGuest();
 
-        expect(result.success, isTrue);
-        expect(result.user!.isGuest, isTrue);
+        expect(result, isA<AuthSuccess>());
+        final user = (result as AuthSuccess).user;
+        expect(user.isGuest, isTrue);
 
         final state = container.read(authProvider);
         expect(state.value!.isGuest, isTrue);
@@ -373,7 +377,7 @@ void main() {
         ).thenAnswer((_) async => null);
         when(() => mockRepository.loginAsGuest()).thenAnswer((_) async {
           await Future.delayed(const Duration(milliseconds: 50));
-          return AuthResult.success(guestUser);
+          return AuthSuccess(guestUser);
         });
 
         await container.read(authProvider.future);
@@ -400,17 +404,18 @@ void main() {
         when(
           () => mockRepository.getCurrentUser(),
         ).thenAnswer((_) async => null);
-        when(() => mockRepository.loginAsGuest()).thenAnswer(
-          (_) async => const AuthResult.failure('Guest mode unavailable'),
-        );
+        when(
+          () => mockRepository.loginAsGuest(),
+        ).thenAnswer((_) async => const AuthFailure('Guest mode unavailable'));
 
         await container.read(authProvider.future);
 
         final notifier = container.read(authProvider.notifier);
         final result = await notifier.playAsGuest();
 
-        expect(result.success, isFalse);
-        expect(result.errorMessage, 'Guest mode unavailable');
+        expect(result, isA<AuthFailure>());
+        final error = (result as AuthFailure).error;
+        expect(error, 'Guest mode unavailable');
 
         final state = container.read(authProvider);
         expect(state.value, isNull);
@@ -425,7 +430,7 @@ void main() {
         when(() => mockRepository.logout()).thenAnswer((_) async {});
         when(
           () => mockRepository.login('testuser', 'password123'),
-        ).thenAnswer((_) async => AuthResult.success(testUser));
+        ).thenAnswer((_) async => AuthSuccess(testUser));
 
         await container.read(authProvider.future);
         final notifier = container.read(authProvider.notifier);
@@ -445,10 +450,10 @@ void main() {
         ).thenAnswer((_) async => null);
         when(
           () => mockRepository.login('nonexistent', 'password'),
-        ).thenAnswer((_) async => const AuthResult.failure('User not found'));
+        ).thenAnswer((_) async => const AuthFailure('User not found'));
         when(
           () => mockRepository.register('newuser', 'password123'),
-        ).thenAnswer((_) async => AuthResult.success(testUser));
+        ).thenAnswer((_) async => AuthSuccess(testUser));
 
         await container.read(authProvider.future);
         final notifier = container.read(authProvider.notifier);
@@ -475,11 +480,11 @@ void main() {
         ).thenAnswer((_) async => null);
         when(
           () => mockRepository.loginAsGuest(),
-        ).thenAnswer((_) async => AuthResult.success(guestUser));
+        ).thenAnswer((_) async => AuthSuccess(guestUser));
         when(() => mockRepository.logout()).thenAnswer((_) async {});
         when(
           () => mockRepository.register('registereduser', 'password123'),
-        ).thenAnswer((_) async => AuthResult.success(registeredUser));
+        ).thenAnswer((_) async => AuthSuccess(registeredUser));
 
         await container.read(authProvider.future);
         final notifier = container.read(authProvider.notifier);
@@ -506,7 +511,7 @@ void main() {
         ).thenAnswer((_) async => null);
         when(
           () => mockRepository.login(any(), any()),
-        ).thenAnswer((_) async => AuthResult.success(testUser));
+        ).thenAnswer((_) async => AuthSuccess(testUser));
 
         await container.read(authProvider.future);
 
@@ -524,7 +529,7 @@ void main() {
         ).thenAnswer((_) async => null);
         when(
           () => mockRepository.register(any(), any()),
-        ).thenAnswer((_) async => AuthResult.success(testUser));
+        ).thenAnswer((_) async => AuthSuccess(testUser));
 
         await container.read(authProvider.future);
 
@@ -556,7 +561,7 @@ void main() {
         ).thenAnswer((_) async => null);
         when(
           () => mockRepository.loginAsGuest(),
-        ).thenAnswer((_) async => AuthResult.success(guestUser));
+        ).thenAnswer((_) async => AuthSuccess(guestUser));
 
         await container.read(authProvider.future);
 

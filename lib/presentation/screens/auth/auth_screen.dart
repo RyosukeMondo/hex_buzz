@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../domain/models/auth_result.dart';
 import '../../../main.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/honey_theme.dart';
@@ -89,12 +90,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     setState(() => _isLoading = false);
 
-    if (result.success) {
-      _navigateToLevels();
-    } else {
-      setState(
-        () => _errorMessage = result.errorMessage ?? 'An error occurred',
-      );
+    switch (result) {
+      case AuthSuccess():
+        _navigateToLevels();
+      case AuthFailure(:final error):
+        setState(() => _errorMessage = error);
     }
   }
 
@@ -110,12 +110,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     setState(() => _isLoading = false);
 
-    if (result.success) {
-      _navigateToLevels();
-    } else {
-      setState(
-        () => _errorMessage = result.errorMessage ?? 'An error occurred',
-      );
+    switch (result) {
+      case AuthSuccess():
+        _navigateToLevels();
+      case AuthFailure(:final error):
+        setState(() => _errorMessage = error);
     }
   }
 

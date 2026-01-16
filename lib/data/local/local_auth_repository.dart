@@ -31,7 +31,7 @@ class LocalAuthRepository implements AuthRepository {
     final storedUser = users[username.toLowerCase()];
 
     if (storedUser == null) {
-      return const AuthResult.failure('User not found');
+      return const AuthFailure('User not found');
     }
 
     final salt = storedUser['salt'] as String;
@@ -39,30 +39,30 @@ class LocalAuthRepository implements AuthRepository {
     final inputHash = _hashPassword(password, salt);
 
     if (inputHash != storedHash) {
-      return const AuthResult.failure('Invalid password');
+      return const AuthFailure('Invalid password');
     }
 
     final user = User.fromJson(storedUser['user'] as Map<String, dynamic>);
     await _setCurrentUser(user);
 
-    return AuthResult.success(user);
+    return AuthSuccess(user);
   }
 
   @override
   Future<AuthResult> register(String username, String password) async {
     if (username.length < 3) {
-      return const AuthResult.failure('Username must be at least 3 characters');
+      return const AuthFailure('Username must be at least 3 characters');
     }
 
     if (password.length < 6) {
-      return const AuthResult.failure('Password must be at least 6 characters');
+      return const AuthFailure('Password must be at least 6 characters');
     }
 
     final users = _loadUsers();
     final normalizedUsername = username.toLowerCase();
 
     if (users.containsKey(normalizedUsername)) {
-      return const AuthResult.failure('Username already taken');
+      return const AuthFailure('Username already taken');
     }
 
     final salt = _generateSalt();
@@ -84,7 +84,7 @@ class LocalAuthRepository implements AuthRepository {
     await _saveUsers(users);
     await _setCurrentUser(user);
 
-    return AuthResult.success(user);
+    return AuthSuccess(user);
   }
 
   @override
@@ -117,7 +117,7 @@ class LocalAuthRepository implements AuthRepository {
   Future<AuthResult> loginAsGuest() async {
     final user = User.guest();
     await _setCurrentUser(user);
-    return AuthResult.success(user);
+    return AuthSuccess(user);
   }
 
   Map<String, dynamic> _loadUsers() {
