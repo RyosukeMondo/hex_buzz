@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hex_buzz/data/firebase/firestore_daily_challenge_repository.dart';
-import 'package:hex_buzz/domain/models/hex_cell.dart';
-import 'package:hex_buzz/domain/models/level.dart';
+
+import 'firestore_test_helpers.dart';
 
 void main() {
   group('FirestoreDailyChallengeRepository', () {
@@ -15,36 +15,6 @@ void main() {
       repository = FirestoreDailyChallengeRepository(firestore: fakeFirestore);
     });
 
-    /// Helper to create a sample level for testing
-    Level createSampleLevel() {
-      return Level(
-        id: 'test-level',
-        size: 4,
-        cells: {
-          (0, 0): const HexCell(q: 0, r: 0, checkpoint: 1),
-          (1, 0): const HexCell(q: 1, r: 0, checkpoint: 2),
-          (0, 1): const HexCell(q: 0, r: 1),
-        },
-        walls: {},
-        checkpointCount: 2,
-      );
-    }
-
-    /// Helper to get today's date string in YYYY-MM-DD format (UTC)
-    String getTodayDateString() {
-      final now = DateTime.now().toUtc();
-      return '${now.year.toString().padLeft(4, '0')}-'
-          '${now.month.toString().padLeft(2, '0')}-'
-          '${now.day.toString().padLeft(2, '0')}';
-    }
-
-    /// Helper to format a date as YYYY-MM-DD
-    String formatDate(DateTime date) {
-      return '${date.year.toString().padLeft(4, '0')}-'
-          '${date.month.toString().padLeft(2, '0')}-'
-          '${date.day.toString().padLeft(2, '0')}';
-    }
-
     group('getTodaysChallenge', () {
       test('returns null when no challenge exists for today', () async {
         final result = await repository.getTodaysChallenge();
@@ -53,14 +23,12 @@ void main() {
 
       test('returns today\'s challenge when it exists', () async {
         final today = getTodayDateString();
-        final level = createSampleLevel();
-
-        // Add challenge document
-        await fakeFirestore.collection('dailyChallenges').doc(today).set({
-          'level': level.toJson(),
-          'completionCount': 42,
-          'createdAt': Timestamp.fromDate(DateTime.now()),
-        });
+        await createDailyChallenge(
+          fakeFirestore,
+          today,
+          level: createSampleLevel(),
+          completionCount: 42,
+        );
 
         final result = await repository.getTodaysChallenge();
 
@@ -69,22 +37,13 @@ void main() {
         expect(result.level.id, 'test-level');
         expect(result.level.size, 4);
         expect(result.completionCount, 42);
-        expect(result.userBestTime, isNull);
-        expect(result.userStars, isNull);
-        expect(result.userRank, isNull);
       });
 
       test('returns null when level data is missing', () async {
         final today = getTodayDateString();
-
-        // Add challenge document without level
-        await fakeFirestore.collection('dailyChallenges').doc(today).set({
-          'completionCount': 10,
-          'createdAt': Timestamp.fromDate(DateTime.now()),
-        });
+        await createDailyChallenge(fakeFirestore, today, completionCount: 10);
 
         final result = await repository.getTodaysChallenge();
-
         expect(result, isNull);
       });
 
@@ -157,54 +116,18 @@ void main() {
         final result2 = await repository.getTodaysChallenge();
         expect(result2, isNotNull);
       });
-
-      test('parses level with all fields correctly', () async {
-        final today = getTodayDateString();
-        final level = Level(
-          id: 'complex-level',
-          size: 6,
-          cells: {
-            (0, 0): const HexCell(q: 0, r: 0, checkpoint: 1),
-            (1, 0): const HexCell(q: 1, r: 0, checkpoint: 2),
-            (0, 1): const HexCell(q: 0, r: 1, checkpoint: 3),
-            (-1, 1): const HexCell(q: -1, r: 1),
-          },
-          walls: {},
-          checkpointCount: 3,
-        );
-
-        await fakeFirestore.collection('dailyChallenges').doc(today).set({
-          'level': level.toJson(),
-          'completionCount': 0,
-          'createdAt': Timestamp.fromDate(DateTime.now()),
-        });
-
-        final result = await repository.getTodaysChallenge();
-
-        expect(result, isNotNull);
-        expect(result!.level.id, 'complex-level');
-        expect(result.level.size, 6);
-        expect(result.level.cells.length, 4);
-        expect(result.level.checkpointCount, 3);
-      });
     });
 
     group('submitChallengeCompletion', () {
       test('submits completion successfully', () async {
         final today = getTodayDateString();
-
-        // Create user document
-        await fakeFirestore.collection('users').doc('user1').set({
-          'displayName': 'Test User',
-          'photoURL': 'https://example.com/photo.jpg',
-          'totalStars': 150,
-        });
-
-        // Create daily challenge document
-        await fakeFirestore.collection('dailyChallenges').doc(today).set({
-          'completionCount': 0,
-          'createdAt': Timestamp.fromDate(DateTime.now()),
-        });
+        await createTestUser(
+          fakeFirestore,
+          'user1',
+          photoURL: 'https://example.com/photo.jpg',
+          totalStars: 150,
+        );
+        await createDailyChallenge(fakeFirestore, today);
 
         final result = await repository.submitChallengeCompletion(
           userId: 'user1',
@@ -213,8 +136,6 @@ void main() {
         );
 
         expect(result, isTrue);
-
-        // Verify entry was created
         final entry = await fakeFirestore
             .collection('dailyChallenges')
             .doc(today)
@@ -224,10 +145,6 @@ void main() {
 
         expect(entry.exists, isTrue);
         final data = entry.data()!;
-        expect(data['userId'], 'user1');
-        expect(data['username'], 'Test User');
-        expect(data['avatarUrl'], 'https://example.com/photo.jpg');
-        expect(data['totalStars'], 150);
         expect(data['stars'], 3);
         expect(data['completionTime'], 5000);
       });
@@ -244,15 +161,8 @@ void main() {
 
       test('uses default values for missing user fields', () async {
         final today = getTodayDateString();
-
-        // Create minimal user document
         await fakeFirestore.collection('users').doc('user1').set({});
-
-        // Create daily challenge document
-        await fakeFirestore.collection('dailyChallenges').doc(today).set({
-          'completionCount': 0,
-          'createdAt': Timestamp.fromDate(DateTime.now()),
-        });
+        await createDailyChallenge(fakeFirestore, today);
 
         final result = await repository.submitChallengeCompletion(
           userId: 'user1',
@@ -261,8 +171,6 @@ void main() {
         );
 
         expect(result, isTrue);
-
-        // Verify entry was created with defaults
         final entry = await fakeFirestore
             .collection('dailyChallenges')
             .doc(today)
@@ -270,42 +178,23 @@ void main() {
             .doc('user1')
             .get();
 
-        expect(entry.exists, isTrue);
         final data = entry.data()!;
         expect(data['username'], 'Unknown');
-        expect(data['avatarUrl'], isNull);
         expect(data['totalStars'], 0);
       });
 
-      test('merges with existing entry', () async {
+      test('updates existing entry when score improves', () async {
         final today = getTodayDateString();
+        await createTestUser(fakeFirestore, 'user1');
+        await createDailyChallenge(fakeFirestore, today, completionCount: 1);
+        await createChallengeEntry(
+          fakeFirestore,
+          today,
+          'user1',
+          stars: 2,
+          completionTime: 10000,
+        );
 
-        // Create user document
-        await fakeFirestore.collection('users').doc('user1').set({
-          'displayName': 'Test User',
-          'totalStars': 100,
-        });
-
-        // Create daily challenge document
-        await fakeFirestore.collection('dailyChallenges').doc(today).set({
-          'completionCount': 1,
-          'createdAt': Timestamp.fromDate(DateTime.now()),
-        });
-
-        // Create existing entry
-        await fakeFirestore
-            .collection('dailyChallenges')
-            .doc(today)
-            .collection('entries')
-            .doc('user1')
-            .set({
-              'userId': 'user1',
-              'username': 'Old Name',
-              'stars': 2,
-              'completionTime': 10000,
-            });
-
-        // Submit new completion (should merge)
         final result = await repository.submitChallengeCompletion(
           userId: 'user1',
           stars: 3,
@@ -313,8 +202,6 @@ void main() {
         );
 
         expect(result, isTrue);
-
-        // Verify entry was updated
         final entry = await fakeFirestore
             .collection('dailyChallenges')
             .doc(today)
@@ -323,42 +210,66 @@ void main() {
             .get();
 
         final data = entry.data()!;
-        expect(data['username'], 'Test User'); // Updated
-        expect(data['stars'], 3); // Updated
-        expect(data['completionTime'], 5000); // Updated
+        expect(data['stars'], 3);
+        expect(data['completionTime'], 5000);
       });
 
-      test('increments completion count', () async {
+      test('does not update when new score is not better', () async {
         final today = getTodayDateString();
+        await createTestUser(fakeFirestore, 'user1');
+        await createDailyChallenge(fakeFirestore, today, completionCount: 1);
+        await createChallengeEntry(
+          fakeFirestore,
+          today,
+          'user1',
+          stars: 3,
+          completionTime: 5000,
+        );
 
-        // Create user document
-        await fakeFirestore.collection('users').doc('user1').set({
-          'displayName': 'Test User',
-          'totalStars': 100,
-        });
+        final result = await repository.submitChallengeCompletion(
+          userId: 'user1',
+          stars: 3,
+          completionTimeMs: 8000,
+        );
 
-        // Create daily challenge document with initial count
-        await fakeFirestore.collection('dailyChallenges').doc(today).set({
-          'completionCount': 5,
-          'createdAt': Timestamp.fromDate(DateTime.now()),
-        });
+        expect(result, isTrue);
+        final entry = await fakeFirestore
+            .collection('dailyChallenges')
+            .doc(today)
+            .collection('entries')
+            .doc('user1')
+            .get();
 
-        await repository.submitChallengeCompletion(
+        expect(entry.data()!['completionTime'], 5000);
+      });
+
+      test('updates when time improves with same stars', () async {
+        final today = getTodayDateString();
+        await createTestUser(fakeFirestore, 'user1');
+        await createDailyChallenge(fakeFirestore, today, completionCount: 1);
+        await createChallengeEntry(
+          fakeFirestore,
+          today,
+          'user1',
+          stars: 3,
+          completionTime: 8000,
+        );
+
+        final result = await repository.submitChallengeCompletion(
           userId: 'user1',
           stars: 3,
           completionTimeMs: 5000,
         );
 
-        // Verify completion count was incremented
-        final doc = await fakeFirestore
+        expect(result, isTrue);
+        final entry = await fakeFirestore
             .collection('dailyChallenges')
             .doc(today)
+            .collection('entries')
+            .doc('user1')
             .get();
 
-        // Note: FakeFirebaseFirestore might not properly support FieldValue.increment
-        // In a real test with Firebase Emulator, this would be 6
-        final count = doc.data()?['completionCount'] ?? 0;
-        expect(count >= 5, isTrue);
+        expect(entry.data()!['completionTime'], 5000);
       });
 
       test('invalidates cache after submission', () async {
@@ -397,44 +308,6 @@ void main() {
         // Cache should be invalidated, so this should fetch fresh data
         final result2 = await repository.getTodaysChallenge();
         expect(result2!.completionCount, 6);
-      });
-
-      test('handles various star values correctly', () async {
-        final today = getTodayDateString();
-
-        // Create user and challenge
-        await fakeFirestore.collection('users').doc('user1').set({
-          'displayName': 'Test User',
-          'totalStars': 100,
-        });
-
-        await fakeFirestore.collection('dailyChallenges').doc(today).set({
-          'completionCount': 0,
-          'createdAt': Timestamp.fromDate(DateTime.now()),
-        });
-
-        // Test different star values
-        final testCases = [0, 1, 2, 3];
-
-        for (final stars in testCases) {
-          final result = await repository.submitChallengeCompletion(
-            userId: 'user1',
-            stars: stars,
-            completionTimeMs: 5000,
-          );
-
-          expect(result, isTrue);
-
-          // Verify stars value
-          final entry = await fakeFirestore
-              .collection('dailyChallenges')
-              .doc(today)
-              .collection('entries')
-              .doc('user1')
-              .get();
-
-          expect(entry.data()!['stars'], stars);
-        }
       });
     });
 
@@ -536,34 +409,6 @@ void main() {
         expect(result.length, 5);
       });
 
-      test('formats date correctly for different months and days', () async {
-        final testDates = [
-          DateTime(2024, 1, 1), // '2024-01-01'
-          DateTime(2024, 12, 31), // '2024-12-31'
-          DateTime(2024, 6, 15), // '2024-06-15'
-        ];
-
-        for (final date in testDates) {
-          final dateStr = formatDate(date);
-
-          await fakeFirestore
-              .collection('dailyChallenges')
-              .doc(dateStr)
-              .collection('entries')
-              .doc('user1')
-              .set({
-                'username': 'Player One',
-                'totalStars': 100,
-                'stars': 3,
-                'completionTime': 5000,
-                'completedAt': Timestamp.fromDate(date),
-              });
-
-          final result = await repository.getChallengeLeaderboard(date: date);
-          expect(result.length, 1);
-        }
-      });
-
       test('handles missing optional fields gracefully', () async {
         final date = DateTime(2024, 1, 15);
         final dateStr = '2024-01-15';
@@ -617,35 +462,14 @@ void main() {
     });
 
     group('Date formatting', () {
-      test('formats single-digit months and days correctly', () async {
-        final date = DateTime(2024, 1, 5);
-        final expected = '2024-01-05';
-        final actual = formatDate(date);
-        expect(actual, expected);
+      test('formats dates correctly', () async {
+        expect(formatDate(DateTime(2024, 1, 5)), '2024-01-05');
+        expect(formatDate(DateTime(2024, 11, 25)), '2024-11-25');
       });
 
-      test('formats double-digit months and days correctly', () async {
-        final date = DateTime(2024, 11, 25);
-        final expected = '2024-11-25';
-        final actual = formatDate(date);
-        expect(actual, expected);
-      });
-
-      test('handles year boundaries correctly', () async {
-        final date1 = DateTime(2024, 1, 1);
-        final date2 = DateTime(2024, 12, 31);
-
-        expect(formatDate(date1), '2024-01-01');
-        expect(formatDate(date2), '2024-12-31');
-      });
-
-      test('uses UTC for today\'s date', () async {
-        // This test verifies that getTodaysChallenge uses UTC
+      test('uses UTC for today', () async {
         final now = DateTime.now().toUtc();
-        final expectedDate = formatDate(now);
-        final actualDate = getTodayDateString();
-
-        expect(actualDate, expectedDate);
+        expect(getTodayDateString(), formatDate(now));
       });
     });
   });

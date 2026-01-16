@@ -86,6 +86,32 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
   }) async {
     try {
       final today = _getTodayDateString();
+      final entryRef = _firestore
+          .collection('dailyChallenges')
+          .doc(today)
+          .collection('entries')
+          .doc(userId);
+
+      // Check if user has already completed this challenge
+      final existingEntry = await entryRef.get();
+      final isFirstCompletion = !existingEntry.exists;
+
+      // If entry exists, check if this is an improvement
+      if (existingEntry.exists) {
+        final existingData = existingEntry.data()!;
+        final existingStars = existingData['stars'] as int? ?? 0;
+        final existingTime = existingData['completionTime'] as int? ?? 0;
+
+        // Only update if this is a better score
+        final isBetterStars = stars > existingStars;
+        final isBetterTime =
+            stars == existingStars && completionTimeMs < existingTime;
+
+        if (!isBetterStars && !isBetterTime) {
+          // Not an improvement, don't update
+          return true;
+        }
+      }
 
       // Get user document from Firestore
       final userDoc = await _firestore.collection('users').doc(userId).get();
@@ -99,25 +125,22 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
       final totalStars = userData['totalStars'] as int? ?? 0;
 
       // Submit to daily challenge entries
-      await _firestore
-          .collection('dailyChallenges')
-          .doc(today)
-          .collection('entries')
-          .doc(userId)
-          .set({
-            'userId': userId,
-            'username': username,
-            'avatarUrl': avatarUrl,
-            'totalStars': totalStars,
-            'stars': stars,
-            'completionTime': completionTimeMs,
-            'completedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
-
-      // Increment completion count
-      await _firestore.collection('dailyChallenges').doc(today).update({
-        'completionCount': FieldValue.increment(1),
+      await entryRef.set({
+        'userId': userId,
+        'username': username,
+        'avatarUrl': avatarUrl,
+        'totalStars': totalStars,
+        'stars': stars,
+        'completionTime': completionTimeMs,
+        'completedAt': FieldValue.serverTimestamp(),
       });
+
+      // Only increment completion count if this is the first completion
+      if (isFirstCompletion) {
+        await _firestore.collection('dailyChallenges').doc(today).update({
+          'completionCount': FieldValue.increment(1),
+        });
+      }
 
       // Invalidate cache
       _cachedChallenge = null;
