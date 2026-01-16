@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/game_mode.dart';
@@ -7,6 +8,10 @@ import '../../domain/models/level.dart';
 import '../../domain/services/game_engine.dart';
 import '../../domain/services/level_generator.dart';
 import '../../domain/services/level_repository.dart';
+import '../../domain/services/star_calculator.dart';
+import 'auth_provider.dart';
+import 'daily_challenge_provider.dart';
+import 'leaderboard_provider.dart';
 import 'progress_provider.dart';
 
 /// Configuration for creating a game.
@@ -15,12 +20,14 @@ class GameConfig {
   final GameMode mode;
   final GameEngine? engine;
   final int edgeSize;
+  final bool isDailyChallenge;
 
   const GameConfig({
     this.level,
     required this.mode,
     this.engine,
     this.edgeSize = 3,
+    this.isDailyChallenge = false,
   });
 }
 
@@ -51,6 +58,7 @@ class GameNotifier extends Notifier<GameState> {
   bool _isGenerating = false;
   bool _repositoryLoaded = false;
   int? _currentLevelIndex;
+  bool _isDailyChallenge = false;
 
   @override
   GameState build() {
@@ -58,6 +66,7 @@ class GameNotifier extends Notifier<GameState> {
     _generator = ref.watch(levelGeneratorProvider);
     _repository = ref.watch(levelRepositoryProvider);
     _edgeSize = config.edgeSize;
+    _isDailyChallenge = config.isDailyChallenge;
 
     // Check if repository was pre-loaded (via provider override)
     _repositoryLoaded = _repository.isLoaded;
@@ -133,9 +142,50 @@ class GameNotifier extends Notifier<GameState> {
     if (_currentLevelIndex == null) return;
 
     final completionTime = state.elapsedTime;
+    final stars = StarCalculator.calculateStars(completionTime);
+
+    // Update local progress
     ref
         .read(progressProvider.notifier)
         .completeLevel(_currentLevelIndex!, completionTime);
+
+    // Submit to leaderboard and daily challenge if user is logged in
+    _submitCompletionToCloud(stars, completionTime);
+  }
+
+  /// Submits completion to leaderboard and daily challenge repositories.
+  Future<void> _submitCompletionToCloud(
+    int stars,
+    Duration completionTime,
+  ) async {
+    final user = ref.read(authProvider).valueOrNull;
+    if (user == null) return;
+
+    try {
+      // Submit to global leaderboard
+      await ref
+          .read(leaderboardRepositoryProvider)
+          .submitScore(
+            userId: user.id,
+            stars: stars,
+            levelId: _currentLevelIndex!.toString(),
+          );
+
+      // Submit to daily challenge if this is a daily challenge game
+      if (_isDailyChallenge) {
+        await ref
+            .read(dailyChallengeRepositoryProvider)
+            .submitChallengeCompletion(
+              userId: user.id,
+              stars: stars,
+              completionTimeMs: completionTime.inMilliseconds,
+            );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Failed to submit completion to cloud: $e');
+      }
+    }
   }
 
   /// Undoes the last move.
