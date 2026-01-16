@@ -5,6 +5,7 @@ import '../../../domain/models/progress_state.dart';
 import '../../../domain/models/user.dart';
 import '../../../main.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/daily_challenge_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/progress_provider.dart';
 import '../../theme/honey_theme.dart';
@@ -67,9 +68,18 @@ class LevelSelectScreen extends ConsumerWidget {
     int totalLevels,
     User? user,
   ) {
+    final dailyChallengeAsync = ref.watch(dailyChallengeProvider);
+
     return Column(
       children: [
-        _buildHeader(context, ref, progressState, totalLevels, user),
+        _buildHeader(
+          context,
+          ref,
+          progressState,
+          totalLevels,
+          user,
+          dailyChallengeAsync.valueOrNull,
+        ),
         Expanded(
           child: _buildLevelGrid(context, ref, progressState, totalLevels),
         ),
@@ -83,6 +93,7 @@ class LevelSelectScreen extends ConsumerWidget {
     ProgressState progressState,
     int totalLevels,
     User? user,
+    DailyChallengeState? dailyChallengeState,
   ) {
     return Container(
       width: double.infinity,
@@ -114,7 +125,7 @@ class LevelSelectScreen extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          _buildTitleRow(context, ref, user),
+          _buildTitleRow(context, ref, user, dailyChallengeState),
           if (user != null) _buildUserGreeting(context, user),
           const SizedBox(height: HoneyTheme.spacingMd),
           _buildStarsCounter(
@@ -127,7 +138,12 @@ class LevelSelectScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTitleRow(BuildContext context, WidgetRef ref, User? user) {
+  Widget _buildTitleRow(
+    BuildContext context,
+    WidgetRef ref,
+    User? user,
+    DailyChallengeState? dailyChallengeState,
+  ) {
     final isLoggedIn = user != null;
     return Column(
       children: [
@@ -156,12 +172,20 @@ class LevelSelectScreen extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: HoneyTheme.spacingMd),
-        _buildNavigationButtons(context),
+        _buildNavigationButtons(context, dailyChallengeState),
       ],
     );
   }
 
-  Widget _buildNavigationButtons(BuildContext context) {
+  Widget _buildNavigationButtons(
+    BuildContext context,
+    DailyChallengeState? dailyChallengeState,
+  ) {
+    final showBadge =
+        dailyChallengeState != null &&
+        dailyChallengeState.challenge != null &&
+        !dailyChallengeState.hasCompleted;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -169,6 +193,7 @@ class LevelSelectScreen extends ConsumerWidget {
           context,
           label: 'Daily Challenge',
           icon: Icons.event,
+          showBadge: showBadge,
           onPressed: () =>
               Navigator.of(context).pushNamed(AppRoutes.dailyChallenge),
         ),
@@ -189,8 +214,9 @@ class LevelSelectScreen extends ConsumerWidget {
     required String label,
     required IconData icon,
     required VoidCallback onPressed,
+    bool showBadge = false,
   }) {
-    return ElevatedButton.icon(
+    final button = ElevatedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, size: 18),
       label: Text(label),
@@ -203,6 +229,28 @@ class LevelSelectScreen extends ConsumerWidget {
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
+    );
+
+    if (!showBadge) return button;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        button,
+        Positioned(
+          right: -4,
+          top: -4,
+          child: Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 1.5),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
