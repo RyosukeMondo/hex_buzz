@@ -6,7 +6,10 @@ import '../../../domain/models/game_mode.dart';
 import '../../../domain/models/hex_cell.dart';
 import '../../../domain/services/star_calculator.dart';
 import '../../../main.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/daily_challenge_provider.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/leaderboard_provider.dart';
 import '../../widgets/completion_overlay/completion_overlay.dart';
 import '../../widgets/hex_grid/hex_grid_widget.dart';
 
@@ -36,6 +39,7 @@ class GameScreen extends ConsumerStatefulWidget {
 
 class _GameScreenState extends ConsumerState<GameScreen> {
   bool _levelLoaded = false;
+  bool _scoreSubmitted = false;
 
   @override
   void initState() {
@@ -73,6 +77,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         child: _GameScreenContent(
           levelIndex: widget.levelIndex,
           isDailyChallenge: true,
+          dailyChallenge: widget.dailyChallenge,
+          scoreSubmitted: _scoreSubmitted,
+          onScoreSubmitted: () {
+            setState(() {
+              _scoreSubmitted = true;
+            });
+          },
         ),
       );
     }
@@ -80,22 +91,88 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     return _GameScreenContent(
       levelIndex: widget.levelIndex,
       isDailyChallenge: false,
+      dailyChallenge: null,
+      scoreSubmitted: _scoreSubmitted,
+      onScoreSubmitted: () {
+        setState(() {
+          _scoreSubmitted = true;
+        });
+      },
     );
   }
 }
 
 /// Internal content widget for GameScreen.
-class _GameScreenContent extends ConsumerWidget {
+class _GameScreenContent extends ConsumerStatefulWidget {
   final int? levelIndex;
   final bool isDailyChallenge;
+  final DailyChallenge? dailyChallenge;
+  final bool scoreSubmitted;
+  final VoidCallback onScoreSubmitted;
 
   const _GameScreenContent({
     required this.levelIndex,
     required this.isDailyChallenge,
+    required this.dailyChallenge,
+    required this.scoreSubmitted,
+    required this.onScoreSubmitted,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_GameScreenContent> createState() => _GameScreenContentState();
+}
+
+class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
+  @override
+  void didUpdateWidget(_GameScreenContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Check if game just completed
+    final gameState = ref.read(gameProvider);
+    if (gameState.isComplete && !widget.scoreSubmitted) {
+      _submitScore();
+    }
+  }
+
+  /// Submits the score to the appropriate leaderboard.
+  Future<void> _submitScore() async {
+    // Only submit if user is logged in
+    final authAsync = ref.read(authProvider);
+    final user = authAsync.valueOrNull;
+    if (user == null) return;
+
+    // Mark as submitted immediately to prevent duplicate submissions
+    widget.onScoreSubmitted();
+
+    final gameState = ref.read(gameProvider);
+    final elapsedTime = gameState.elapsedTime;
+    final elapsedTimeMs = elapsedTime.inMilliseconds;
+    final stars = StarCalculator.calculateStars(elapsedTime);
+
+    try {
+      if (widget.isDailyChallenge && widget.dailyChallenge != null) {
+        // Submit to daily challenge leaderboard
+        await ref
+            .read(dailyChallengeProvider.notifier)
+            .submitCompletion(
+              userId: user.id,
+              stars: stars,
+              completionTimeMs: elapsedTimeMs,
+            );
+      } else if (widget.levelIndex != null) {
+        // Submit to global leaderboard
+        final levelId = 'level_${widget.levelIndex}';
+        await ref
+            .read(leaderboardProvider.notifier)
+            .submitScore(userId: user.id, stars: stars, levelId: levelId);
+      }
+    } catch (e) {
+      // Log error but don't block the game completion
+      debugPrint('Failed to submit score: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final gameState = ref.watch(gameProvider);
     final visitedCells = gameState.path.toSet();
 
@@ -112,7 +189,7 @@ class _GameScreenContent extends ConsumerWidget {
             tooltip: 'Reset (same level)',
           ),
           // New level button (only in practice mode, not daily challenge)
-          if (levelIndex == null && !isDailyChallenge)
+          if (widget.levelIndex == null && !widget.isDailyChallenge)
             IconButton(
               icon: const Icon(Icons.skip_next),
               onPressed: () =>
@@ -132,11 +209,11 @@ class _GameScreenContent extends ConsumerWidget {
   }
 
   Widget _buildTitle() {
-    if (isDailyChallenge) {
+    if (widget.isDailyChallenge) {
       return const Text('Daily Challenge');
     }
-    if (levelIndex != null) {
-      return Text('Level ${levelIndex! + 1}');
+    if (widget.levelIndex != null) {
+      return Text('Level ${widget.levelIndex! + 1}');
     }
     return const Text('HexBuzz');
   }
@@ -189,7 +266,7 @@ class _GameScreenContent extends ConsumerWidget {
               label: const Text('Retry'),
             ),
             // Only show Next button in practice mode (not daily challenge)
-            if (levelIndex == null && !isDailyChallenge) ...[
+            if (widget.levelIndex == null && !widget.isDailyChallenge) ...[
               const SizedBox(width: 8),
               FilledButton.icon(
                 onPressed: () => notifier.generateNewLevel(),
@@ -259,14 +336,15 @@ class _GameScreenContent extends ConsumerWidget {
     final stars = StarCalculator.calculateStars(elapsedTime);
     final repository = ref.read(levelRepositoryProvider);
     final hasNextLevel =
-        levelIndex != null && levelIndex! + 1 < repository.totalLevelCount;
+        widget.levelIndex != null &&
+        widget.levelIndex! + 1 < repository.totalLevelCount;
 
     return CompletionOverlay(
       stars: stars,
       completionTime: elapsedTime,
-      hasNextLevel: hasNextLevel && !isDailyChallenge,
-      onNextLevel: hasNextLevel && !isDailyChallenge
-          ? () => _goToNextLevel(context, levelIndex)
+      hasNextLevel: hasNextLevel && !widget.isDailyChallenge,
+      onNextLevel: hasNextLevel && !widget.isDailyChallenge
+          ? () => _goToNextLevel(context, widget.levelIndex)
           : null,
       onReplay: () => ref.read(gameProvider.notifier).reset(),
       onLevelSelect: () => _navigateToLevelSelect(context),
