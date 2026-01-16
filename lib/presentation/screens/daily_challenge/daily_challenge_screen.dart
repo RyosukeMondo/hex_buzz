@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/daily_challenge.dart';
+import '../../../domain/models/user.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/daily_challenge_provider.dart';
 import '../../theme/honey_theme.dart';
@@ -43,7 +44,7 @@ class DailyChallengeScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     DailyChallengeState state,
-    authAsync,
+    AsyncValue<User?> authAsync,
   ) {
     if (state.error != null) {
       return _buildError(state.error!, () {
@@ -57,6 +58,8 @@ class DailyChallengeScreen extends ConsumerWidget {
       );
     }
 
+    final user = authAsync.valueOrNull;
+
     return RefreshIndicator(
       onRefresh: () => ref.read(dailyChallengeProvider.notifier).refresh(),
       child: SingleChildScrollView(
@@ -65,7 +68,7 @@ class DailyChallengeScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildChallengeCard(context, ref, state.challenge!, authAsync),
+            _buildChallengeCard(context, ref, state.challenge!, user),
             const SizedBox(height: HoneyTheme.spacingLg),
             _buildStatsCard(state.challenge!),
             if (state.challenge!.hasUserCompleted) ...[
@@ -82,9 +85,8 @@ class DailyChallengeScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     DailyChallenge challenge,
-    authAsync,
+    User? user,
   ) {
-    final user = authAsync.valueOrNull;
     final hasCompleted = challenge.hasUserCompleted;
 
     return Container(
