@@ -2,7 +2,7 @@
 
 ## Phase 1: Firebase Setup & Configuration
 
-- [ ] 1.1 Create Firebase project and configure services
+- [x] 1.1 Create Firebase project and configure services
   - Action: Create Firebase project in console, enable Authentication (Google provider), Firestore, Cloud Functions, FCM
   - Add Firebase configuration to Flutter app (Android, iOS, Web, Windows)
   - Install dependencies: `firebase_core`, `firebase_auth`, `cloud_firestore`, `firebase_messaging`, `google_sign_in`
