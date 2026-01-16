@@ -8,9 +8,10 @@ void main(List<String> args) async {
   final generator = LevelGenerator();
 
   // Configuration: how many levels per size
-  // Size 3: ~0.5s per level, Size 4+: very slow (skip for now)
+  // Size 3: ~0.5s per level, Size 4: slower but feasible for 100 levels
   final config = {
-    3: 100, // 100 levels of size 3 (fast)
+    3: 100, // 100 levels of size 3 (19 cells, easier)
+    4: 100, // 100 levels of size 4 (37 cells, medium difficulty)
   };
 
   final levels = <Map<String, dynamic>>[];
