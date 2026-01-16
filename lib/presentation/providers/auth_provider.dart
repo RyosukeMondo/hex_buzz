@@ -94,6 +94,26 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
     return result;
   }
+
+  /// Signs in with Google OAuth.
+  ///
+  /// Opens Google OAuth consent screen and authenticates the user.
+  /// Returns [AuthResult] indicating success or failure.
+  Future<AuthResult> signInWithGoogle() async {
+    state = const AsyncValue.loading();
+
+    final result = await _repository.signInWithGoogle();
+
+    switch (result) {
+      case AuthSuccess(:final user):
+        state = AsyncValue.data(user);
+      case AuthFailure():
+        // Restore to no user state on failure
+        state = const AsyncValue.data(null);
+    }
+
+    return result;
+  }
 }
 
 /// Provider for authentication state management.

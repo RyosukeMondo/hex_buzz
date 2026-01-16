@@ -24,6 +24,8 @@ void main() {
     username: 'testuser',
     createdAt: DateTime(2024, 1, 1),
     isGuest: false,
+    email: 'test@example.com',
+    displayName: 'Test User',
   );
 
   setUp(() {
@@ -51,12 +53,12 @@ void main() {
   }
 
   group('AuthScreen', () {
-    group('renders correctly in login mode', () {
-      testWidgets('displays "Welcome Back!" header', (tester) async {
+    group('renders correctly', () {
+      testWidgets('displays "Welcome!" header', (tester) async {
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        expect(find.text('Welcome Back!'), findsOneWidget);
+        expect(find.text('Welcome!'), findsOneWidget);
       });
 
       testWidgets('displays HexBuzz title', (tester) async {
@@ -66,466 +68,293 @@ void main() {
         expect(find.text('HexBuzz'), findsOneWidget);
       });
 
-      testWidgets('displays username field', (tester) async {
+      testWidgets('displays sign-in prompt text', (tester) async {
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        expect(find.widgetWithText(TextFormField, 'Username'), findsOneWidget);
+        expect(find.text('Sign in to compete on leaderboards'), findsOneWidget);
       });
 
-      testWidgets('displays password field', (tester) async {
+      testWidgets('displays Google Sign-In button', (tester) async {
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        expect(find.widgetWithText(TextFormField, 'Password'), findsOneWidget);
+        expect(find.text('Sign in with Google'), findsOneWidget);
       });
 
-      testWidgets('does not display confirm password field', (tester) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        expect(
-          find.widgetWithText(TextFormField, 'Confirm Password'),
-          findsNothing,
-        );
-      });
-
-      testWidgets('displays Log In button', (tester) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        expect(find.text('Log In'), findsOneWidget);
-      });
-
-      testWidgets('displays toggle to register mode', (tester) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        expect(find.text("Don't have an account? Register"), findsOneWidget);
-      });
-
-      testWidgets('displays guest mode section', (tester) async {
+      testWidgets('displays Play as Guest button', (tester) async {
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
         expect(find.text('Play as Guest'), findsOneWidget);
+      });
+
+      testWidgets('displays guest disclaimer', (tester) async {
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
         expect(find.text('Progress saved locally only'), findsOneWidget);
       });
-    });
 
-    group('mode switching', () {
-      testWidgets('switches to register mode on toggle', (tester) async {
+      testWidgets('displays app icon', (tester) async {
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        // Tap the toggle button
-        await tester.tap(find.text("Don't have an account? Register"));
-        await tester.pumpAndSettle();
-
-        // Verify we're now in register mode
-        expect(find.text('Create Account'), findsWidgets);
-        expect(
-          find.widgetWithText(TextFormField, 'Confirm Password'),
-          findsOneWidget,
-        );
+        expect(find.byIcon(Icons.hexagon), findsOneWidget);
       });
 
-      testWidgets('switches back to login mode', (tester) async {
+      testWidgets('displays divider with "or"', (tester) async {
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        // Switch to register mode
-        await tester.tap(find.text("Don't have an account? Register"));
-        await tester.pumpAndSettle();
-
-        // Switch back to login mode
-        await tester.tap(find.text('Already have an account? Log In'));
-        await tester.pumpAndSettle();
-
-        // Verify we're back in login mode
-        expect(find.text('Welcome Back!'), findsOneWidget);
-        expect(
-          find.widgetWithText(TextFormField, 'Confirm Password'),
-          findsNothing,
-        );
+        expect(find.text('or'), findsOneWidget);
       });
     });
 
-    group('form validation', () {
-      testWidgets('shows error for empty username', (tester) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        // Try to submit with empty form
-        await tester.tap(find.text('Log In'));
-        await tester.pumpAndSettle();
-
-        expect(find.text('Username is required'), findsOneWidget);
-      });
-
-      testWidgets('shows error for short username', (tester) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        // Enter short username
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Username'),
-          'ab',
-        );
-        await tester.tap(find.text('Log In'));
-        await tester.pumpAndSettle();
-
-        expect(
-          find.text('Username must be at least 3 characters'),
-          findsOneWidget,
-        );
-      });
-
-      testWidgets('shows error for empty password', (tester) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        // Enter valid username
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Username'),
-          'testuser',
-        );
-        await tester.tap(find.text('Log In'));
-        await tester.pumpAndSettle();
-
-        expect(find.text('Password is required'), findsOneWidget);
-      });
-
-      testWidgets('shows error for short password', (tester) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        // Enter valid username and short password
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Username'),
-          'testuser',
-        );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Password'),
-          '12345',
-        );
-        await tester.tap(find.text('Log In'));
-        await tester.pumpAndSettle();
-
-        expect(
-          find.text('Password must be at least 6 characters'),
-          findsOneWidget,
-        );
-      });
-
-      testWidgets('shows error for mismatched passwords in register mode', (
-        tester,
-      ) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        // Switch to register mode
-        await tester.tap(find.text("Don't have an account? Register"));
-        await tester.pumpAndSettle();
-
-        // Enter valid username and password, mismatched confirm
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Username'),
-          'testuser',
-        );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Password'),
-          'password123',
-        );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Confirm Password'),
-          'different123',
-        );
-
-        // Find the Create Account button in ElevatedButton
-        await tester.tap(find.widgetWithText(ElevatedButton, 'Create Account'));
-        await tester.pumpAndSettle();
-
-        expect(find.text('Passwords do not match'), findsOneWidget);
-      });
-    });
-
-    group('password visibility toggle', () {
-      testWidgets('password is obscured by default', (tester) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        final passwordField = tester.widget<EditableText>(
-          find.descendant(
-            of: find.widgetWithText(TextFormField, 'Password'),
-            matching: find.byType(EditableText),
-          ),
-        );
-
-        expect(passwordField.obscureText, isTrue);
-      });
-
-      testWidgets('can toggle password visibility', (tester) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        // Find visibility toggle by icon (visibility_off initially)
-        final visibilityToggle = find.byIcon(Icons.visibility_off).first;
-
-        // Tap to show password
-        await tester.tap(visibilityToggle);
-        await tester.pumpAndSettle();
-
-        final passwordField = tester.widget<EditableText>(
-          find.descendant(
-            of: find.widgetWithText(TextFormField, 'Password'),
-            matching: find.byType(EditableText),
-          ),
-        );
-
-        expect(passwordField.obscureText, isFalse);
-      });
-    });
-
-    group('login functionality', () {
-      testWidgets('calls login on repository with valid credentials', (
-        tester,
-      ) async {
+    group('Google Sign-In', () {
+      testWidgets('calls signInWithGoogle when button pressed', (tester) async {
         when(
-          () => mockAuthRepository.login('testuser', 'password123'),
+          () => mockAuthRepository.signInWithGoogle(),
         ).thenAnswer((_) async => AuthSuccess(testUser));
 
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        // Enter credentials
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Username'),
-          'testuser',
-        );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Password'),
-          'password123',
-        );
+        await tester.tap(find.text('Sign in with Google'));
+        await tester.pump();
 
-        // Submit
-        await tester.tap(find.text('Log In'));
-        await tester.pumpAndSettle();
-
-        verify(
-          () => mockAuthRepository.login('testuser', 'password123'),
-        ).called(1);
+        verify(() => mockAuthRepository.signInWithGoogle()).called(1);
       });
 
-      testWidgets('shows error message on login failure', (tester) async {
-        when(
-          () => mockAuthRepository.login('testuser', 'wrongpassword'),
-        ).thenAnswer((_) async => AuthFailure('Invalid username or password'));
-
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        // Enter credentials
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Username'),
-          'testuser',
-        );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Password'),
-          'wrongpassword',
-        );
-
-        // Submit
-        await tester.tap(find.text('Log In'));
-        await tester.pumpAndSettle();
-
-        expect(find.text('Invalid username or password'), findsOneWidget);
-      });
-    });
-
-    group('register functionality', () {
-      testWidgets('calls register on repository with valid credentials', (
+      testWidgets('navigates to level select on successful sign-in', (
         tester,
       ) async {
         when(
-          () => mockAuthRepository.register('newuser', 'password123'),
+          () => mockAuthRepository.signInWithGoogle(),
         ).thenAnswer((_) async => AuthSuccess(testUser));
 
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        // Switch to register mode
-        await tester.tap(find.text("Don't have an account? Register"));
+        await tester.tap(find.text('Sign in with Google'));
         await tester.pumpAndSettle();
 
-        // Enter credentials
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Username'),
-          'newuser',
-        );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Password'),
-          'password123',
-        );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Confirm Password'),
-          'password123',
-        );
-
-        // Submit
-        await tester.tap(find.widgetWithText(ElevatedButton, 'Create Account'));
-        await tester.pumpAndSettle();
-
-        verify(
-          () => mockAuthRepository.register('newuser', 'password123'),
-        ).called(1);
+        expect(find.byType(_MockLevelSelectScreen), findsOneWidget);
       });
 
-      testWidgets('shows error message on registration failure', (
-        tester,
-      ) async {
+      testWidgets('shows error message on failed sign-in', (tester) async {
         when(
-          () => mockAuthRepository.register('existinguser', 'password123'),
-        ).thenAnswer((_) async => AuthFailure('Username already exists'));
+          () => mockAuthRepository.signInWithGoogle(),
+        ).thenAnswer((_) async => const AuthFailure('Sign-in failed'));
 
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        // Switch to register mode
-        await tester.tap(find.text("Don't have an account? Register"));
+        await tester.tap(find.text('Sign in with Google'));
         await tester.pumpAndSettle();
 
-        // Enter credentials
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Username'),
-          'existinguser',
-        );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Password'),
-          'password123',
-        );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Confirm Password'),
-          'password123',
-        );
-
-        // Submit
-        await tester.tap(find.widgetWithText(ElevatedButton, 'Create Account'));
-        await tester.pumpAndSettle();
-
-        expect(find.text('Username already exists'), findsOneWidget);
+        expect(find.text('Sign-in failed'), findsOneWidget);
       });
-    });
 
-    group('guest mode', () {
-      testWidgets('calls loginAsGuest on repository', (tester) async {
-        final guestUser = User.guest();
+      testWidgets('shows loading indicator during sign-in', (tester) async {
+        final completer = Completer<AuthResult>();
+        when(
+          () => mockAuthRepository.signInWithGoogle(),
+        ).thenAnswer((_) => completer.future);
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Sign in with Google'));
+        await tester.pump();
+
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+        completer.complete(AuthSuccess(testUser));
+        await tester.pumpAndSettle();
+      });
+
+      testWidgets('disables buttons during sign-in', (tester) async {
+        final completer = Completer<AuthResult>();
+        when(
+          () => mockAuthRepository.signInWithGoogle(),
+        ).thenAnswer((_) => completer.future);
+        // Also mock guest login to avoid errors if it's accidentally called
         when(
           () => mockAuthRepository.loginAsGuest(),
-        ).thenAnswer((_) async => AuthSuccess(guestUser));
+        ).thenAnswer((_) async => AuthSuccess(User.guest()));
 
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        // Tap play as guest
-        await tester.tap(find.text('Play as Guest'));
+        await tester.tap(find.text('Sign in with Google'));
+        await tester.pump();
+
+        // Verify loading indicator is shown
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+        // Guest login should not be called during Google sign-in loading
+        verifyNever(() => mockAuthRepository.loginAsGuest());
+
+        completer.complete(AuthSuccess(testUser));
         await tester.pumpAndSettle();
+      });
+
+      testWidgets('handles user cancellation gracefully', (tester) async {
+        when(() => mockAuthRepository.signInWithGoogle()).thenAnswer(
+          (_) async => const AuthFailure('Sign-in cancelled by user'),
+        );
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Sign in with Google'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Sign-in cancelled by user'), findsOneWidget);
+      });
+    });
+
+    group('Guest Play', () {
+      testWidgets('calls loginAsGuest when button pressed', (tester) async {
+        when(
+          () => mockAuthRepository.loginAsGuest(),
+        ).thenAnswer((_) async => AuthSuccess(User.guest()));
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Play as Guest'));
+        await tester.pump();
 
         verify(() => mockAuthRepository.loginAsGuest()).called(1);
       });
 
-      testWidgets('shows disclaimer about guest progress', (tester) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        expect(find.text('Progress saved locally only'), findsOneWidget);
-      });
-    });
-
-    group('layout and theming', () {
-      testWidgets('uses Scaffold', (tester) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        expect(find.byType(Scaffold), findsOneWidget);
-      });
-
-      testWidgets('uses SafeArea', (tester) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        expect(find.byType(SafeArea), findsOneWidget);
-      });
-
-      testWidgets('uses SingleChildScrollView for scrolling', (tester) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        expect(find.byType(SingleChildScrollView), findsOneWidget);
-      });
-
-      testWidgets('displays form in styled container', (tester) async {
-        await tester.pumpWidget(createTestWidget());
-        await tester.pumpAndSettle();
-
-        // Find container with BoxDecoration
-        final containers = tester.widgetList<Container>(find.byType(Container));
-        final hasStyledContainer = containers.any((container) {
-          if (container.decoration is! BoxDecoration) return false;
-          final decoration = container.decoration as BoxDecoration;
-          return decoration.borderRadius != null ||
-              decoration.border != null ||
-              decoration.color != null;
-        });
-
-        expect(hasStyledContainer, isTrue);
-      });
-    });
-
-    group('loading state', () {
-      testWidgets('shows loading indicator during login', (tester) async {
-        // Use a Completer to control when the login completes
-        final loginCompleter = Completer<AuthResult>();
+      testWidgets('navigates to level select on successful guest login', (
+        tester,
+      ) async {
         when(
-          () => mockAuthRepository.login(any(), any()),
-        ).thenAnswer((_) => loginCompleter.future);
+          () => mockAuthRepository.loginAsGuest(),
+        ).thenAnswer((_) async => AuthSuccess(User.guest()));
 
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        // Enter credentials
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Username'),
-          'testuser',
-        );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Password'),
-          'password123',
-        );
+        await tester.tap(find.text('Play as Guest'));
+        await tester.pumpAndSettle();
 
-        // Submit and check for loading indicator
-        await tester.tap(find.text('Log In'));
+        expect(find.byType(_MockLevelSelectScreen), findsOneWidget);
+      });
+
+      testWidgets('shows error message on failed guest login', (tester) async {
+        when(
+          () => mockAuthRepository.loginAsGuest(),
+        ).thenAnswer((_) async => const AuthFailure('Guest login failed'));
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Play as Guest'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Guest login failed'), findsOneWidget);
+      });
+
+      testWidgets('shows loading indicator during guest login', (tester) async {
+        final completer = Completer<AuthResult>();
+        when(
+          () => mockAuthRepository.loginAsGuest(),
+        ).thenAnswer((_) => completer.future);
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Play as Guest'));
         await tester.pump();
 
-        // Should show loading indicator
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
-        // Complete the login to clean up
-        loginCompleter.complete(AuthSuccess(testUser));
+        completer.complete(AuthSuccess(User.guest()));
         await tester.pumpAndSettle();
+      });
+    });
+
+    group('UI interactions', () {
+      testWidgets('clears error message when retrying', (tester) async {
+        when(
+          () => mockAuthRepository.signInWithGoogle(),
+        ).thenAnswer((_) async => const AuthFailure('First error'));
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // First attempt - should show error
+        await tester.tap(find.text('Sign in with Google'));
+        await tester.pumpAndSettle();
+        expect(find.text('First error'), findsOneWidget);
+
+        // Second attempt - should clear previous error
+        when(
+          () => mockAuthRepository.signInWithGoogle(),
+        ).thenAnswer((_) async => const AuthFailure('Second error'));
+
+        await tester.tap(find.text('Sign in with Google'));
+        await tester.pump();
+
+        // During loading, error should be cleared
+        expect(find.text('First error'), findsNothing);
+      });
+    });
+
+    group('accessibility', () {
+      testWidgets('error message has live region semantics', (tester) async {
+        when(
+          () => mockAuthRepository.signInWithGoogle(),
+        ).thenAnswer((_) async => const AuthFailure('Error message'));
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Sign in with Google'));
+        await tester.pumpAndSettle();
+
+        // Verify error message is displayed
+        expect(find.text('Error message'), findsOneWidget);
+
+        // Verify Semantics widget with liveRegion property exists
+        final semanticsWidget = find.ancestor(
+          of: find.text('Error message'),
+          matching: find.byType(Semantics),
+        );
+        expect(semanticsWidget, findsWidgets);
+      });
+
+      testWidgets('error icon has semantic label', (tester) async {
+        when(
+          () => mockAuthRepository.signInWithGoogle(),
+        ).thenAnswer((_) async => const AuthFailure('Error message'));
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Sign in with Google'));
+        await tester.pumpAndSettle();
+
+        // Find error icon with semantic label
+        final errorIcon = find.byWidgetPredicate(
+          (widget) => widget is Icon && widget.semanticLabel == 'Error',
+        );
+        expect(errorIcon, findsOneWidget);
       });
     });
   });
 }
 
-/// Mock LevelSelectScreen for navigation testing.
 class _MockLevelSelectScreen extends StatelessWidget {
   const _MockLevelSelectScreen();
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Mock Level Select Screen')),
-    );
+    return const Scaffold(body: Text('Level Select'));
   }
 }

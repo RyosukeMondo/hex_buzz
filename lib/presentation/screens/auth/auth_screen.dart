@@ -6,16 +6,13 @@ import '../../../main.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/honey_theme.dart';
 
-/// Authentication mode for the form.
-enum AuthMode { login, register }
-
-/// Authentication screen with login/register form and guest play option.
+/// Authentication screen with Google Sign-In as primary authentication method.
 ///
-/// Displays username/password fields with validation:
-/// - Username: minimum 3 characters
-/// - Password: minimum 6 characters
+/// Displays a welcome message with a "Sign in with Google" button following
+/// Google's branding guidelines. Shows loading state during authentication
+/// and handles authentication errors gracefully.
 ///
-/// On successful auth, navigates to [LevelSelectScreen].
+/// On successful authentication, navigates to [LevelSelectScreen].
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
 
@@ -24,67 +21,17 @@ class AuthScreen extends ConsumerStatefulWidget {
 }
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-
-  AuthMode _mode = AuthMode.login;
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   bool _isLoading = false;
   String? _errorMessage;
 
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
-  }
-
-  void _toggleMode() {
-    setState(() {
-      _mode = _mode == AuthMode.login ? AuthMode.register : AuthMode.login;
-      _errorMessage = null;
-      _formKey.currentState?.reset();
-    });
-  }
-
-  String? _validateUsername(String? value) {
-    if (value == null || value.isEmpty) return 'Username is required';
-    if (value.length < 3) return 'Username must be at least 3 characters';
-    return null;
-  }
-
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) return 'Password is required';
-    if (value.length < 6) return 'Password must be at least 6 characters';
-    return null;
-  }
-
-  String? _validateConfirmPassword(String? value) {
-    if (_mode == AuthMode.register && value != _passwordController.text) {
-      return 'Passwords do not match';
-    }
-    return null;
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-
+  Future<void> _signInWithGoogle() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     final authNotifier = ref.read(authProvider.notifier);
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text;
-
-    final result = _mode == AuthMode.login
-        ? await authNotifier.login(username, password)
-        : await authNotifier.register(username, password);
+    final result = await authNotifier.signInWithGoogle();
 
     if (!mounted) return;
 
@@ -134,7 +81,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               children: [
                 _buildHeader(),
                 const SizedBox(height: HoneyTheme.spacingXxl),
-                _buildFormContainer(),
+                _buildAuthContainer(),
                 const SizedBox(height: HoneyTheme.spacingXl),
                 _buildGuestSection(),
               ],
@@ -148,6 +95,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
+        _buildAppIcon(),
+        const SizedBox(height: HoneyTheme.spacingLg),
         Text(
           'HexBuzz',
           style: Theme.of(context).textTheme.displaySmall?.copyWith(
@@ -157,41 +106,61 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ),
         const SizedBox(height: HoneyTheme.spacingSm),
         Text(
-          _mode == AuthMode.login ? 'Welcome Back!' : 'Create Account',
+          'Welcome!',
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(color: HoneyTheme.textSecondary),
+        ),
+        const SizedBox(height: HoneyTheme.spacingSm),
+        Text(
+          'Sign in to compete on leaderboards',
+          textAlign: TextAlign.center,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: HoneyTheme.textSecondary),
         ),
       ],
     );
   }
 
-  Widget _buildFormContainer() {
+  Widget _buildAppIcon() {
+    return Container(
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        color: HoneyTheme.honeyGoldLight,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: HoneyTheme.honeyGold.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: const Icon(Icons.hexagon, size: 64, color: HoneyTheme.textPrimary),
+    );
+  }
+
+  Widget _buildAuthContainer() {
     return Container(
       constraints: const BoxConstraints(maxWidth: 400),
       padding: const EdgeInsets.all(HoneyTheme.spacingXl),
-      decoration: _formDecoration(),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildUsernameField(),
+      decoration: _authContainerDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_errorMessage != null) ...[
+            _buildErrorMessage(),
             const SizedBox(height: HoneyTheme.spacingLg),
-            _buildPasswordField(),
-            if (_mode == AuthMode.register) _buildConfirmPasswordField(),
-            if (_errorMessage != null) _buildErrorMessage(),
-            const SizedBox(height: HoneyTheme.spacingXl),
-            _buildSubmitButton(),
-            const SizedBox(height: HoneyTheme.spacingLg),
-            _buildToggleModeButton(),
           ],
-        ),
+          _buildGoogleSignInButton(),
+        ],
       ),
     );
   }
 
-  BoxDecoration _formDecoration() {
+  BoxDecoration _authContainerDecoration() {
     return BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(HoneyTheme.radiusLg),
@@ -208,129 +177,56 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     );
   }
 
-  Widget _buildUsernameField() {
-    return TextFormField(
-      controller: _usernameController,
-      validator: _validateUsername,
-      enabled: !_isLoading,
-      decoration: _inputDecoration(
-        label: 'Username',
-        icon: Icons.person_outline,
-      ),
-      textInputAction: TextInputAction.next,
-      autocorrect: false,
-    );
-  }
-
-  Widget _buildPasswordField() {
-    return TextFormField(
-      controller: _passwordController,
-      validator: _validatePassword,
-      enabled: !_isLoading,
-      obscureText: _obscurePassword,
-      decoration: _inputDecoration(
-        label: 'Password',
-        icon: Icons.lock_outline,
-        suffixIcon: _buildVisibilityToggle(
-          obscure: _obscurePassword,
-          onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
-        ),
-      ),
-      textInputAction: _mode == AuthMode.register
-          ? TextInputAction.next
-          : TextInputAction.done,
-      onFieldSubmitted: _mode == AuthMode.login ? (_) => _submit() : null,
-    );
-  }
-
-  Widget _buildConfirmPasswordField() {
-    return Padding(
-      padding: const EdgeInsets.only(top: HoneyTheme.spacingLg),
-      child: TextFormField(
-        controller: _confirmPasswordController,
-        validator: _validateConfirmPassword,
-        enabled: !_isLoading,
-        obscureText: _obscureConfirmPassword,
-        decoration: _inputDecoration(
-          label: 'Confirm Password',
-          icon: Icons.lock_outline,
-          suffixIcon: _buildVisibilityToggle(
-            obscure: _obscureConfirmPassword,
-            onToggle: () => setState(
-              () => _obscureConfirmPassword = !_obscureConfirmPassword,
-            ),
-          ),
-        ),
-        textInputAction: TextInputAction.done,
-        onFieldSubmitted: (_) => _submit(),
-      ),
-    );
-  }
-
-  Widget _buildVisibilityToggle({
-    required bool obscure,
-    required VoidCallback onToggle,
-  }) {
-    return IconButton(
-      icon: Icon(
-        obscure ? Icons.visibility_off : Icons.visibility,
-        color: HoneyTheme.textSecondary,
-        semanticLabel: obscure ? 'Show password' : 'Hide password',
-      ),
-      onPressed: onToggle,
-      tooltip: obscure ? 'Show password' : 'Hide password',
-    );
-  }
-
-  Widget _buildErrorMessage() {
-    return Semantics(
-      liveRegion: true,
-      child: Padding(
-        padding: const EdgeInsets.only(top: HoneyTheme.spacingLg),
-        child: Container(
-          padding: const EdgeInsets.all(HoneyTheme.spacingMd),
-          decoration: BoxDecoration(
-            color: Colors.red.shade50,
-            borderRadius: BorderRadius.circular(HoneyTheme.radiusSm),
-            border: Border.all(color: Colors.red.shade200),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.error_outline,
-                color: Colors.red.shade700,
-                size: HoneyTheme.iconSizeSm,
-                semanticLabel: 'Error',
-              ),
-              const SizedBox(width: HoneyTheme.spacingSm),
-              Expanded(
-                child: Text(
-                  _errorMessage!,
-                  style: TextStyle(color: Colors.red.shade700),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSubmitButton() {
+  Widget _buildGoogleSignInButton() {
+    // Following Google's branding guidelines:
+    // https://developers.google.com/identity/branding-guidelines
     return SizedBox(
-      height: 48,
+      height: 50,
       child: ElevatedButton(
-        onPressed: _isLoading ? null : _submit,
+        onPressed: _isLoading ? null : _signInWithGoogle,
         style: ElevatedButton.styleFrom(
-          backgroundColor: HoneyTheme.honeyGold,
-          foregroundColor: HoneyTheme.textPrimary,
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF3C4043),
+          elevation: 1,
+          shadowColor: Colors.black26,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(HoneyTheme.radiusMd),
+            borderRadius: BorderRadius.circular(4),
+            side: BorderSide(color: const Color(0xFFDADCE0), width: 1),
           ),
-          elevation: 2,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
         ),
-        child: _isLoading ? _buildLoadingIndicator() : _buildSubmitText(),
+        child: _isLoading
+            ? _buildLoadingIndicator()
+            : _buildGoogleButtonContent(),
       ),
+    );
+  }
+
+  Widget _buildGoogleButtonContent() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildGoogleLogo(),
+        const SizedBox(width: 24),
+        const Text(
+          'Sign in with Google',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.25,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGoogleLogo() {
+    // Google "G" logo using path for accurate representation
+    return SizedBox(
+      width: 18,
+      height: 18,
+      child: CustomPaint(painter: _GoogleLogoPainter()),
     );
   }
 
@@ -340,59 +236,39 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       height: 24,
       child: CircularProgressIndicator(
         strokeWidth: 2,
-        valueColor: AlwaysStoppedAnimation<Color>(HoneyTheme.textPrimary),
+        valueColor: AlwaysStoppedAnimation<Color>(HoneyTheme.honeyGold),
       ),
     );
   }
 
-  Widget _buildSubmitText() {
-    return Text(
-      _mode == AuthMode.login ? 'Log In' : 'Create Account',
-      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-    );
-  }
-
-  Widget _buildToggleModeButton() {
-    return TextButton(
-      onPressed: _isLoading ? null : _toggleMode,
-      child: Text(
-        _mode == AuthMode.login
-            ? "Don't have an account? Register"
-            : 'Already have an account? Log In',
-        style: TextStyle(
-          color: HoneyTheme.deepHoney,
-          fontWeight: FontWeight.w500,
+  Widget _buildErrorMessage() {
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        padding: const EdgeInsets.all(HoneyTheme.spacingMd),
+        decoration: BoxDecoration(
+          color: Colors.red.shade50,
+          borderRadius: BorderRadius.circular(HoneyTheme.radiusSm),
+          border: Border.all(color: Colors.red.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.error_outline,
+              color: Colors.red.shade700,
+              size: HoneyTheme.iconSizeSm,
+              semanticLabel: 'Error',
+            ),
+            const SizedBox(width: HoneyTheme.spacingSm),
+            Expanded(
+              child: Text(
+                _errorMessage!,
+                style: TextStyle(color: Colors.red.shade700),
+              ),
+            ),
+          ],
         ),
       ),
-    );
-  }
-
-  InputDecoration _inputDecoration({
-    required String label,
-    required IconData icon,
-    Widget? suffixIcon,
-  }) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon, color: HoneyTheme.honeyGoldDark),
-      suffixIcon: suffixIcon,
-      filled: true,
-      fillColor: HoneyTheme.warmCream.withValues(alpha: 0.5),
-      border: _inputBorder(HoneyTheme.honeyGoldLight),
-      enabledBorder: _inputBorder(
-        HoneyTheme.honeyGoldLight.withValues(alpha: 0.5),
-      ),
-      focusedBorder: _inputBorder(HoneyTheme.honeyGold, width: 2),
-      errorBorder: _inputBorder(Colors.red.shade300),
-      focusedErrorBorder: _inputBorder(Colors.red.shade400, width: 2),
-      labelStyle: TextStyle(color: HoneyTheme.textSecondary),
-    );
-  }
-
-  OutlineInputBorder _inputBorder(Color color, {double width = 1}) {
-    return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(HoneyTheme.radiusMd),
-      borderSide: BorderSide(color: color, width: width),
     );
   }
 
@@ -469,4 +345,71 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       ),
     );
   }
+}
+
+/// Custom painter for Google's "G" logo following brand guidelines.
+class _GoogleLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    // Google Blue
+    paint.color = const Color(0xFF4285F4);
+    canvas.drawArc(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      -0.52,
+      2.09,
+      true,
+      paint,
+    );
+
+    // Google Green
+    paint.color = const Color(0xFF34A853);
+    canvas.drawArc(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      1.57,
+      2.09,
+      true,
+      paint,
+    );
+
+    // Google Yellow
+    paint.color = const Color(0xFFFBBC05);
+    canvas.drawArc(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      3.665,
+      2.09,
+      true,
+      paint,
+    );
+
+    // Google Red
+    paint.color = const Color(0xFFEA4335);
+    canvas.drawArc(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      -2.61,
+      2.09,
+      true,
+      paint,
+    );
+
+    // White center circle
+    paint.color = Colors.white;
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2),
+      size.width * 0.45,
+      paint,
+    );
+
+    // Blue segment for center
+    paint.color = const Color(0xFF4285F4);
+    final path = Path();
+    path.moveTo(size.width / 2, size.height / 2);
+    path.lineTo(size.width, size.height / 2);
+    path.lineTo(size.width, size.height * 0.75);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

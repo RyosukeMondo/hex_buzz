@@ -47,7 +47,7 @@ void main() {
   );
 
   group('Full User Journey E2E', () {
-    testWidgets('New user: Front → Register → Play → Progress persists', (
+    testWidgets('New user: Front → Play as Guest → Progress persists', (
       tester,
     ) async {
       print('=== Starting Full User Journey Test ===');
@@ -59,31 +59,14 @@ void main() {
       await tester.tap(find.byType(GestureDetector).first);
       await tester.pumpAndSettle();
 
-      // Auth screen - switch to register
+      // Auth screen - play as guest
       expect(find.byType(AuthScreen), findsOneWidget);
-      final switchToRegister = find.textContaining("Don't have an account");
-      if (switchToRegister.evaluate().isNotEmpty) {
-        await tester.tap(switchToRegister);
-        await tester.pumpAndSettle();
-      }
-
-      // Register
-      await tester.enterText(find.byType(TextFormField).first, 'testplayer');
-      await tester.pump();
-      await tester.enterText(find.byType(TextFormField).at(1), 'password123');
-      await tester.pump();
-      final fields = find.byType(TextFormField);
-      if (fields.evaluate().length > 2) {
-        await tester.enterText(fields.at(2), 'password123');
-        await tester.pump();
-      }
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Create Account'));
+      await tester.tap(find.text('Play as Guest'));
       await tester.pumpAndSettle();
 
       // Level select
       expect(find.byType(LevelSelectScreen), findsOneWidget);
-      expect(find.textContaining('testplayer'), findsOneWidget);
-      print('  - Registered successfully');
+      print('  - Started as guest');
 
       // Play level 1
       await tester.tap(find.byType(LevelCellWidget).first);
@@ -114,21 +97,17 @@ void main() {
       expect(cells[1].isUnlocked, isTrue);
       print('  - Level 2 unlocked');
 
-      // Logout and login again
+      // Logout and play as guest again to verify progress persists
       await tester.tap(find.byIcon(Icons.logout));
       await pumpFrames(tester);
       expect(find.byType(FrontScreen), findsOneWidget);
 
       await tester.tap(find.byType(GestureDetector).first);
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextFormField).first, 'testplayer');
-      await tester.pump();
-      await tester.enterText(find.byType(TextFormField).at(1), 'password123');
-      await tester.pump();
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Log In'));
+      await tester.tap(find.text('Play as Guest'));
       await tester.pumpAndSettle();
 
-      // Verify progress persisted
+      // Verify progress persisted for guest user
       final persistedCells = tester
           .widgetList<LevelCellWidget>(find.byType(LevelCellWidget))
           .toList();
@@ -212,24 +191,10 @@ void main() {
       await tester.tap(find.byIcon(Icons.logout));
       await pumpFrames(tester);
 
-      // Register new user
+      // Sign in with Google (simulated)
       await tester.tap(find.byType(GestureDetector).first);
       await tester.pumpAndSettle();
-      final switchToRegister = find.textContaining("Don't have an account");
-      if (switchToRegister.evaluate().isNotEmpty) {
-        await tester.tap(switchToRegister);
-        await tester.pumpAndSettle();
-      }
-      await tester.enterText(find.byType(TextFormField).first, 'newplayer');
-      await tester.pump();
-      await tester.enterText(find.byType(TextFormField).at(1), 'password123');
-      await tester.pump();
-      final fields = find.byType(TextFormField);
-      if (fields.evaluate().length > 2) {
-        await tester.enterText(fields.at(2), 'password123');
-        await tester.pump();
-      }
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Create Account'));
+      await tester.tap(find.text('Sign in with Google'));
       await tester.pumpAndSettle();
 
       // Verify isolation
