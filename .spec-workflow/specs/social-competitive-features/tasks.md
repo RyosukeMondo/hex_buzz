@@ -445,7 +445,7 @@
   - _Completed: Enhanced msix_config in pubspec.yaml with comprehensive Store settings including publisher/identity configuration, Windows-specific icon paths, protocol activation (hexbuzz://), multi-language support (en-us, ja-jp), Windows 10 1809+ compatibility. Windows icons already exist in multiple sizes (44x44, 71x71, 150x150, 310x310, 620x620). Updated MS_STORE_DEPLOYMENT.md with configuration details. Note: Publisher CN must be obtained from Microsoft Partner Center before final build._
   - _Prompt: Role: Flutter Developer with Windows packaging expertise | Task: Configure MSIX packaging in pubspec.yaml by adding msix package and configuring msix_config with display name, publisher info, identity, capabilities (internetClient), and creating required app icons | Restrictions: Follow Microsoft Store app manifest requirements, use valid publisher identity, include all required capabilities | Success: MSIX config complete, icons created in all sizes, package builds successfully with flutter pub run msix:create_
 
-- [ ] 9.2 Implement Windows-specific adaptations
+- [x] 9.2 Implement Windows-specific adaptations
   - Files: Various UI files
   - Add window resizing support with responsive layout
   - Add keyboard shortcuts (Ctrl+Z for undo, Escape for back)
@@ -454,6 +454,7 @@
   - Purpose: Windows UI polish
   - _Leverage: Existing UI components_
   - _Requirements: 5.2, 5.3, 5.6_
+  - _Completed: Implemented comprehensive Windows desktop adaptations including WindowConfig helper with responsive breakpoints (720x480 min), KeyboardShortcuts widget supporting Ctrl+Z (undo) and Escape (back), HoverButton/HoverTextButton/HoverIconButton widgets with cursor changes, updated AnimatedButton and LevelCellWidget with hover states. Integrated shortcuts into GameScreen and LevelSelectScreen. All hover effects respect system accessibility settings. Comprehensive tests added and passing._
   - _Prompt: Role: Flutter Developer with desktop expertise | Task: Adapt UI for Windows by implementing window resizing with responsive layout (min 720x480), keyboard shortcuts (Ctrl+Z, Escape), mouse hover states, and ensuring Windows-native window controls work properly | Restrictions: Use LayoutBuilder for responsive design, add hover effects only for desktop, test on Windows 10 and 11 | Success: App resizes properly, keyboard shortcuts work, hover states look good, window controls native_
 
 - [ ] 9.3 Test with Windows App Certification Kit (WACK)
