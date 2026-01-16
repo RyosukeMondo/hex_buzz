@@ -500,13 +500,14 @@
   - _Completed: Comprehensive unit tests exist for all providers with 99 total tests passing. Tests cover: AuthProvider (47 tests) - login, register, logout, signOut, playAsGuest, state transitions, repository calls; LeaderboardProvider (30 tests) - global and daily challenge leaderboards, refresh, pagination, score submission; DailyChallengeProvider (22 tests) - challenge loading, completion status, submission. All tests use mocked repositories with mocktail, verify state changes, handle error cases, and test all critical paths. Tests follow Riverpod best practices with proper provider container setup/teardown._
   - _Prompt: Role: QA Engineer | Task: Write comprehensive unit tests for all new providers (AuthProvider, LeaderboardProvider, DailyChallengeProvider) testing state changes, method calls, error handling, using mocked repositories | Restrictions: Use Riverpod testing utilities, mock all external dependencies, test all state transitions | Success: All provider logic tested, state changes verified, error handling covered, >90% coverage_
 
-- [ ] 10.2 Write widget tests for UI screens
+- [x] 10.2 Write widget tests for UI screens
   - Files: `test/presentation/screens/auth_screen_test.dart`, `test/presentation/screens/leaderboard_screen_test.dart`, `test/presentation/screens/daily_challenge_screen_test.dart`
   - Test UI rendering, user interactions, state display
   - Mock providers
   - Purpose: Ensure UI correctness
   - _Leverage: Flutter widget testing_
   - _Requirements: All UI requirements_
+  - _Completed: Comprehensive widget tests exist for all three screens with 71 total tests passing. Tests cover: AuthScreen (26 tests) - rendering welcome text, Google Sign-In button, guest mode button, sign-in/logout flows, loading states, error handling, accessibility features; LeaderboardScreen (21 tests) - app bar, tabs, global/daily challenge leaderboards, rank badges, star counts, user highlighting, pull-to-refresh, error/empty states, avatars; DailyChallengeScreen (24 tests) - challenge card, stats display, user results, error handling, date/time formatting, pull-to-refresh, UI responsiveness. All tests use mocked repositories with mocktail, verify UI interactions, handle all states (loading/success/error), and follow Flutter widget testing best practices._
   - _Prompt: Role: QA Engineer | Task: Write widget tests for all new screens (AuthScreen, LeaderboardScreen, DailyChallengeScreen) testing rendering, interactions, state display with mocked providers | Restrictions: Use flutter_test, mock providers with fake implementations, test loading/error/success states | Success: All screens tested, interactions verified, state displays correct, no visual regressions_
 
 - [ ] 10.3 Write E2E tests for user flows
