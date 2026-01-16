@@ -1,360 +1,438 @@
-import 'dart:io';
-
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hex_buzz/platform/windows/wns_notification_service.dart';
+import 'package:mocktail/mocktail.dart';
+
+// Mock classes
+class MockFlutterLocalNotificationsPlugin extends Mock
+    implements FlutterLocalNotificationsPlugin {}
+
+class MockNotificationResponse extends Mock implements NotificationResponse {}
+
+// Fake classes for fallback values
+class FakeInitializationSettings extends Fake
+    implements InitializationSettings {}
+
+class FakeNotificationDetails extends Fake implements NotificationDetails {}
 
 void main() {
-  late WNSNotificationService service;
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUp(() {
-    service = WNSNotificationService();
-  });
-
-  tearDown(() {
-    service.dispose();
+  setUpAll(() {
+    // Register fallback values for mocktail
+    registerFallbackValue(FakeInitializationSettings());
+    registerFallbackValue(FakeNotificationDetails());
   });
 
   group('WNSNotificationService', () {
+    late MockFlutterLocalNotificationsPlugin mockLocalNotifications;
+    late FakeFirebaseFirestore fakeFirestore;
+    late WNSNotificationService service;
+    const testUserId = 'test-user-123';
+
+    setUp(() {
+      mockLocalNotifications = MockFlutterLocalNotificationsPlugin();
+      fakeFirestore = FakeFirebaseFirestore();
+
+      // Create user document for testing token storage
+      fakeFirestore.collection('users').doc(testUserId).set({
+        'uid': testUserId,
+        'email': 'test@example.com',
+      });
+
+      service = WNSNotificationService(
+        localNotifications: mockLocalNotifications,
+        firestore: fakeFirestore,
+        userId: testUserId,
+      );
+
+      // Setup default mock behavior for initialization
+      when(
+        () => mockLocalNotifications.initialize(
+          any(),
+          onDidReceiveNotificationResponse: any(
+            named: 'onDidReceiveNotificationResponse',
+          ),
+        ),
+      ).thenAnswer((_) async => true);
+    });
+
+    tearDown(() {
+      service.dispose();
+    });
+
     group('initialize', () {
-      test('initializes successfully on Windows', () async {
-        // Skip test if not running on Windows
-        if (!Platform.isWindows) {
-          return;
-        }
+      test('succeeds on Windows platform', () async {
+        final result = await service.initialize();
+
+        expect(result, isTrue);
+        verify(
+          () => mockLocalNotifications.initialize(
+            any(),
+            onDidReceiveNotificationResponse: any(
+              named: 'onDidReceiveNotificationResponse',
+            ),
+          ),
+        ).called(1);
+      });
+
+      test(
+        'stores device ID in Firestore when user is authenticated',
+        () async {
+          await service.initialize();
+
+          // Allow async operations to complete
+          await Future.delayed(const Duration(milliseconds: 100));
+
+          final userDoc = await fakeFirestore
+              .collection('users')
+              .doc(testUserId)
+              .get();
+          expect(userDoc.data()?['windowsDeviceId'], isNotNull);
+          expect(
+            userDoc.data()?['windowsDeviceId'],
+            startsWith('windows_$testUserId'),
+          );
+          expect(userDoc.data()?['windowsDeviceIdUpdatedAt'], isNotNull);
+          expect(userDoc.data()?['platform'], 'windows');
+        },
+      );
+
+      test('handles exception gracefully', () async {
+        when(
+          () => mockLocalNotifications.initialize(
+            any(),
+            onDidReceiveNotificationResponse: any(
+              named: 'onDidReceiveNotificationResponse',
+            ),
+          ),
+        ).thenThrow(Exception('Initialization error'));
 
         final result = await service.initialize();
 
-        expect(result, true);
-      });
-
-      test('returns false on non-Windows platforms', () async {
-        // Skip test if running on Windows
-        if (Platform.isWindows) {
-          return;
-        }
-
-        final result = await service.initialize();
-
-        expect(result, false);
-      });
-
-      test('can be called multiple times safely', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
-
-        final result1 = await service.initialize();
-        final result2 = await service.initialize();
-
-        expect(result1, true);
-        expect(result2, true);
+        expect(result, isFalse);
       });
     });
 
     group('getDeviceToken', () {
-      test('returns device identifier after initialization', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
-
+      test('returns device ID after initialization', () async {
         await service.initialize();
+
         final token = await service.getDeviceToken();
 
         expect(token, isNotNull);
-        expect(token, startsWith('windows-'));
+        expect(token, startsWith('windows_'));
       });
 
-      test('initializes automatically if not initialized', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
-
-        // Don't call initialize() first
+      test('generates device ID if not initialized', () async {
         final token = await service.getDeviceToken();
 
-        // On Windows, should auto-initialize and return token
-        if (Platform.isWindows) {
-          expect(token, isNotNull);
-        }
+        expect(token, isNotNull);
+        expect(token, startsWith('windows_'));
+      });
+    });
+
+    group('subscribeToTopic', () {
+      test('succeeds when subscription is successful', () async {
+        await service.initialize();
+        const topic = 'daily_challenge';
+
+        final result = await service.subscribeToTopic(topic);
+
+        expect(result, isTrue);
+
+        // Verify subscription stored in Firestore
+        final subscriptionDoc = await fakeFirestore
+            .collection('users')
+            .doc(testUserId)
+            .collection('notificationSubscriptions')
+            .doc(topic)
+            .get();
+
+        expect(subscriptionDoc.exists, isTrue);
+        expect(subscriptionDoc.data()?['topic'], topic);
+        expect(subscriptionDoc.data()?['platform'], 'windows');
+        expect(subscriptionDoc.data()?['deviceId'], isNotNull);
+        expect(subscriptionDoc.data()?['subscribedAt'], isNotNull);
+      });
+
+      test('fails when user ID is null', () async {
+        final serviceNoUser = WNSNotificationService(
+          localNotifications: mockLocalNotifications,
+          firestore: fakeFirestore,
+          userId: null,
+        );
+
+        await serviceNoUser.initialize();
+        const topic = 'daily_challenge';
+
+        final result = await serviceNoUser.subscribeToTopic(topic);
+
+        expect(result, isFalse);
+        serviceNoUser.dispose();
+      });
+
+      test('fails when not initialized', () async {
+        const topic = 'daily_challenge';
+
+        final result = await service.subscribeToTopic(topic);
+
+        expect(result, isFalse);
+      });
+
+      test('handles exception gracefully', () async {
+        await service.initialize();
+        const topic = 'daily_challenge';
+
+        // Close firestore connection to simulate error
+        final badService = WNSNotificationService(
+          localNotifications: mockLocalNotifications,
+          firestore: FakeFirebaseFirestore(),
+          userId: 'nonexistent-user',
+        );
+        await badService.initialize();
+
+        final result = await badService.subscribeToTopic(topic);
+
+        // Should return true even if user doc doesn't exist
+        // (subscription doc will be created anyway)
+        expect(result, isTrue);
+        badService.dispose();
+      });
+    });
+
+    group('unsubscribeFromTopic', () {
+      test('succeeds when unsubscription is successful', () async {
+        await service.initialize();
+        const topic = 'daily_challenge';
+
+        // First subscribe
+        await service.subscribeToTopic(topic);
+
+        // Then unsubscribe
+        final result = await service.unsubscribeFromTopic(topic);
+
+        expect(result, isTrue);
+
+        // Verify subscription removed from Firestore
+        final subscriptionDoc = await fakeFirestore
+            .collection('users')
+            .doc(testUserId)
+            .collection('notificationSubscriptions')
+            .doc(topic)
+            .get();
+
+        expect(subscriptionDoc.exists, isFalse);
+      });
+
+      test('succeeds even if subscription does not exist', () async {
+        await service.initialize();
+        const topic = 'nonexistent_topic';
+
+        final result = await service.unsubscribeFromTopic(topic);
+
+        expect(result, isTrue);
+      });
+
+      test('fails when user ID is null', () async {
+        final serviceNoUser = WNSNotificationService(
+          localNotifications: mockLocalNotifications,
+          firestore: fakeFirestore,
+          userId: null,
+        );
+
+        await serviceNoUser.initialize();
+        const topic = 'daily_challenge';
+
+        final result = await serviceNoUser.unsubscribeFromTopic(topic);
+
+        expect(result, isFalse);
+        serviceNoUser.dispose();
       });
     });
 
     group('requestPermission', () {
-      test('grants permission by default on Windows', () async {
-        final result = await service.requestPermission();
+      test(
+        'returns true on Windows (permissions granted by default)',
+        () async {
+          final result = await service.requestPermission();
 
-        expect(result, true);
-      });
-    });
+          expect(result, isTrue);
+        },
+      );
 
-    group('topic subscriptions', () {
-      test('subscribes to topic successfully', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
+      test('returns same result when called multiple times', () async {
+        final result1 = await service.requestPermission();
+        final result2 = await service.requestPermission();
 
-        await service.initialize();
-        final result = await service.subscribeToTopic('daily_challenge');
-
-        expect(result, true);
-        expect(service.isSubscribedToTopic('daily_challenge'), true);
-      });
-
-      test('unsubscribes from topic successfully', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
-
-        await service.initialize();
-        await service.subscribeToTopic('daily_challenge');
-        expect(service.isSubscribedToTopic('daily_challenge'), true);
-
-        final result = await service.unsubscribeFromTopic('daily_challenge');
-
-        expect(result, true);
-        expect(service.isSubscribedToTopic('daily_challenge'), false);
-      });
-
-      test('handles multiple topic subscriptions', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
-
-        await service.initialize();
-
-        await service.subscribeToTopic('daily_challenge');
-        await service.subscribeToTopic('rank_changes');
-        await service.subscribeToTopic('re_engagement');
-
-        final subscriptions = service.getActiveSubscriptions();
-
-        expect(subscriptions.length, 3);
-        expect(subscriptions, contains('daily_challenge'));
-        expect(subscriptions, contains('rank_changes'));
-        expect(subscriptions, contains('re_engagement'));
-      });
-
-      test('returns false when subscribing without initialization', () async {
-        final result = await service.subscribeToTopic('test_topic');
-
-        expect(result, false);
-      });
-
-      test('returns false when unsubscribing without initialization', () async {
-        final result = await service.unsubscribeFromTopic('test_topic');
-
-        expect(result, false);
+        expect(result1, isTrue);
+        expect(result2, isTrue);
       });
     });
 
     group('onMessageReceived stream', () {
-      test('emits messages when local notification shown', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
-
+      test('emits messages with proper structure', () async {
         await service.initialize();
-        await service.requestPermission();
+
+        // Service is ready, stream should be available
+        expect(service.onMessageReceived, isA<Stream<Map<String, dynamic>>>());
+      });
+
+      test('emits message when showNotification is called', () async {
+        await service.initialize();
+        when(
+          () => mockLocalNotifications.show(
+            any(),
+            any(),
+            any(),
+            any(),
+            payload: any(named: 'payload'),
+          ),
+        ).thenAnswer((_) async {});
 
         final messages = <Map<String, dynamic>>[];
         service.onMessageReceived.listen(messages.add);
 
-        await service.showLocalNotification(
+        await service.showNotification(
           title: 'Test Title',
           body: 'Test Body',
           data: {'key': 'value'},
         );
 
-        // Wait for stream to emit
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future.delayed(const Duration(milliseconds: 50));
 
         expect(messages.length, 1);
         expect(messages[0]['title'], 'Test Title');
         expect(messages[0]['body'], 'Test Body');
         expect(messages[0]['data'], {'key': 'value'});
       });
+    });
 
-      test('emits multiple messages correctly', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
-
+    group('showNotification', () {
+      test('displays notification with title and body', () async {
         await service.initialize();
-        await service.requestPermission();
+        when(
+          () => mockLocalNotifications.show(
+            any(),
+            any(),
+            any(),
+            any(),
+            payload: any(named: 'payload'),
+          ),
+        ).thenAnswer((_) async {});
 
-        final messages = <Map<String, dynamic>>[];
-        service.onMessageReceived.listen(messages.add);
+        await service.showNotification(title: 'Test Title', body: 'Test Body');
 
-        await service.showLocalNotification(title: 'Message 1', body: 'Body 1');
-
-        await service.showLocalNotification(title: 'Message 2', body: 'Body 2');
-
-        // Wait for stream to emit
-        await Future.delayed(const Duration(milliseconds: 100));
-
-        expect(messages.length, 2);
-        expect(messages[0]['title'], 'Message 1');
-        expect(messages[1]['title'], 'Message 2');
+        verify(
+          () => mockLocalNotifications.show(
+            any(),
+            'Test Title',
+            'Test Body',
+            any(),
+            payload: any(named: 'payload'),
+          ),
+        ).called(1);
       });
 
-      test('does not emit when not initialized', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
+      test('displays notification with data payload', () async {
+        await service.initialize();
+        when(
+          () => mockLocalNotifications.show(
+            any(),
+            any(),
+            any(),
+            any(),
+            payload: any(named: 'payload'),
+          ),
+        ).thenAnswer((_) async {});
 
-        final messages = <Map<String, dynamic>>[];
-        service.onMessageReceived.listen(messages.add);
+        await service.showNotification(
+          title: 'Test Title',
+          body: 'Test Body',
+          data: {'screen': 'daily_challenge', 'id': '123'},
+        );
 
-        // Don't initialize
-        await service.showLocalNotification(title: 'Test', body: 'Body');
-
-        await Future.delayed(const Duration(milliseconds: 100));
-
-        expect(messages, isEmpty);
+        verify(
+          () => mockLocalNotifications.show(
+            any(),
+            'Test Title',
+            'Test Body',
+            any(),
+            payload: 'screen=daily_challenge&id=123',
+          ),
+        ).called(1);
       });
 
-      test('does not emit when permission not granted', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
-
+      test('handles exception gracefully', () async {
         await service.initialize();
-        // Don't request permission
+        when(
+          () => mockLocalNotifications.show(
+            any(),
+            any(),
+            any(),
+            any(),
+            payload: any(named: 'payload'),
+          ),
+        ).thenThrow(Exception('Show error'));
 
-        final messages = <Map<String, dynamic>>[];
-        service.onMessageReceived.listen(messages.add);
-
-        await service.showLocalNotification(title: 'Test', body: 'Body');
-
-        await Future.delayed(const Duration(milliseconds: 100));
-
-        expect(messages, isEmpty);
+        // Should not throw
+        await service.showNotification(title: 'Test Title', body: 'Test Body');
       });
     });
 
-    group('showLocalNotification', () {
-      test('handles null data parameter', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
+    group('service without userId', () {
+      test('initializes but does not store token', () async {
+        final serviceNoUser = WNSNotificationService(
+          localNotifications: mockLocalNotifications,
+          firestore: fakeFirestore,
+          userId: null,
+        );
 
-        await service.initialize();
-        await service.requestPermission();
+        final result = await serviceNoUser.initialize();
 
-        final messages = <Map<String, dynamic>>[];
-        service.onMessageReceived.listen(messages.add);
+        expect(result, isTrue);
 
-        await service.showLocalNotification(title: 'Test', body: 'Body');
-
-        await Future.delayed(const Duration(milliseconds: 100));
-
-        expect(messages.length, 1);
-        expect(messages[0]['data'], {});
-      });
-
-      test('handles empty strings', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
-
-        await service.initialize();
-        await service.requestPermission();
-
-        final messages = <Map<String, dynamic>>[];
-        service.onMessageReceived.listen(messages.add);
-
-        await service.showLocalNotification(title: '', body: '');
-
-        await Future.delayed(const Duration(milliseconds: 100));
-
-        expect(messages.length, 1);
-        expect(messages[0]['title'], '');
-        expect(messages[0]['body'], '');
+        serviceNoUser.dispose();
       });
     });
 
-    group('isSubscribedToTopic', () {
-      test('returns false for non-existent topic', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
-
+    group('payload encoding/decoding', () {
+      test('correctly encodes and decodes data', () async {
         await service.initialize();
+        when(
+          () => mockLocalNotifications.show(
+            any(),
+            any(),
+            any(),
+            any(),
+            payload: any(named: 'payload'),
+          ),
+        ).thenAnswer((_) async {});
 
-        expect(service.isSubscribedToTopic('non_existent'), false);
-      });
+        final testData = {'key1': 'value1', 'key2': 'value2', 'key3': 'value3'};
 
-      test('returns true for subscribed topic', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
+        await service.showNotification(
+          title: 'Test',
+          body: 'Test',
+          data: testData,
+        );
 
-        await service.initialize();
-        await service.subscribeToTopic('test_topic');
+        // Verify the payload was encoded
+        final captured = verify(
+          () => mockLocalNotifications.show(
+            any(),
+            any(),
+            any(),
+            any(),
+            payload: captureAny(named: 'payload'),
+          ),
+        ).captured;
 
-        expect(service.isSubscribedToTopic('test_topic'), true);
-      });
-    });
-
-    group('getActiveSubscriptions', () {
-      test('returns empty list when no subscriptions', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
-
-        await service.initialize();
-
-        expect(service.getActiveSubscriptions(), isEmpty);
-      });
-
-      test('returns all subscribed topics', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
-
-        await service.initialize();
-        await service.subscribeToTopic('topic1');
-        await service.subscribeToTopic('topic2');
-
-        final subscriptions = service.getActiveSubscriptions();
-
-        expect(subscriptions.length, 2);
-        expect(subscriptions, containsAll(['topic1', 'topic2']));
-      });
-
-      test('updates after unsubscription', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
-
-        await service.initialize();
-        await service.subscribeToTopic('topic1');
-        await service.subscribeToTopic('topic2');
-
-        expect(service.getActiveSubscriptions().length, 2);
-
-        await service.unsubscribeFromTopic('topic1');
-
-        final subscriptions = service.getActiveSubscriptions();
-        expect(subscriptions.length, 1);
-        expect(subscriptions, contains('topic2'));
-        expect(subscriptions, isNot(contains('topic1')));
-      });
-    });
-
-    group('dispose', () {
-      test('closes stream controller', () async {
-        if (!Platform.isWindows) {
-          return;
-        }
-
-        await service.initialize();
-        await service.requestPermission();
-
-        service.dispose();
-
-        // Stream should be closed, no more emissions
-        expect(service.onMessageReceived.isBroadcast, true);
+        expect(captured.length, 1);
+        expect(captured[0], contains('key1=value1'));
+        expect(captured[0], contains('key2=value2'));
+        expect(captured[0], contains('key3=value3'));
       });
     });
   });

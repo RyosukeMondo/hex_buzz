@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/firebase/fcm_notification_service.dart';
 import '../../domain/services/notification_service.dart';
+import '../../platform/windows/wns_notification_service.dart';
 
 /// Provider for SharedPreferences instance.
 ///
@@ -36,23 +37,23 @@ class NotificationPrefs {
 /// Creates a platform-specific notification service implementation.
 ///
 /// Returns FCMNotificationService for mobile/web platforms,
-/// or WNSNotificationService for Windows (if available and compiled).
+/// or WNSNotificationService for Windows desktop.
 ///
 /// The [userId] parameter is the currently authenticated user's ID,
 /// used for storing device tokens in Firestore.
 NotificationService createNotificationService({String? userId}) {
-  // Check if running on Windows platform
+  // Use WNS for Windows platform
   if (!kIsWeb && Platform.isWindows) {
-    // WNS support is platform-specific and requires conditional imports
-    // For now, fall back to FCM which is universally available
-    // TODO: Implement platform-specific conditional import for WNS
     if (kDebugMode) {
-      debugPrint('Windows detected, but using FCM for now');
-      debugPrint('TODO: Implement WNS conditional import');
+      debugPrint('Windows detected, using WNSNotificationService');
     }
+    return WNSNotificationService(userId: userId);
   }
 
-  // Use FCM for all platforms (mobile, web, and Windows fallback)
+  // Use FCM for mobile and web platforms
+  if (kDebugMode) {
+    debugPrint('Using FCMNotificationService for ${Platform.operatingSystem}');
+  }
   return FCMNotificationService(userId: userId);
 }
 
