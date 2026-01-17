@@ -1,4 +1,8 @@
+import 'dart:ui';
+
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,6 +63,24 @@ void main() async {
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   if (kDebugMode) debugPrint('Firebase initialized');
+
+  // Initialize Firebase Performance Monitoring
+  final performance = FirebasePerformance.instance;
+  await performance.setPerformanceCollectionEnabled(true);
+  if (kDebugMode) debugPrint('Firebase Performance Monitoring enabled');
+
+  // Initialize Firebase Crashlytics
+  if (!kDebugMode) {
+    // Only enable Crashlytics in release mode
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+    if (kDebugMode) debugPrint('Firebase Crashlytics enabled');
+  } else {
+    debugPrint('Firebase Crashlytics disabled in debug mode');
+  }
 
   // Initialize SharedPreferences (needed for notification preferences)
   final sharedPreferences = await SharedPreferences.getInstance();

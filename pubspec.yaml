@@ -38,6 +38,8 @@ dependencies:
   firebase_auth: ^5.3.4
   cloud_firestore: ^5.5.2
   firebase_messaging: ^15.1.7
+  firebase_performance: ^0.10.0+10
+  firebase_crashlytics: ^4.1.5
   google_sign_in: ^6.2.2
 
   # Local notifications (Windows support)

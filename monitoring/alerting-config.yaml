@@ -1,0 +1,493 @@
+# Firebase/GCP Monitoring and Alerting Configuration for HexBuzz
+# This file documents alert policies to be configured in Google Cloud Console
+
+# Configuration can be deployed via:
+# 1. Google Cloud Console (Monitoring -> Alerting -> Create Policy)
+# 2. Terraform (see terraform/monitoring.tf)
+# 3. gcloud CLI (see scripts/setup-monitoring.sh)
+
+alertPolicies:
+  # ============================================================================
+  # Cloud Functions Alerts
+  # ============================================================================
+
+  - name: "Cloud Functions - High Error Rate"
+    description: "Alert when Cloud Functions error rate exceeds 5% over 5 minutes"
+    conditions:
+      - metric: cloud.googleapis.com/functions/execution/count
+        filter: resource.type="cloud_function" AND metric.status!="ok"
+        aggregation:
+          perSeriesAligner: ALIGN_RATE
+          crossSeriesReducer: REDUCE_SUM
+          alignmentPeriod: 300s  # 5 minutes
+        threshold: 0.05  # 5% error rate
+        comparison: COMPARISON_GT
+    notificationChannels:
+      - email
+      - slack
+    documentation: |
+      High error rate detected in Cloud Functions.
+
+      **Troubleshooting steps:**
+      1. Check Cloud Functions logs: `firebase functions:log`
+      2. Identify failing function in logs
+      3. Check recent deployments
+      4. Review Firebase status page: https://status.firebase.google.com/
+
+      **Common causes:**
+      - Firestore quota exceeded
+      - Invalid data in submissions
+      - Network connectivity issues
+      - Firebase service outage
+
+  - name: "Cloud Functions - High Latency"
+    description: "Alert when Cloud Function execution time exceeds 10 seconds (p95)"
+    conditions:
+      - metric: cloud.googleapis.com/functions/execution/times
+        filter: resource.type="cloud_function"
+        aggregation:
+          perSeriesAligner: ALIGN_DELTA
+          crossSeriesReducer: REDUCE_PERCENTILE_95
+          alignmentPeriod: 300s  # 5 minutes
+        threshold: 10000  # 10 seconds in milliseconds
+        comparison: COMPARISON_GT
+    notificationChannels:
+      - email
+    documentation: |
+      Cloud Functions are taking longer than expected to execute.
+
+      **Troubleshooting steps:**
+      1. Check which function is slow in Cloud Console
+      2. Review function code for inefficient queries
+      3. Check if recomputeRanks() is taking too long (scales with user count)
+      4. Consider optimizing rank computation (use scheduled batch job instead)
+
+  - name: "Cloud Functions - Scheduled Job Failure"
+    description: "Alert when generateDailyChallenge scheduled function fails"
+    conditions:
+      - metric: cloud.googleapis.com/functions/execution/count
+        filter: |
+          resource.type="cloud_function"
+          AND resource.function_name="generateDailyChallenge"
+          AND metric.status!="ok"
+        aggregation:
+          perSeriesAligner: ALIGN_RATE
+          crossSeriesReducer: REDUCE_SUM
+          alignmentPeriod: 300s  # 5 minutes
+        threshold: 0  # Any error
+        comparison: COMPARISON_GT
+    notificationChannels:
+      - email
+      - slack
+      - pagerduty  # High priority - daily challenge must run
+    documentation: |
+      CRITICAL: Daily challenge generation failed!
+
+      **Immediate actions:**
+      1. Check function logs: `firebase functions:log --only generateDailyChallenge`
+      2. Manually trigger: Call sendDailyChallengeNotifications callable function
+      3. Verify daily challenge exists in Firestore: dailyChallenges/{YYYY-MM-DD}
+
+      **Impact:**
+      - Users won't receive daily challenge notifications
+      - Daily challenge may not be available in app
+      - Daily leaderboard won't update
+
+  # ============================================================================
+  # Firestore Alerts
+  # ============================================================================
+
+  - name: "Firestore - Read Quota Near Limit"
+    description: "Alert when Firestore reads exceed 80% of daily quota"
+    conditions:
+      - metric: firestore.googleapis.com/document/read_count
+        filter: resource.type="firestore_instance"
+        aggregation:
+          perSeriesAligner: ALIGN_RATE
+          crossSeriesReducer: REDUCE_SUM
+          alignmentPeriod: 3600s  # 1 hour
+        threshold: 0.8  # 80% of quota
+        comparison: COMPARISON_GT
+    notificationChannels:
+      - email
+      - slack
+    documentation: |
+      Firestore read quota is nearing limit (80% of daily quota).
+
+      **Troubleshooting steps:**
+      1. Check which collections have high read counts in Firebase Console
+      2. Review leaderboard caching implementation (should cache for 5 minutes)
+      3. Check for inefficient queries (missing indexes, full collection scans)
+      4. Consider upgrading to Blaze plan if on Spark plan
+
+      **Common causes:**
+      - Leaderboard being refreshed too frequently
+      - Missing composite indexes causing multiple reads
+      - Clients not respecting cache TTL
+
+  - name: "Firestore - Write Quota Near Limit"
+    description: "Alert when Firestore writes exceed 80% of daily quota"
+    conditions:
+      - metric: firestore.googleapis.com/document/write_count
+        filter: resource.type="firestore_instance"
+        aggregation:
+          perSeriesAligner: ALIGN_RATE
+          crossSeriesReducer: REDUCE_SUM
+          alignmentPeriod: 3600s  # 1 hour
+        threshold: 0.8  # 80% of quota
+        comparison: COMPARISON_GT
+    notificationChannels:
+      - email
+      - slack
+    documentation: |
+      Firestore write quota is nearing limit (80% of daily quota).
+
+      **Troubleshooting steps:**
+      1. Check scoreSubmissions collection for abnormal write patterns
+      2. Review Cloud Functions logs for recomputeRanks() frequency
+      3. Check for spam or abuse (rapid score submissions)
+      4. Implement rate limiting if not already in place
+
+      **Common causes:**
+      - recomputeRanks() being called too frequently (on every score submission)
+      - Score submission spam/abuse
+      - Inefficient batch operations
+
+  - name: "Firestore - High Query Latency"
+    description: "Alert when Firestore query latency exceeds 2 seconds (p95)"
+    conditions:
+      - metric: firestore.googleapis.com/api/request_latencies
+        filter: resource.type="firestore_instance"
+        aggregation:
+          perSeriesAligner: ALIGN_DELTA
+          crossSeriesReducer: REDUCE_PERCENTILE_95
+          alignmentPeriod: 300s  # 5 minutes
+        threshold: 2000  # 2 seconds in milliseconds
+        comparison: COMPARISON_GT
+    notificationChannels:
+      - email
+    documentation: |
+      Firestore queries are taking longer than expected (>2s at p95).
+
+      **Troubleshooting steps:**
+      1. Verify all composite indexes are created (check firestore.indexes.json)
+      2. Check for missing indexes in Firebase Console (Firestore -> Indexes)
+      3. Review query complexity (orderBy, where clauses)
+      4. Check Firestore regional location and client locations
+
+      **Impact:**
+      - Slow leaderboard loading
+      - Poor user experience
+      - Potential app timeouts
+
+  # ============================================================================
+  # Firebase Cloud Messaging (FCM) Alerts
+  # ============================================================================
+
+  - name: "FCM - Low Delivery Rate"
+    description: "Alert when FCM message delivery rate drops below 95%"
+    conditions:
+      - metric: firebase.googleapis.com/messaging/send/count
+        filter: |
+          resource.type="firebase_project"
+          AND metric.response_code="success"
+        aggregation:
+          perSeriesAligner: ALIGN_RATE
+          crossSeriesReducer: REDUCE_SUM
+          alignmentPeriod: 3600s  # 1 hour
+        threshold: 0.95  # 95% success rate
+        comparison: COMPARISON_LT
+    notificationChannels:
+      - email
+      - slack
+    documentation: |
+      Firebase Cloud Messaging delivery rate has dropped below 95%.
+
+      **Troubleshooting steps:**
+      1. Check FCM logs in Firebase Console (Cloud Messaging -> Reports)
+      2. Review error codes (invalid tokens, unregistered devices, etc.)
+      3. Check if device tokens are being refreshed properly
+      4. Verify topic subscriptions are working
+
+      **Common causes:**
+      - Stale device tokens (users uninstalled app)
+      - Invalid token registration
+      - FCM quota exceeded
+      - Network issues on client devices
+
+  - name: "FCM - Daily Challenge Notification Failure"
+    description: "Alert when daily challenge notifications fail to send"
+    conditions:
+      - metric: cloud.googleapis.com/functions/execution/count
+        filter: |
+          resource.type="cloud_function"
+          AND resource.function_name="sendDailyChallengeNotifications"
+          AND metric.status!="ok"
+        aggregation:
+          perSeriesAligner: ALIGN_RATE
+          crossSeriesReducer: REDUCE_SUM
+          alignmentPeriod: 300s  # 5 minutes
+        threshold: 0  # Any error
+        comparison: COMPARISON_GT
+    notificationChannels:
+      - email
+      - slack
+    documentation: |
+      Daily challenge notification sending failed!
+
+      **Immediate actions:**
+      1. Check function logs for FCM errors
+      2. Verify daily_challenge topic has subscribers
+      3. Check FCM quota and rate limits
+      4. Manually retry notification send if needed
+
+      **Impact:**
+      - Users won't be notified of new daily challenge
+      - Reduced daily challenge engagement
+
+  # ============================================================================
+  # Performance Alerts
+  # ============================================================================
+
+  - name: "App Performance - High Crash Rate"
+    description: "Alert when app crash rate exceeds 1% (Crashlytics)"
+    conditions:
+      - metric: firebase.googleapis.com/crashlytics/crash_free_rate
+        filter: resource.type="firebase_project"
+        aggregation:
+          perSeriesAligner: ALIGN_MEAN
+          crossSeriesReducer: REDUCE_MEAN
+          alignmentPeriod: 3600s  # 1 hour
+        threshold: 0.99  # 99% crash-free rate
+        comparison: COMPARISON_LT
+    notificationChannels:
+      - email
+      - slack
+    documentation: |
+      App crash rate has exceeded 1% (crash-free rate below 99%).
+
+      **Troubleshooting steps:**
+      1. Check Crashlytics dashboard in Firebase Console
+      2. Identify most common crash types
+      3. Review recent app releases
+      4. Check affected OS versions and devices
+      5. Create hotfix if critical crash identified
+
+      **Common causes:**
+      - Null pointer exceptions
+      - Network errors not handled
+      - Memory leaks
+      - Platform-specific bugs
+
+  - name: "App Performance - Slow Screen Rendering"
+    description: "Alert when screen rendering time exceeds 1 second (p95)"
+    conditions:
+      - metric: firebase.googleapis.com/performance/screen/duration
+        filter: resource.type="firebase_project"
+        aggregation:
+          perSeriesAligner: ALIGN_DELTA
+          crossSeriesReducer: REDUCE_PERCENTILE_95
+          alignmentPeriod: 3600s  # 1 hour
+        threshold: 1000  # 1 second in milliseconds
+        comparison: COMPARISON_GT
+    notificationChannels:
+      - email
+    documentation: |
+      App screens are taking longer than 1 second to render (p95).
+
+      **Troubleshooting steps:**
+      1. Check Performance Monitoring dashboard in Firebase Console
+      2. Identify slow screens (likely LeaderboardScreen with large lists)
+      3. Review widget build times
+      4. Check for large images or unoptimized assets
+      5. Profile app with Flutter DevTools
+
+      **Common causes:**
+      - Large leaderboard lists without pagination
+      - Unoptimized images
+      - Expensive widget rebuilds
+      - Network calls blocking UI
+
+  # ============================================================================
+  # Cost Alerts
+  # ============================================================================
+
+  - name: "GCP Billing - Budget Alert (80%)"
+    description: "Alert when Firebase/GCP billing reaches 80% of monthly budget"
+    conditions:
+      - metric: billing.googleapis.com/billing_account/cost_forecast
+        threshold: 0.8  # 80% of budget
+        comparison: COMPARISON_GT
+    notificationChannels:
+      - email
+      - slack
+    documentation: |
+      Firebase/GCP billing has reached 80% of monthly budget.
+
+      **Immediate actions:**
+      1. Review Firebase Usage dashboard
+      2. Check for unexpected spikes in:
+         - Firestore reads/writes
+         - Cloud Function invocations
+         - Cloud Storage bandwidth
+         - FCM messages
+      3. Review quota alerts above for specific service issues
+      4. Consider implementing additional rate limiting
+
+      **Cost optimization strategies:**
+      - Increase leaderboard cache TTL (currently 5 minutes)
+      - Optimize recomputeRanks() (batch job instead of per-score)
+      - Implement pagination for all large lists
+      - Review and remove unused Cloud Functions
+      - Optimize Firestore indexes (remove unused ones)
+
+# ============================================================================
+# Notification Channels Configuration
+# ============================================================================
+
+notificationChannels:
+  email:
+    type: email
+    labels:
+      email_address: "alerts@hexbuzz.app"  # Replace with actual email
+    displayName: "HexBuzz Alerts Email"
+    enabled: true
+
+  slack:
+    type: slack
+    labels:
+      channel_name: "#hexbuzz-alerts"  # Replace with actual Slack channel
+      url: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"  # Replace with actual webhook
+    displayName: "HexBuzz Alerts Slack"
+    enabled: true
+    description: "Slack channel for real-time alerts"
+
+  pagerduty:
+    type: pagerduty
+    labels:
+      service_key: "YOUR_PAGERDUTY_SERVICE_KEY"  # Replace with actual key
+    displayName: "HexBuzz PagerDuty"
+    enabled: false  # Enable for production on-call rotation
+    description: "PagerDuty for critical production alerts"
+
+# ============================================================================
+# Monitoring Dashboards
+# ============================================================================
+
+dashboards:
+  - name: "HexBuzz - Production Overview"
+    description: "Main dashboard for HexBuzz production monitoring"
+    widgets:
+      - type: line_chart
+        title: "Cloud Functions Execution Count"
+        metric: cloud.googleapis.com/functions/execution/count
+        groupBy: function_name
+
+      - type: line_chart
+        title: "Cloud Functions Error Rate"
+        metric: cloud.googleapis.com/functions/execution/count
+        filter: metric.status!="ok"
+        groupBy: function_name
+
+      - type: line_chart
+        title: "Firestore Operations"
+        metrics:
+          - firestore.googleapis.com/document/read_count
+          - firestore.googleapis.com/document/write_count
+          - firestore.googleapis.com/document/delete_count
+
+      - type: scorecard
+        title: "Active Users (Last 24h)"
+        metric: firebase.googleapis.com/analytics/active_users
+        aggregation:
+          alignmentPeriod: 86400s  # 24 hours
+
+      - type: line_chart
+        title: "FCM Message Delivery"
+        metrics:
+          - firebase.googleapis.com/messaging/send/count (success)
+          - firebase.googleapis.com/messaging/send/count (failure)
+
+      - type: scorecard
+        title: "App Crash-Free Rate"
+        metric: firebase.googleapis.com/crashlytics/crash_free_rate
+
+      - type: line_chart
+        title: "Leaderboard Query Latency (p95)"
+        metric: firestore.googleapis.com/api/request_latencies
+        filter: metric.api_method="Query"
+        aggregation: PERCENTILE_95
+
+# ============================================================================
+# Log-Based Metrics (Custom Metrics from Logs)
+# ============================================================================
+
+logBasedMetrics:
+  - name: "leaderboard_rank_recomputation_duration"
+    description: "Time taken to recompute all leaderboard ranks"
+    filter: |
+      resource.type="cloud_function"
+      AND resource.function_name="onScoreUpdate"
+      AND textPayload=~"Recomputed ranks for .* users"
+    metricDescriptor:
+      metricKind: DELTA
+      valueType: DISTRIBUTION
+      unit: "ms"
+    labelExtractors:
+      user_count: 'EXTRACT(textPayload, "Recomputed ranks for (\\d+) users")'
+
+  - name: "daily_challenge_generation_success"
+    description: "Success/failure counter for daily challenge generation"
+    filter: |
+      resource.type="cloud_function"
+      AND resource.function_name="generateDailyChallenge"
+      AND (textPayload=~"Generated daily challenge" OR textPayload=~"Error generating daily challenge")
+    metricDescriptor:
+      metricKind: DELTA
+      valueType: INT64
+    labelExtractors:
+      status: 'IF(textPayload=~"Generated daily challenge", "success", "failure")'
+
+  - name: "notification_delivery_attempts"
+    description: "Count of notification delivery attempts by type"
+    filter: |
+      resource.type="cloud_function"
+      AND (resource.function_name="onScoreUpdate" OR resource.function_name="sendDailyChallengeNotifications")
+      AND textPayload=~"Sent .* notification"
+    metricDescriptor:
+      metricKind: DELTA
+      valueType: INT64
+    labelExtractors:
+      notification_type: 'EXTRACT(textPayload, "Sent (\\w+) notification")'
+
+# ============================================================================
+# SLO (Service Level Objectives) Definitions
+# ============================================================================
+
+slos:
+  - name: "Leaderboard Query Latency"
+    description: "95% of leaderboard queries complete within 2 seconds"
+    target: 0.95  # 95% availability
+    metricType: firestore.googleapis.com/api/request_latencies
+    goodService:
+      threshold: 2000  # 2 seconds
+      comparison: COMPARISON_LT
+
+  - name: "Cloud Functions Availability"
+    description: "99.5% of Cloud Function executions succeed"
+    target: 0.995  # 99.5% success rate
+    metricType: cloud.googleapis.com/functions/execution/count
+    goodService:
+      filter: metric.status="ok"
+
+  - name: "App Crash-Free Rate"
+    description: "99% of user sessions are crash-free"
+    target: 0.99  # 99% crash-free
+    metricType: firebase.googleapis.com/crashlytics/crash_free_rate
+
+  - name: "FCM Delivery Success"
+    description: "95% of push notifications are delivered successfully"
+    target: 0.95  # 95% delivery rate
+    metricType: firebase.googleapis.com/messaging/send/count
+    goodService:
+      filter: metric.response_code="success"
