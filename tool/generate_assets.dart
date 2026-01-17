@@ -37,12 +37,12 @@ class SDConfig {
   });
 
   Map<String, dynamic> toJson() => {
-        'width': width,
-        'height': height,
-        'steps': steps,
-        'cfg_scale': cfgScale,
-        'sampler_name': samplerName,
-      };
+    'width': width,
+    'height': height,
+    'steps': steps,
+    'cfg_scale': cfgScale,
+    'sampler_name': samplerName,
+  };
 }
 
 /// Asset definition with prompt and negative prompt
@@ -173,10 +173,10 @@ class AssetGenerator {
     required String outputDir,
     bool overwrite = false,
     SDConfig? config,
-  })  : _client = client,
-        _outputDir = outputDir,
-        _overwrite = overwrite,
-        _config = config ?? const SDConfig();
+  }) : _client = client,
+       _outputDir = outputDir,
+       _overwrite = overwrite,
+       _config = config ?? const SDConfig();
 
   /// Generate all assets or a specific asset
   Future<void> generate({String? assetName}) async {
@@ -282,11 +282,7 @@ Future<void> main(List<String> arguments) async {
       defaultsTo: false,
       help: 'Overwrite existing assets',
     )
-    ..addOption(
-      'asset',
-      abbr: 'a',
-      help: 'Generate specific asset only',
-    )
+    ..addOption('asset', abbr: 'a', help: 'Generate specific asset only')
     ..addFlag(
       'help',
       abbr: 'h',

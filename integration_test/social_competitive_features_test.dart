@@ -135,8 +135,9 @@ class TestLeaderboardRepository implements LeaderboardRepository {
     String? levelId,
   }) async {
     // Update or add user to leaderboard
-    final existingIndex =
-        _globalLeaderboard.indexWhere((e) => e.userId == userId);
+    final existingIndex = _globalLeaderboard.indexWhere(
+      (e) => e.userId == userId,
+    );
 
     final entry = LeaderboardEntry(
       userId: userId,
@@ -184,7 +185,9 @@ class TestLeaderboardRepository implements LeaderboardRepository {
 
   @override
   Stream<List<LeaderboardEntry>> watchLeaderboard({int limit = 100}) {
-    return _leaderboardController.stream.map((list) => list.take(limit).toList());
+    return _leaderboardController.stream.map(
+      (list) => list.take(limit).toList(),
+    );
   }
 
   void addDailyChallengeEntry({
@@ -520,7 +523,9 @@ void main() {
 
         expect(userRank, isNotNull);
         expect(userRank!.totalStars, greaterThan(0));
-        print('  - User rank: #${userRank.rank} with ${userRank.totalStars} stars');
+        print(
+          '  - User rank: #${userRank.rank} with ${userRank.totalStars} stars',
+        );
 
         // Step 7: View updated leaderboard
         print('Step 7: Viewing updated leaderboard...');
@@ -617,7 +622,9 @@ void main() {
 
         // Step 5: Verify completion status
         print('Step 5: Verifying completion status...');
-        final hasCompleted = await dailyChallengeRepo.hasCompletedToday(user.id);
+        final hasCompleted = await dailyChallengeRepo.hasCompletedToday(
+          user.id,
+        );
         expect(hasCompleted, isTrue);
         print('  - Completion recorded');
 
@@ -639,66 +646,67 @@ void main() {
       },
     );
 
-    testWidgets(
-      'Flow 3: Deep link navigation to daily challenge',
-      (tester) async {
-        print('=== Starting Flow 3: Notification Deep Link Flow ===');
+    testWidgets('Flow 3: Deep link navigation to daily challenge', (
+      tester,
+    ) async {
+      print('=== Starting Flow 3: Notification Deep Link Flow ===');
 
-        // Setup: Create today's daily challenge
-        final dailyChallengeLevel = createSimpleLevel(id: 'daily-challenge');
-        dailyChallengeRepo.setTodaysChallenge(dailyChallengeLevel);
+      // Setup: Create today's daily challenge
+      final dailyChallengeLevel = createSimpleLevel(id: 'daily-challenge');
+      dailyChallengeRepo.setTodaysChallenge(dailyChallengeLevel);
 
-        // Step 1: Simulate app launch via deep link
-        print('Step 1: Launching app via deep link to daily challenge...');
-        await tester.pumpWidget(
-          createTestApp(initialRoute: AppRoutes.dailyChallenge),
-        );
+      // Step 1: Simulate app launch via deep link
+      print('Step 1: Launching app via deep link to daily challenge...');
+      await tester.pumpWidget(
+        createTestApp(initialRoute: AppRoutes.dailyChallenge),
+      );
+      await tester.pumpAndSettle();
+
+      // Should be directly on daily challenge screen
+      // Note: In real app, auth might redirect, but for test we start here
+      print('  - App opened to daily challenge screen');
+
+      // Step 2: Verify we're on the correct screen
+      print('Step 2: Verifying screen navigation...');
+      // The app might show auth first if not logged in
+      // In a real implementation, we'd check for either DailyChallengeScreen
+      // or redirect to auth then to daily challenge
+      print('  - Navigation to daily challenge screen verified');
+
+      // Step 3: Simulate signing in if needed
+      print('Step 3: Handling authentication...');
+      if (find.byType(AuthScreen).evaluate().isNotEmpty) {
+        await tester.tap(find.text('Sign in with Google'));
         await tester.pumpAndSettle();
+        print('  - Signed in via auth redirect');
+      }
 
-        // Should be directly on daily challenge screen
-        // Note: In real app, auth might redirect, but for test we start here
-        print('  - App opened to daily challenge screen');
+      // Step 4: Verify daily challenge is available
+      print('Step 4: Verifying daily challenge availability...');
+      final challenge = await dailyChallengeRepo.getTodaysChallenge();
+      expect(challenge, isNotNull);
+      expect(challenge!.level.id, 'daily-challenge');
+      print('  - Daily challenge loaded successfully');
 
-        // Step 2: Verify we're on the correct screen
-        print('Step 2: Verifying screen navigation...');
-        // The app might show auth first if not logged in
-        // In a real implementation, we'd check for either DailyChallengeScreen
-        // or redirect to auth then to daily challenge
-        print('  - Navigation to daily challenge screen verified');
+      // Step 5: Test completing challenge from notification
+      print('Step 5: Testing challenge completion...');
+      final user = await authRepo.getCurrentUser();
+      if (user != null && !user.isGuest) {
+        await dailyChallengeRepo.submitChallengeCompletion(
+          userId: user.id,
+          stars: 2,
+          completionTimeMs: 8000,
+        );
 
-        // Step 3: Simulate signing in if needed
-        print('Step 3: Handling authentication...');
-        if (find.byType(AuthScreen).evaluate().isNotEmpty) {
-          await tester.tap(find.text('Sign in with Google'));
-          await tester.pumpAndSettle();
-          print('  - Signed in via auth redirect');
-        }
+        final hasCompleted = await dailyChallengeRepo.hasCompletedToday(
+          user.id,
+        );
+        expect(hasCompleted, isTrue);
+        print('  - Challenge completion recorded');
+      }
 
-        // Step 4: Verify daily challenge is available
-        print('Step 4: Verifying daily challenge availability...');
-        final challenge = await dailyChallengeRepo.getTodaysChallenge();
-        expect(challenge, isNotNull);
-        expect(challenge!.level.id, 'daily-challenge');
-        print('  - Daily challenge loaded successfully');
-
-        // Step 5: Test completing challenge from notification
-        print('Step 5: Testing challenge completion...');
-        final user = await authRepo.getCurrentUser();
-        if (user != null && !user.isGuest) {
-          await dailyChallengeRepo.submitChallengeCompletion(
-            userId: user.id,
-            stars: 2,
-            completionTimeMs: 8000,
-          );
-
-          final hasCompleted = await dailyChallengeRepo.hasCompletedToday(user.id);
-          expect(hasCompleted, isTrue);
-          print('  - Challenge completion recorded');
-        }
-
-        print('=== Flow 3 Test PASSED ===');
-      },
-    );
+      print('=== Flow 3 Test PASSED ===');
+    });
 
     testWidgets('Leaderboard updates in real-time', (tester) async {
       print('=== Starting Real-Time Leaderboard Update Test ===');
@@ -763,8 +771,7 @@ void main() {
       // Step 2: Verify badge shows on daily challenge button
       print('Step 2: Checking for notification badge...');
       final user = await authRepo.getCurrentUser();
-      final hasCompleted =
-          await dailyChallengeRepo.hasCompletedToday(user!.id);
+      final hasCompleted = await dailyChallengeRepo.hasCompletedToday(user!.id);
       expect(hasCompleted, isFalse);
       print('  - Challenge not completed, badge should show');
 
@@ -776,8 +783,9 @@ void main() {
         completionTimeMs: 5000,
       );
 
-      final hasCompletedNow =
-          await dailyChallengeRepo.hasCompletedToday(user.id);
+      final hasCompletedNow = await dailyChallengeRepo.hasCompletedToday(
+        user.id,
+      );
       expect(hasCompletedNow, isTrue);
       print('  - Challenge completed, badge should hide');
 
@@ -810,7 +818,9 @@ void main() {
 
       print('  - Rankings correct:');
       for (final entry in leaderboard) {
-        print('    #${entry.rank}: ${entry.userId} - ${entry.totalStars} stars');
+        print(
+          '    #${entry.rank}: ${entry.userId} - ${entry.totalStars} stars',
+        );
       }
 
       // Step 3: Update a score and verify re-ranking

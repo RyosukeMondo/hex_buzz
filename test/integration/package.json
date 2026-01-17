@@ -1,0 +1,23 @@
+{
+  "name": "hexbuzz-integration-tests",
+  "version": "1.0.0",
+  "description": "Integration testing utilities for HexBuzz",
+  "scripts": {
+    "setup": "node setup-test-data.js --emulator",
+    "setup-staging": "node setup-test-data.js --project hexbuzz-staging",
+    "cleanup": "node cleanup-test-data.js --emulator",
+    "test": "npm run setup && flutter test ../integration_test/"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "commander": "^11.1.0"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "firebase",
+    "testing",
+    "integration"
+  ],
+  "author": "HexBuzz Team",
+  "license": "MIT"
+}
