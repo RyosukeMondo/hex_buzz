@@ -1,0 +1,177 @@
+name: Build Windows MSIX
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+        type: string
+
+env:
+  FLUTTER_VERSION: '3.35.6'
+
+jobs:
+  build-msix:
+    name: Build Windows MSIX Package
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Extract version from tag or input
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $version = "${{ github.event.inputs.version }}"
+          } else {
+            $version = "${{ github.ref_name }}" -replace '^v', ''
+          }
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          echo "Building version: $version"
+
+      - name: Update version in pubspec.yaml
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          $content = Get-Content pubspec.yaml -Raw
+          $content = $content -replace 'version: .*', "version: $version+${{ github.run_number }}"
+          Set-Content pubspec.yaml $content
+
+          # Update MSIX version
+          $msixVersion = "$version.0"
+          $content = Get-Content pubspec.yaml -Raw
+          $content = $content -replace 'msix_version: .*', "msix_version: $msixVersion"
+          Set-Content pubspec.yaml $content
+
+      - name: Verify Publisher ID is set
+        shell: pwsh
+        run: |
+          $content = Get-Content pubspec.yaml -Raw
+          if ($content -match 'publisher: CN=YourPublisherID') {
+            Write-Error "Publisher ID not set in pubspec.yaml. Update with real Publisher ID from Microsoft Partner Center."
+            exit 1
+          }
+          Write-Host "✅ Publisher ID is configured"
+
+      - name: Build Windows release
+        run: flutter build windows --release
+
+      - name: Create MSIX package
+        run: flutter pub run msix:create
+
+      - name: Run WACK validation (if configured)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $msixPath = Get-ChildItem -Path build/windows -Filter *.msix -Recurse | Select-Object -First 1
+          if ($msixPath) {
+            Write-Host "MSIX package created at: $($msixPath.FullName)"
+
+            # Check if WACK is installed
+            $wackPath = "${env:ProgramFiles(x86)}\Windows Kits\10\App Certification Kit\appcert.exe"
+            if (Test-Path $wackPath) {
+              Write-Host "Running WACK validation..."
+              & $wackPath test -appxpackagepath $msixPath.FullName -reportoutputpath "build/wack-report.xml"
+              Write-Host "✅ WACK validation complete. Check report in artifacts."
+            } else {
+              Write-Host "⚠️  WACK not installed. Skipping validation."
+            }
+          }
+
+      - name: Create release artifacts directory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release-artifacts
+
+          # Copy MSIX package
+          $msix = Get-ChildItem -Path build/windows -Filter *.msix -Recurse | Select-Object -First 1
+          if ($msix) {
+            Copy-Item $msix.FullName "release-artifacts/HexBuzz-${{ steps.version.outputs.VERSION }}.msix"
+          }
+
+          # Copy WACK report if exists
+          if (Test-Path "build/wack-report.xml") {
+            Copy-Item "build/wack-report.xml" "release-artifacts/"
+          }
+
+      - name: Upload MSIX package
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-msix-${{ steps.version.outputs.VERSION }}
+          path: release-artifacts/*.msix
+          retention-days: 90
+
+      - name: Upload WACK report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wack-report-${{ steps.version.outputs.VERSION }}
+          path: release-artifacts/wack-report.xml
+          retention-days: 90
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            release-artifacts/*.msix
+          body: |
+            ## HexBuzz v${{ steps.version.outputs.VERSION }} - Windows Release
+
+            ### Installation
+            1. Download the MSIX package below
+            2. Double-click to install (requires Windows 10 1809+ or Windows 11)
+            3. Or submit to Microsoft Store for distribution
+
+            ### Changes
+            See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
+
+            ### Requirements
+            - Windows 10 version 1809 or later
+            - Windows 11 (fully supported)
+
+            ### Store Submission
+            This MSIX package is ready for Microsoft Store submission:
+            1. Verify Publisher ID matches your Partner Center account
+            2. Run WACK validation (report included in artifacts)
+            3. Prepare store assets (screenshots, description)
+            4. Submit via Partner Center
+
+            See [docs/MS_STORE_SUBMISSION.md](docs/MS_STORE_SUBMISSION.md) for details.
+          draft: true
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-release:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    needs: build-msix
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Send notification
+        run: |
+          echo "🎉 Windows MSIX package v${{ steps.version.outputs.VERSION }} built successfully!"
+          echo "📦 Download from GitHub Releases"
+          echo "🏪 Ready for Microsoft Store submission"
