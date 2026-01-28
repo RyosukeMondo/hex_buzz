@@ -1,0 +1,100 @@
+# Bug Fix Workflow
+name: "bug_fix"
+description: "Root cause analysis and bug fixing workflow"
+type: "sequential_with_investigation"
+
+phases:
+  - name: "investigation"
+    description: "Root cause analysis"
+    swarm:
+      type: "investigation_team"
+      queen: "architect"
+      workers:
+        - flutter_specialist
+        - firebase_specialist
+      consensus_algorithm: "gossip"
+    tasks:
+      - reproduce_bug
+      - analyze_stack_traces
+      - identify_root_cause
+      - verify_not_band_aid
+    consensus_required: true
+    output: "root_cause_analysis"
+
+  - name: "fix_planning"
+    description: "Plan architectural fix"
+    agents:
+      - architect
+    tasks:
+      - design_proper_fix
+      - ensure_no_band_aid
+      - identify_affected_areas
+      - plan_implementation
+    consensus_required: false
+    depends_on: ["investigation"]
+    output: "fix_plan"
+
+  - name: "implementation"
+    description: "Implement fix"
+    agents:
+      - flutter_specialist  # or firebase_specialist based on domain
+      - architect
+    tasks:
+      - implement_fix
+      - ensure_root_cause_addressed
+      - maintain_code_standards
+    consensus_required: true
+    depends_on: ["fix_planning"]
+    output: "implemented_fix"
+
+  - name: "testing"
+    description: "Verify fix and prevent regression"
+    agents:
+      - test_specialist
+    tasks:
+      - write_regression_test
+      - verify_bug_fixed
+      - run_existing_tests
+      - verify_coverage_maintained
+    consensus_required: false
+    depends_on: ["implementation"]
+    output: "test_results"
+
+  - name: "review"
+    description: "Verify no band-aid fixes"
+    agents:
+      - architect
+    tasks:
+      - verify_root_cause_fixed
+      - ensure_no_workarounds
+      - validate_code_quality
+    consensus_required: false
+    depends_on: ["testing"]
+    output: "review_report"
+
+success_criteria:
+  - root_cause_identified
+  - proper_fix_implemented
+  - no_band_aid_fixes
+  - regression_test_added
+  - all_tests_passing
+
+failure_handling:
+  on_band_aid_detected:
+    action: "reject_and_return_to_planning"
+    notify: true
+    message: "Band-aid fix detected. Must address root cause."
+
+  on_test_failure:
+    action: "return_to_implementation"
+    notify: true
+
+monitoring:
+  track_metrics:
+    - time_to_root_cause
+    - fix_complexity
+    - test_coverage_change
+
+  alert_on:
+    - band_aid_fix_attempt
+    - regression_detected

@@ -1,0 +1,109 @@
+# Firebase Backend Domain
+name: "firebase_backend"
+description: "Firebase Cloud Functions and backend services"
+type: "backend"
+
+structure:
+  root: "functions"
+
+  layers:
+    endpoints:
+      path: "functions/src/endpoints"
+      description: "HTTP and callable function endpoints"
+      responsibilities:
+        - request_handling
+        - input_validation
+        - response_formatting
+      dependencies_allowed:
+        - services
+        - models
+        - utils
+      dependencies_forbidden:
+        - direct_firestore_access
+
+    services:
+      path: "functions/src/services"
+      description: "Business logic services"
+      responsibilities:
+        - business_operations
+        - data_processing
+        - external_integrations
+      dependencies_allowed:
+        - repositories
+        - models
+        - utils
+      dependencies_forbidden:
+        - endpoints
+
+    repositories:
+      path: "functions/src/repositories"
+      description: "Data access layer"
+      responsibilities:
+        - firestore_operations
+        - query_execution
+        - data_persistence
+      dependencies_allowed:
+        - models
+      dependencies_forbidden:
+        - endpoints
+        - services
+
+    models:
+      path: "functions/src/models"
+      description: "Data models and types"
+      responsibilities:
+        - type_definitions
+        - data_validation
+        - business_entities
+      dependencies_allowed: []
+      dependencies_forbidden:
+        - all_other_layers
+
+    triggers:
+      path: "functions/src/triggers"
+      description: "Firestore and Firebase triggers"
+      responsibilities:
+        - event_handling
+        - async_operations
+        - data_synchronization
+      dependencies_allowed:
+        - services
+        - models
+      dependencies_forbidden:
+        - endpoints
+
+  entry_points:
+    - "functions/src/index.ts"
+
+  configuration_files:
+    - "functions/package.json"
+    - "functions/tsconfig.json"
+    - "firestore.rules"
+    - "firestore.indexes.json"
+    - "firebase.json"
+
+patterns:
+  architecture: "clean_architecture"
+  dependency_injection: "manual_di"
+  error_handling: "custom_exception_hierarchy"
+  logging: "structured_json"
+
+agent_assignment:
+  primary: "firebase_specialist"
+  review: "architect"
+  testing: "test_specialist"
+  security: "security_specialist"
+
+file_conventions:
+  naming: "camelCase"
+  organization: "by_layer"
+  max_lines: 500
+
+quality_gates:
+  - input_validation_at_entry
+  - structured_json_logging
+  - custom_error_types
+  - no_secrets_in_code
+  - dependency_injection_used
+  - fail_fast_validation
+  - no_pii_in_logs

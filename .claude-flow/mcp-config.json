@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "claude-flow": {
+      "command": "npx",
+      "args": ["-y", "claude-flow@v3alpha", "mcp", "start"],
+      "env": {
+        "CLAUDE_FLOW_PROJECT_ROOT": "/home/rmondo/repos/hex_buzz",
+        "CLAUDE_FLOW_CONFIG": "/home/rmondo/repos/hex_buzz/.claude-flow/config/claude-flow.yaml",
+        "CLAUDE_FLOW_LOG_LEVEL": "info",
+        "CLAUDE_FLOW_ENABLE_LEARNING": "true",
+        "CLAUDE_FLOW_VECTOR_STORE": "/home/rmondo/repos/hex_buzz/.claude-flow/vector_store"
+      },
+      "description": "Claude-Flow multi-agent orchestration platform for HexBuzz development"
+    }
+  },
+  "settings": {
+    "autoStart": true,
+    "restartOnFailure": true,
+    "maxRestarts": 3,
+    "healthCheckInterval": 30000
+  }
+}

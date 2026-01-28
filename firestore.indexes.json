@@ -15,16 +15,6 @@
       ]
     },
     {
-      "collectionGroup": "users",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "rank",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "entries",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
@@ -34,6 +24,20 @@
         },
         {
           "fieldPath": "time",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "completions",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "stars",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "completionTimeMs",
           "order": "ASCENDING"
         }
       ]

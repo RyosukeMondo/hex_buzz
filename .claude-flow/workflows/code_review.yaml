@@ -1,0 +1,123 @@
+# Code Review Workflow
+name: "code_review"
+description: "Comprehensive multi-agent code review"
+type: "parallel_review_with_consensus"
+
+phases:
+  - name: "automated_analysis"
+    description: "Automated code quality checks"
+    agents:
+      - architect
+    tasks:
+      - analyze_code_metrics
+      - check_file_sizes
+      - check_function_sizes
+      - verify_test_coverage
+    consensus_required: false
+    output: "metrics_report"
+
+  - name: "domain_reviews"
+    description: "Parallel specialist reviews"
+    swarm:
+      type: "parallel_reviewers"
+      queen: "architect"
+      workers:
+        - flutter_specialist
+        - firebase_specialist
+        - test_specialist
+        - security_specialist
+      consensus_algorithm: "byzantine"
+      fault_tolerance: 1
+    tasks:
+      flutter_specialist:
+        - review_flutter_code
+        - check_widget_patterns
+        - verify_state_management
+
+      firebase_specialist:
+        - review_functions_code
+        - check_firestore_queries
+        - verify_error_handling
+
+      test_specialist:
+        - review_test_quality
+        - verify_coverage_targets
+        - check_mock_usage
+
+      security_specialist:
+        - scan_vulnerabilities
+        - check_auth_implementation
+        - verify_input_validation
+
+    consensus_required: true
+    depends_on: ["automated_analysis"]
+    output: "domain_reviews"
+
+  - name: "architectural_review"
+    description: "Final architectural assessment"
+    agents:
+      - architect
+    tasks:
+      - review_solid_compliance
+      - verify_dependency_injection
+      - check_abstraction_quality
+      - ensure_no_band_aids
+      - validate_ssot
+    consensus_required: false
+    depends_on: ["domain_reviews"]
+    output: "architectural_review"
+
+  - name: "consensus_decision"
+    description: "Final approval decision"
+    swarm:
+      type: "approval_committee"
+      queen: "architect"
+      workers:
+        - flutter_specialist
+        - firebase_specialist
+        - security_specialist
+      consensus_algorithm: "raft"
+      quorum_size: 3
+    tasks:
+      - aggregate_feedback
+      - vote_on_approval
+      - generate_action_items
+    consensus_required: true
+    depends_on: ["architectural_review"]
+    output: "final_decision"
+
+success_criteria:
+  - all_metrics_pass
+  - no_critical_issues
+  - security_approved
+  - architectural_approval
+  - consensus_reached
+
+approval_thresholds:
+  critical_issues: 0
+  major_issues: 2
+  minor_issues: 10
+  code_coverage: 0.8
+  critical_coverage: 0.9
+
+failure_handling:
+  on_critical_issue:
+    action: "reject"
+    notify: true
+    require_fix: true
+
+  on_consensus_failure:
+    action: "escalate_to_human"
+    notify: true
+
+monitoring:
+  track_metrics:
+    - review_duration
+    - issues_found_by_type
+    - consensus_rounds
+    - agent_agreement_rate
+
+  alert_on:
+    - critical_issues_detected
+    - consensus_timeout
+    - excessive_revisions

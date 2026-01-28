@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../domain/models/auth_result.dart';
 import '../../domain/models/user.dart' as domain;
@@ -16,60 +16,68 @@ import '../../domain/services/auth_repository.dart';
 class FirebaseAuthRepository implements AuthRepository {
   final firebase_auth.FirebaseAuth _firebaseAuth;
   final FirebaseFirestore _firestore;
-  final GoogleSignIn _googleSignIn;
   final StreamController<domain.User?> _authStateController =
       StreamController<domain.User?>.broadcast();
 
   FirebaseAuthRepository({
     firebase_auth.FirebaseAuth? firebaseAuth,
     FirebaseFirestore? firestore,
-    GoogleSignIn? googleSignIn,
   }) : _firebaseAuth = firebaseAuth ?? firebase_auth.FirebaseAuth.instance,
-       _firestore = firestore ?? FirebaseFirestore.instance,
-       _googleSignIn = googleSignIn ?? GoogleSignIn() {
+       _firestore = firestore ?? FirebaseFirestore.instance {
     // Listen to Firebase auth state changes and emit to our stream
     _firebaseAuth.authStateChanges().listen((firebaseUser) async {
+      print('🔐 Auth state change: ${firebaseUser?.uid ?? "signed out"}');
+
       if (firebaseUser == null) {
         _authStateController.add(null);
       } else {
-        final user = await _syncUserProfile(firebaseUser);
-        _authStateController.add(user);
+        // Emit user immediately (fast, from Firebase Auth cache)
+        final quickUser = _mapFirebaseUserToDomainUser(firebaseUser);
+        _authStateController.add(quickUser);
+
+        // Sync to Firestore in background (non-blocking)
+        _syncUserProfile(firebaseUser)
+            .then((fullUser) {
+              _authStateController.add(fullUser);
+            })
+            .catchError((e) {
+              print('⚠️ Firestore sync failed: $e');
+              // Keep the quick user if Firestore fails
+            });
       }
     });
+
+    print('🔐 FirebaseAuthRepository initialized');
+    print('🔐 Current user: ${_firebaseAuth.currentUser?.uid ?? "none"}');
   }
 
   @override
   Future<AuthResult> signInWithGoogle() async {
     try {
-      // Trigger the Google Sign-In flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      // Use Firebase Auth popup directly (faster, no COOP issues)
+      final provider = firebase_auth.GoogleAuthProvider();
+      provider.addScope('email');
+      provider.addScope('profile');
 
-      // User cancelled the sign-in
-      if (googleUser == null) {
-        return const AuthFailure('Sign-in cancelled by user');
-      }
-
-      // Obtain auth details from the request
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      // Create a new credential for Firebase
-      final credential = firebase_auth.GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Sign in to Firebase with the Google credentials
+      // Sign in with popup
       final firebase_auth.UserCredential userCredential = await _firebaseAuth
-          .signInWithCredential(credential);
+          .signInWithPopup(provider);
 
       final firebaseUser = userCredential.user;
       if (firebaseUser == null) {
         return const AuthFailure('Authentication failed: no user returned');
       }
 
-      // Sync user profile to Firestore
-      final user = await _syncUserProfile(firebaseUser);
+      // Return user immediately from Firebase Auth (fast)
+      final user = _mapFirebaseUserToDomainUser(firebaseUser);
+
+      // Sync to Firestore in background (non-blocking)
+      _syncUserProfile(firebaseUser).catchError((e) {
+        // Log but don't fail - Firestore sync is not critical for login
+        if (kDebugMode) {
+          debugPrint('Firestore sync failed: $e');
+        }
+      });
 
       return AuthSuccess(user);
     } on firebase_auth.FirebaseAuthException catch (e) {
@@ -82,7 +90,7 @@ class FirebaseAuthRepository implements AuthRepository {
   @override
   Future<void> signOut() async {
     try {
-      await Future.wait([_firebaseAuth.signOut(), _googleSignIn.signOut()]);
+      await _firebaseAuth.signOut();
       _authStateController.add(null);
     } catch (e) {
       // Log error but don't throw - best effort sign out
@@ -93,6 +101,7 @@ class FirebaseAuthRepository implements AuthRepository {
   @override
   Future<domain.User?> getCurrentUser() async {
     final firebaseUser = _firebaseAuth.currentUser;
+    print('🔐 getCurrentUser called: ${firebaseUser?.uid ?? "no user"}');
     if (firebaseUser == null) {
       return null;
     }

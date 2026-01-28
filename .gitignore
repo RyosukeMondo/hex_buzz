@@ -139,3 +139,6 @@ tool/deploy/venv/
 # FVM (ignore entire .fvm directory, track .fvmrc)
 .fvm/
 tool/venv/
+examples/
+scripts/populate_firestore_data.dart
+GOOGLE_SIGNIN_*.md

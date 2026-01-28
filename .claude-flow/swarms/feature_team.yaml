@@ -1,0 +1,113 @@
+# Feature Development Swarm
+name: "feature_team"
+description: "Coordinated team for feature development"
+type: "hierarchical_swarm"
+
+topology:
+  structure: "queen_worker"
+
+  queen:
+    agent: "architect"
+    responsibilities:
+      - coordinate_workers
+      - make_final_decisions
+      - resolve_conflicts
+      - ensure_architecture_compliance
+
+  workers:
+    - agent: "flutter_specialist"
+      specialization: "frontend"
+      max_concurrent_tasks: 3
+
+    - agent: "firebase_specialist"
+      specialization: "backend"
+      max_concurrent_tasks: 3
+
+    - agent: "test_specialist"
+      specialization: "quality"
+      max_concurrent_tasks: 2
+
+coordination:
+  consensus_algorithm: "raft"
+
+  raft_config:
+    leader: "architect"
+    quorum_size: 3
+    election_timeout: 5000
+    heartbeat_interval: 1000
+
+  decision_making:
+    strategy: "majority_vote"
+    tie_breaker: "queen_decides"
+
+  conflict_resolution:
+    strategy: "escalate_to_queen"
+    timeout: 10000
+
+communication:
+  protocol: "message_passing"
+
+  channels:
+    coordination_channel:
+      participants: ["all"]
+      message_types:
+        - task_assignment
+        - status_update
+        - help_request
+
+    review_channel:
+      participants: ["architect", "specialists"]
+      message_types:
+        - review_request
+        - feedback
+        - approval
+
+    emergency_channel:
+      participants: ["all"]
+      message_types:
+        - blocker
+        - critical_issue
+
+failure_handling:
+  worker_failure:
+    strategy: "reassign_to_available"
+    timeout: 30000
+    max_retries: 2
+
+  queen_failure:
+    strategy: "elect_new_leader"
+    candidates: ["flutter_specialist", "firebase_specialist"]
+
+  consensus_failure:
+    strategy: "escalate_to_human"
+    timeout: 60000
+
+task_distribution:
+  strategy: "skill_based_routing"
+
+  load_balancing:
+    enabled: true
+    algorithm: "least_loaded"
+
+  priority_levels:
+    critical: 1
+    high: 2
+    medium: 3
+    low: 4
+
+monitoring:
+  health_checks:
+    enabled: true
+    interval: 5000
+
+  metrics:
+    - worker_utilization
+    - task_completion_time
+    - consensus_rounds
+    - coordination_overhead
+    - success_rate
+
+  alerts:
+    - worker_overloaded
+    - consensus_timeout
+    - task_failure_rate_high

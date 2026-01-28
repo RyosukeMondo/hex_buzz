@@ -110,6 +110,9 @@ class GameEngine {
     if (winCheck.isWin) {
       newEndTime = _clock();
       _state = _state.copyWith(endTime: newEndTime);
+      print('🎉 GAME WON! Setting endTime, isComplete will be true');
+      print('   Level: ${_state.level.id}');
+      print('   Elapsed time: ${_state.elapsedTime}');
       return MoveResult.success(_state, isWin: true);
     }
 

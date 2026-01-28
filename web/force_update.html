@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Force Update - HexBuzz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #357ae8;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+        pre {
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Force Update HexBuzz</h1>
+        <p>If the app is showing old cached code, use this page to force a complete refresh.</p>
+
+        <h2>Quick Actions</h2>
+        <button onclick="clearEverything()">Clear Everything & Reload</button>
+        <button onclick="unregisterServiceWorkers()">Unregister Service Workers</button>
+        <button onclick="clearCache()">Clear Cache Storage</button>
+        <button onclick="clearLocalStorage()">Clear Local Storage</button>
+        <button onclick="checkStatus()">Check Status</button>
+
+        <div id="status" class="status"></div>
+
+        <h2>Manual Steps</h2>
+        <ol>
+            <li>Click "Clear Everything & Reload"</li>
+            <li>Wait for confirmation</li>
+            <li>App will automatically open with fresh code</li>
+        </ol>
+
+        <h2>Or: Browser DevTools Method</h2>
+        <ol>
+            <li>Press <code>F12</code> to open DevTools</li>
+            <li>Go to "Application" tab</li>
+            <li>Click "Clear storage" in left sidebar</li>
+            <li>Check all boxes</li>
+            <li>Click "Clear site data"</li>
+            <li>Close DevTools</li>
+            <li>Hard refresh: <code>Ctrl+Shift+R</code></li>
+        </ol>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+        }
+
+        async function unregisterServiceWorkers() {
+            showStatus('Unregistering service workers...', 'info');
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                let count = 0;
+                for (let registration of registrations) {
+                    await registration.unregister();
+                    count++;
+                }
+                showStatus(`✓ Unregistered ${count} service worker(s)`, 'success');
+            } catch (error) {
+                showStatus(`✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearCache() {
+            showStatus('Clearing cache storage...', 'info');
+            try {
+                const cacheNames = await caches.keys();
+                for (let name of cacheNames) {
+                    await caches.delete(name);
+                }
+                showStatus(`✓ Cleared ${cacheNames.length} cache(s)`, 'success');
+            } catch (error) {
+                showStatus(`✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function clearLocalStorage() {
+            showStatus('Clearing local storage...', 'info');
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+                showStatus('✓ Cleared local storage and session storage', 'success');
+            } catch (error) {
+                showStatus(`✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearEverything() {
+            showStatus('Clearing everything...', 'info');
+            try {
+                // 1. Unregister service workers
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                }
+
+                // 2. Clear all caches
+                const cacheNames = await caches.keys();
+                for (let name of cacheNames) {
+                    await caches.delete(name);
+                }
+
+                // 3. Clear storage
+                localStorage.clear();
+                sessionStorage.clear();
+
+                // 4. Clear IndexedDB (EXCEPT Firebase Auth to preserve login)
+                const databases = await window.indexedDB.databases();
+                for (let db of databases) {
+                    // Skip Firebase Auth database to preserve session
+                    if (!db.name || !db.name.includes('firebase')) {
+                        window.indexedDB.deleteDatabase(db.name);
+                    }
+                }
+
+                showStatus('✓ Everything cleared! Redirecting to app...', 'success');
+
+                // Redirect after 2 seconds
+                setTimeout(() => {
+                    window.location.href = '/hex_buzz';
+                }, 2000);
+            } catch (error) {
+                showStatus(`✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkStatus() {
+            showStatus('Checking status...', 'info');
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                const cacheNames = await caches.keys();
+                const databases = await window.indexedDB.databases();
+
+                let status = `Service Workers: ${registrations.length}\n`;
+                status += `Cache Storage: ${cacheNames.length} cache(s)\n`;
+                status += `IndexedDB: ${databases.length} database(s)\n`;
+                status += `Local Storage Items: ${localStorage.length}\n`;
+                status += `Session Storage Items: ${sessionStorage.length}`;
+
+                showStatus('Current Status:\n' + status, 'info');
+                document.getElementById('status').innerHTML = '<pre>' + status + '</pre>';
+            } catch (error) {
+                showStatus(`✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-check status on load
+        window.onload = () => {
+            checkStatus();
+        };
+    </script>
+</body>
+</html>

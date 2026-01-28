@@ -30,5 +30,11 @@
     "eslint-plugin-import": "^2.29.0",
     "typescript": "^5.0.0"
   },
-  "private": true
+  "private": true,
+  "directories": {
+    "lib": "lib"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

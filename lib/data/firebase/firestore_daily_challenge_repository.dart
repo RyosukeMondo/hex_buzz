@@ -86,6 +86,11 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
   }) async {
     try {
       final today = _getTodayDateString();
+      print('📝 Submitting challenge completion for $today');
+      print('   User: $userId');
+      print('   Stars: $stars');
+      print('   Time: ${completionTimeMs}ms');
+
       final entryRef = _firestore
           .collection('dailyChallenges')
           .doc(today)
@@ -125,6 +130,7 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
       final totalStars = userData['totalStars'] as int? ?? 0;
 
       // Submit to daily challenge entries
+      print('   Writing to dailyChallenges/$today/entries/$userId');
       await entryRef.set({
         'userId': userId,
         'username': username,
@@ -134,18 +140,24 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
         'completionTime': completionTimeMs,
         'completedAt': FieldValue.serverTimestamp(),
       });
+      print('   ✓ Entry written successfully');
 
       // Only increment completion count if this is the first completion
       if (isFirstCompletion) {
+        print('   Incrementing completion count (first completion)');
         await _firestore.collection('dailyChallenges').doc(today).update({
           'completionCount': FieldValue.increment(1),
         });
+        print('   ✓ Completion count incremented');
+      } else {
+        print('   Skipping completion count (already completed)');
       }
 
       // Invalidate cache
       _cachedChallenge = null;
       _cachedChallengeDate = null;
 
+      print('✅ Challenge completion submitted successfully!');
       return true;
     } catch (e) {
       return false;

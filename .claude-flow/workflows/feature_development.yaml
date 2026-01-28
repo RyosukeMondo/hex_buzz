@@ -1,0 +1,109 @@
+# Feature Development Workflow
+name: "feature_development"
+description: "Complete workflow for implementing new features"
+type: "sequential_with_consensus"
+
+phases:
+  - name: "planning"
+    description: "Architecture planning and design"
+    agents:
+      - architect
+    tasks:
+      - analyze_requirements
+      - design_architecture
+      - identify_affected_components
+      - plan_implementation_steps
+    consensus_required: false
+    output: "implementation_plan"
+
+  - name: "implementation"
+    description: "Feature implementation"
+    swarm:
+      type: "parallel_workers"
+      queen: "architect"
+      workers:
+        - flutter_specialist
+        - firebase_specialist
+      consensus_algorithm: "raft"
+      quorum_size: 2
+    tasks:
+      - implement_frontend_changes
+      - implement_backend_changes
+      - ensure_code_standards
+      - dependency_injection_setup
+    consensus_required: true
+    depends_on: ["planning"]
+    output: "implemented_feature"
+
+  - name: "testing"
+    description: "Comprehensive testing"
+    agents:
+      - test_specialist
+    tasks:
+      - write_unit_tests
+      - write_widget_tests
+      - write_integration_tests
+      - verify_coverage_80_percent
+      - verify_critical_paths_90_percent
+    consensus_required: false
+    depends_on: ["implementation"]
+    output: "test_results"
+
+  - name: "security_review"
+    description: "Security analysis"
+    agents:
+      - security_specialist
+    tasks:
+      - scan_for_vulnerabilities
+      - review_auth_changes
+      - validate_input_handling
+      - check_firestore_rules
+    consensus_required: false
+    depends_on: ["implementation"]
+    output: "security_report"
+
+  - name: "code_review"
+    description: "Final architectural review"
+    agents:
+      - architect
+    tasks:
+      - review_solid_compliance
+      - verify_code_metrics
+      - check_no_band_aid_fixes
+      - validate_test_coverage
+    consensus_required: false
+    depends_on: ["testing", "security_review"]
+    output: "review_report"
+
+success_criteria:
+  - all_phases_completed
+  - no_critical_security_issues
+  - test_coverage_above_80_percent
+  - code_metrics_compliant
+  - architect_approval
+
+failure_handling:
+  on_test_failure:
+    action: "return_to_implementation"
+    notify: true
+
+  on_security_issue:
+    action: "return_to_implementation"
+    notify: true
+    severity_threshold: "medium"
+
+  on_review_failure:
+    action: "return_to_implementation"
+    notify: true
+
+monitoring:
+  track_metrics:
+    - phase_duration
+    - agent_coordination_time
+    - consensus_rounds
+    - total_cost
+
+  alert_on:
+    - phase_timeout
+    - consensus_failure
+    - critical_errors

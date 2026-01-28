@@ -1,0 +1,64 @@
+# Strict Analysis Options to Prevent State Management Bugs
+# Enable by copying to analysis_options.yaml
+
+include: package:lints/recommended.yaml
+
+analyzer:
+  errors:
+    # Enforce these as errors, not warnings
+    avoid_print: warning  # We use print for debugging
+    unused_local_variable: error
+    dead_code: error
+
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/generated/**"
+
+linter:
+  rules:
+    # General code quality
+    - always_declare_return_types
+    - always_put_required_named_parameters_first
+    - avoid_bool_literals_in_conditional_expressions
+    - avoid_catching_errors
+    - avoid_dynamic_calls
+    - avoid_empty_else
+    - avoid_print  # Use proper logging in production
+    - avoid_relative_lib_imports
+    - avoid_returning_null_for_void
+    - avoid_slow_async_io
+    - avoid_type_to_string
+    - cancel_subscriptions
+    - close_sinks
+    - comment_references
+    - literal_only_boolean_expressions
+    - no_adjacent_strings_in_list
+    - no_duplicate_case_values
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_final_fields
+    - prefer_final_in_for_each
+    - prefer_final_locals
+    - throw_in_finally
+    - unnecessary_statements
+    - use_key_in_widget_constructors
+
+    # State management specific
+    - prefer_const_constructors_in_immutables
+    - prefer_const_literals_to_create_immutables
+
+    # Async/await
+    - unawaited_futures  # Critical: catch forgotten awaits
+    - await_only_futures
+
+# Custom documentation for code review
+# Since Dart doesn't support custom lint rules without plugins,
+# document the patterns to watch for:
+
+# WATCH FOR IN CODE REVIEW:
+# 1. Business logic in didUpdateWidget, initState, dispose
+# 2. State-dependent operations without ref.listen()
+# 3. Async operations without error handling
+# 4. Side effects triggered by widget rebuild
+# 5. Multiple sources of truth for the same state

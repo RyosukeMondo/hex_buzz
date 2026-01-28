@@ -124,14 +124,12 @@ class _GameScreenContent extends ConsumerStatefulWidget {
 }
 
 class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
+  bool _hasSubmitted = false;
+
   @override
   void didUpdateWidget(_GameScreenContent oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Check if game just completed
-    final gameState = ref.read(gameProvider);
-    if (gameState.isComplete && !widget.scoreSubmitted) {
-      _submitScore();
-    }
+    print('🔄 didUpdateWidget called');
   }
 
   /// Submits the score to the appropriate leaderboard.
@@ -139,10 +137,13 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
     // Only submit if user is logged in
     final authAsync = ref.read(authProvider);
     final user = authAsync.valueOrNull;
-    if (user == null) return;
-
-    // Mark as submitted immediately to prevent duplicate submissions
-    widget.onScoreSubmitted();
+    print(
+      '🎯 _submitScore called: user=${user?.id ?? "null"}, isLoading=${authAsync.isLoading}, hasError=${authAsync.hasError}',
+    );
+    if (user == null) {
+      print('⚠️ Cannot submit score: user not authenticated');
+      return;
+    }
 
     final gameState = ref.read(gameProvider);
     final elapsedTime = gameState.elapsedTime;
@@ -152,13 +153,17 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
     try {
       if (widget.isDailyChallenge && widget.dailyChallenge != null) {
         // Submit to daily challenge leaderboard
-        await ref
+        print(
+          '📊 Submitting daily challenge completion: user=${user.id}, stars=$stars, time=${elapsedTimeMs}ms',
+        );
+        final success = await ref
             .read(dailyChallengeProvider.notifier)
             .submitCompletion(
               userId: user.id,
               stars: stars,
               completionTimeMs: elapsedTimeMs,
             );
+        print('📊 Daily challenge submission result: $success');
       } else if (widget.levelIndex != null) {
         // Submit to global leaderboard
         final levelId = 'level_${widget.levelIndex}';
@@ -168,6 +173,7 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
       }
     } catch (e) {
       // Log error but don't block the game completion
+      print('❌ Failed to submit score: $e');
       debugPrint('Failed to submit score: $e');
     }
   }
@@ -176,6 +182,27 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
   Widget build(BuildContext context) {
     final gameState = ref.watch(gameProvider);
     final visitedCells = gameState.path.toSet();
+
+    // Listen for game completion and trigger submission
+    ref.listen(gameProvider, (previous, next) {
+      print('🔊 Game state changed!');
+      print('   Previous isComplete: ${previous?.isComplete ?? "null"}');
+      print('   Next isComplete: ${next.isComplete}');
+      print('   _hasSubmitted: $_hasSubmitted');
+
+      if (next.isComplete && !_hasSubmitted) {
+        print('🎯 Game just completed! Triggering score submission...');
+        _hasSubmitted = true;
+        widget.onScoreSubmitted();
+        _submitScore();
+      }
+    });
+
+    // Log game state changes
+    if (gameState.isComplete) {
+      print('🎮 BUILD: Game is COMPLETE, showing completion overlay');
+      print('   scoreSubmitted: ${widget.scoreSubmitted}');
+    }
 
     return KeyboardShortcuts(
       onUndo: () {
@@ -360,6 +387,9 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
           : null,
       onReplay: () => ref.read(gameProvider.notifier).reset(),
       onLevelSelect: () => _navigateToLevelSelect(context),
+      onViewLeaderboard: widget.isDailyChallenge
+          ? () => _navigateToLeaderboard(context)
+          : null,
     );
   }
 
@@ -379,5 +409,10 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
     } else {
       Navigator.of(context).pushReplacementNamed(AppRoutes.levels);
     }
+  }
+
+  void _navigateToLeaderboard(BuildContext context) {
+    // Navigate to leaderboard screen with daily challenge tab selected
+    Navigator.of(context).pushNamed(AppRoutes.leaderboard);
   }
 }

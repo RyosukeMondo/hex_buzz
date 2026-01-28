@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="google-signin-client_id" content="384062554696-k3ur1lnpvvhfn2b6oehm3dervlb42pnq.apps.googleusercontent.com">
+    <title>Test Google Sign-In</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <h1>Test Google Sign-In Configuration</h1>
+
+    <div id="status"></div>
+
+    <div id="g_id_onload"
+         data-client_id="384062554696-k3ur1lnpvvhfn2b6oehm3dervlb42pnq.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse">
+    </div>
+
+    <div class="g_id_signin" data-type="standard"></div>
+
+    <hr>
+
+    <h2>Firebase Test</h2>
+    <button onclick="testFirebaseAuth()">Test Firebase Auth</button>
+    <div id="firebase-status"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: 'AIzaSyC-QprL7VkdoPr4QBmXmJ08OWxp-FblIGc',
+            authDomain: 'hexbuzz-game.firebaseapp.com',
+            projectId: 'hexbuzz-game',
+            storageBucket: 'hexbuzz-game.appspot.com',
+            messagingSenderId: '384062554696',
+            appId: '1:384062554696:web:hexbuzz'
+        };
+
+        let app, auth;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            document.getElementById('firebase-status').innerHTML = '<p style="color: green;">✓ Firebase initialized</p>';
+        } catch (error) {
+            document.getElementById('firebase-status').innerHTML = '<p style="color: red;">✗ Firebase init error: ' + error.message + '</p>';
+            console.error('Firebase init error:', error);
+        }
+
+        window.testFirebaseAuth = async function() {
+            const statusDiv = document.getElementById('firebase-status');
+            statusDiv.innerHTML += '<p>Testing Google Sign-In...</p>';
+
+            try {
+                const provider = new GoogleAuthProvider();
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                statusDiv.innerHTML += '<p style="color: green;">✓ Sign-in successful! User: ' + user.email + '</p>';
+                console.log('Sign-in successful:', user);
+            } catch (error) {
+                statusDiv.innerHTML += '<p style="color: red;">✗ Sign-in error: ' + error.code + ' - ' + error.message + '</p>';
+                console.error('Sign-in error:', error);
+            }
+        };
+    </script>
+
+    <script>
+        function handleCredentialResponse(response) {
+            document.getElementById('status').innerHTML = '<p style="color: green;">✓ Google Sign-In token received!</p>';
+            console.log('Google credential:', response);
+        }
+
+        window.onerror = function(msg, url, line, col, error) {
+            console.error('Error:', msg, 'at', url, ':', line);
+            return false;
+        };
+    </script>
+</body>
+</html>

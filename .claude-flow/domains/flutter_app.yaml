@@ -1,0 +1,95 @@
+# Flutter Application Domain
+name: "flutter_app"
+description: "Flutter mobile application domain"
+type: "frontend"
+
+structure:
+  root: "lib"
+
+  layers:
+    ui:
+      path: "lib/ui"
+      description: "User interface layer - screens and widgets"
+      components:
+        - screens
+        - widgets
+        - themes
+      responsibilities:
+        - widget_composition
+        - user_interaction
+        - visual_presentation
+      dependencies_allowed:
+        - models
+        - providers
+        - services
+      dependencies_forbidden:
+        - direct_firebase_access
+
+    models:
+      path: "lib/models"
+      description: "Data models and business entities"
+      responsibilities:
+        - data_representation
+        - business_logic
+        - validation
+      dependencies_allowed: []
+      dependencies_forbidden:
+        - ui
+        - providers
+        - services
+
+    providers:
+      path: "lib/providers"
+      description: "State management with Riverpod"
+      responsibilities:
+        - state_management
+        - dependency_provision
+        - lifecycle_management
+      dependencies_allowed:
+        - models
+        - services
+      dependencies_forbidden:
+        - ui
+
+    services:
+      path: "lib/services"
+      description: "Business logic and external integration"
+      responsibilities:
+        - api_integration
+        - firebase_integration
+        - business_operations
+      dependencies_allowed:
+        - models
+      dependencies_forbidden:
+        - ui
+        - providers
+
+  entry_points:
+    - "lib/main.dart"
+
+  test_structure:
+    unit_tests: "test"
+    widget_tests: "test/ui"
+    integration_tests: "integration_test"
+
+patterns:
+  state_management: "riverpod"
+  architecture: "clean_architecture"
+  dependency_injection: "riverpod_providers"
+
+agent_assignment:
+  primary: "flutter_specialist"
+  review: "architect"
+  testing: "test_specialist"
+
+file_conventions:
+  naming: "snake_case"
+  organization: "by_feature"
+  max_lines: 500
+
+quality_gates:
+  - no_direct_firebase_in_ui
+  - all_state_through_providers
+  - models_are_immutable
+  - proper_error_handling
+  - dependency_injection_used

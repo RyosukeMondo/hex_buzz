@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/auth_result.dart';
@@ -20,11 +23,34 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 /// Integrates with [AuthRepository] for authentication operations.
 class AuthNotifier extends AsyncNotifier<User?> {
   late AuthRepository _repository;
+  StreamSubscription<User?>? _authSubscription;
 
   @override
   Future<User?> build() async {
     _repository = ref.watch(authRepositoryProvider);
-    return _repository.getCurrentUser();
+
+    print('🔐 AuthNotifier build started');
+
+    // Cancel any existing subscription to avoid duplicates
+    _authSubscription?.cancel();
+
+    // Listen to auth state changes (session restore, sign in, sign out)
+    _authSubscription = _repository.authStateChanges().listen((user) {
+      print('🔐 AuthNotifier stream update: user=${user?.id ?? "null"}');
+      state = AsyncValue.data(user);
+    });
+
+    // Clean up subscription when provider is disposed
+    ref.onDispose(() {
+      print('🔐 AuthNotifier disposing subscription');
+      _authSubscription?.cancel();
+    });
+
+    // Get initial user (from persisted session)
+    final initialUser = await _repository.getCurrentUser();
+    print('🔐 AuthNotifier build: initialUser=${initialUser?.id ?? "null"}');
+
+    return initialUser;
   }
 
   /// Attempts to log in with the given credentials.

@@ -1,0 +1,113 @@
+# Claude-Flow Configuration for HexBuzz
+# Enterprise AI Agent Orchestration
+
+version: "3.0"
+project:
+  name: "hex_buzz"
+  type: "multi_platform"
+  languages:
+    - dart
+    - typescript
+    - javascript
+  frameworks:
+    - flutter
+    - firebase
+    - cloud_functions
+
+# Intelligence Configuration
+intelligence:
+  vector_store:
+    type: "ruvector"
+    dimensions: 1536
+    index_type: "hnsw"
+    enabled: true
+    persistence_path: ".claude-flow/vector_store"
+
+  learning:
+    enabled: true
+    q_learning:
+      enabled: true
+      learning_rate: 0.1
+      discount_factor: 0.95
+      exploration_rate: 0.2
+    pattern_retention: true
+    success_threshold: 0.85
+
+# Routing Configuration
+routing:
+  strategy: "q_learning"
+  fallback: "round_robin"
+  cost_optimization: true
+  target_cost_reduction: 0.4  # 40% cost reduction goal
+
+# Consensus Algorithms
+consensus:
+  default_algorithm: "raft"
+  algorithms:
+    raft:
+      enabled: true
+      quorum_size: 3
+      leader_election_timeout: 5000
+    byzantine:
+      enabled: false
+      fault_tolerance: 1
+    gossip:
+      enabled: true
+      propagation_delay: 100
+
+# Security
+security:
+  ai_defence:
+    enabled: true
+    injection_prevention: true
+    path_traversal_blocking: true
+    input_validation: strict
+
+  allowed_operations:
+    - read
+    - write
+    - execute_tests
+    - deploy_functions
+    - git_operations
+
+  restricted_paths:
+    - ".env"
+    - ".env.*"
+    - "**/*.key"
+    - "**/*.pem"
+    - "**/secrets/**"
+    - "firebase-adminsdk-*.json"
+
+# Monitoring & Observability
+monitoring:
+  enabled: true
+  log_level: "info"
+  structured_logging: true
+  metrics:
+    - agent_performance
+    - cost_tracking
+    - consensus_timing
+    - error_rates
+
+  alerting:
+    enabled: true
+    channels:
+      - type: "console"
+      - type: "file"
+        path: "logs/claude-flow.log"
+
+# Agent Defaults
+agent_defaults:
+  timeout: 300000  # 5 minutes
+  max_retries: 3
+  retry_backoff: 1000
+  memory_limit: "2GB"
+  context_window: 8000
+
+# Swarm Configuration
+swarm_defaults:
+  min_workers: 2
+  max_workers: 5
+  worker_spawn_strategy: "dynamic"
+  failure_tolerance: 0.3  # 30% of workers can fail
+  consensus_required: true

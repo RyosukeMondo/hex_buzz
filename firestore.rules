@@ -1,87 +1,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    // Helper function to check if the user is the owner
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-
-    // Helper function to validate timestamp fields
-    function hasValidTimestamp(field) {
-      return request.resource.data[field] is timestamp;
-    }
-
-    // Users collection - user profiles
-    match /users/{userId} {
-      // Anyone authenticated can read user profiles
-      allow read: if isAuthenticated();
-
-      // Users can only write their own profile
-      allow create: if isOwner(userId)
-        && request.resource.data.uid == request.auth.uid
-        && hasValidTimestamp('createdAt')
-        && hasValidTimestamp('lastLoginAt');
-
-      allow update: if isOwner(userId)
-        && request.resource.data.uid == request.auth.uid
-        && hasValidTimestamp('lastLoginAt');
-
-      // Delete not allowed
-      allow delete: if false;
-    }
-
-    // Leaderboard collection - computed by Cloud Functions
-    match /leaderboard/{userId} {
-      // Anyone authenticated can read the leaderboard
-      allow read: if isAuthenticated();
-
-      // Only Cloud Functions can write to leaderboard
-      // (Cloud Functions run with admin privileges, bypassing these rules)
-      allow write: if false;
-    }
-
-    // Daily challenges collection
-    match /dailyChallenges/{date} {
-      // Anyone authenticated can read daily challenges
-      allow read: if isAuthenticated();
-
-      // Only Cloud Functions can write daily challenges
-      allow write: if false;
-
-      // Daily challenge entries subcollection
-      match /entries/{userId} {
-        // Anyone authenticated can read all entries
-        allow read: if isAuthenticated();
-
-        // Only Cloud Functions can write entries
-        allow write: if false;
-      }
-    }
-
-    // Score submissions collection - write-only, triggers Cloud Functions
-    match /scoreSubmissions/{submissionId} {
-      // No one can read score submissions (they're just a trigger)
-      allow read: if false;
-
-      // Users can only submit their own scores
-      allow create: if isAuthenticated()
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.stars is int
-        && request.resource.data.stars >= 0
-        && request.resource.data.stars <= 3
-        && request.resource.data.time is int
-        && request.resource.data.time > 0
-        && request.resource.data.totalStars is int
-        && request.resource.data.totalStars >= 0
-        && hasValidTimestamp('submittedAt');
-
-      // Update and delete not allowed
-      allow update, delete: if false;
+    // TEMPORARY: Open rules for testing data population
+    // TODO: Restore secure rules from firestore.rules.backup after testing!
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }

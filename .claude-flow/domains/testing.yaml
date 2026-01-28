@@ -1,0 +1,79 @@
+# Testing Domain
+name: "testing"
+description: "Test infrastructure and quality assurance"
+type: "quality_assurance"
+
+structure:
+  root: "test"
+
+  layers:
+    unit_tests:
+      path: "test"
+      description: "Unit tests for business logic"
+      coverage_target: 0.8
+      patterns:
+        - arrange_act_assert
+        - one_assertion_per_test
+        - isolated_tests
+
+    widget_tests:
+      path: "test/ui"
+      description: "Widget and UI component tests"
+      coverage_target: 0.8
+      patterns:
+        - pump_and_settle
+        - finder_based_assertions
+        - mock_dependencies
+
+    integration_tests:
+      path: "integration_test"
+      description: "End-to-end integration tests"
+      coverage_target: 0.7
+      patterns:
+        - real_user_flows
+        - critical_paths
+        - smoke_tests
+
+    function_tests:
+      path: "functions/src/__tests__"
+      description: "Cloud Functions unit tests"
+      coverage_target: 0.8
+      patterns:
+        - mock_firebase_admin
+        - isolated_function_testing
+
+  test_utilities:
+    mocks: "test/mocks"
+    fixtures: "test/fixtures"
+    helpers: "test/helpers"
+
+coverage_requirements:
+  overall_minimum: 0.8
+  critical_paths: 0.9
+  new_code: 0.85
+
+  critical_areas:
+    - lib/services/auth/**
+    - lib/services/game/**
+    - functions/src/services/**
+    - functions/src/repositories/**
+
+test_standards:
+  naming_convention: "describe_what_when_then"
+  isolation: "mock_all_external_dependencies"
+  independence: "tests_can_run_in_any_order"
+  determinism: "no_random_or_time_based_failures"
+
+agent_assignment:
+  primary: "test_specialist"
+  review: "architect"
+  security_tests: "security_specialist"
+
+quality_gates:
+  - all_public_methods_tested
+  - edge_cases_covered
+  - error_scenarios_tested
+  - mocks_for_external_deps
+  - descriptive_test_names
+  - aaa_pattern_followed
+  - coverage_meets_targets

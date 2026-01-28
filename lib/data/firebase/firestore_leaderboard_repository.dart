@@ -162,10 +162,13 @@ class FirestoreLeaderboardRepository implements LeaderboardRepository {
           '${date.month.toString().padLeft(2, '0')}-'
           '${date.day.toString().padLeft(2, '0')}';
 
+      print('🏆 Fetching daily challenge leaderboard for $dateStr');
+
       // Check cache first
       final cacheKey = 'daily_challenge_${dateStr}_$limit';
       final cached = _getCached(cacheKey);
       if (cached != null) {
+        print('🏆 Returning cached leaderboard: ${cached.length} entries');
         return cached;
       }
 
@@ -179,6 +182,9 @@ class FirestoreLeaderboardRepository implements LeaderboardRepository {
           .limit(limit);
 
       final snapshot = await query.get();
+      print(
+        '🏆 Query completed: found ${snapshot.docs.length} entries for dailyChallenges/$dateStr/entries',
+      );
 
       // Convert documents to LeaderboardEntry objects
       final entries = <LeaderboardEntry>[];

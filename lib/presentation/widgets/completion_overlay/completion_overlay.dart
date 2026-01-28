@@ -27,6 +27,9 @@ class CompletionOverlay extends StatefulWidget {
   /// Callback when "Level Select" button is tapped.
   final VoidCallback? onLevelSelect;
 
+  /// Callback when "View Leaderboard" button is tapped.
+  final VoidCallback? onViewLeaderboard;
+
   /// Whether the "Next Level" button should be enabled.
   /// Set to false when on the last level.
   final bool hasNextLevel;
@@ -38,6 +41,7 @@ class CompletionOverlay extends StatefulWidget {
     this.onNextLevel,
     this.onReplay,
     this.onLevelSelect,
+    this.onViewLeaderboard,
     this.hasNextLevel = true,
   }) : assert(stars >= 0 && stars <= 3, 'Stars must be between 0 and 3');
 
@@ -360,6 +364,23 @@ class _CompletionOverlayState extends State<CompletionOverlay>
               ),
             ),
           if (widget.hasNextLevel) const SizedBox(height: 12),
+
+          // View Leaderboard button (for daily challenges)
+          if (widget.onViewLeaderboard != null)
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: widget.onViewLeaderboard,
+                icon: const Icon(Icons.leaderboard),
+                label: const Text('View Leaderboard'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: HoneyTheme.deepHoney,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          if (widget.onViewLeaderboard != null) const SizedBox(height: 12),
 
           // Secondary actions row
           Row(

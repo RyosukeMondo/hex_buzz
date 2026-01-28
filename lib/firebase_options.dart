@@ -41,48 +41,46 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR_WEB_API_KEY',
-    appId: '1:YOUR_PROJECT_NUMBER:web:YOUR_WEB_APP_ID',
-    messagingSenderId: 'YOUR_PROJECT_NUMBER',
-    projectId: 'hexbuzz-project',
-    authDomain: 'hexbuzz-project.firebaseapp.com',
-    storageBucket: 'hexbuzz-project.appspot.com',
-    measurementId: 'YOUR_MEASUREMENT_ID',
+    apiKey: 'AIzaSyC-QprL7VkdoPr4QBmXmJ08OWxp-FblIGc',
+    appId: '1:384062554696:web:hexbuzz',
+    messagingSenderId: '384062554696',
+    projectId: 'hexbuzz-game',
+    authDomain: 'hexbuzz-game.firebaseapp.com',
+    storageBucket: 'hexbuzz-game.appspot.com',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: '1:YOUR_PROJECT_NUMBER:android:YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_PROJECT_NUMBER',
-    projectId: 'hexbuzz-project',
-    storageBucket: 'hexbuzz-project.appspot.com',
+    apiKey: 'AIzaSyC-QprL7VkdoPr4QBmXmJ08OWxp-FblIGc',
+    appId: '1:384062554696:android:hexbuzz',
+    messagingSenderId: '384062554696',
+    projectId: 'hexbuzz-game',
+    storageBucket: 'hexbuzz-game.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: '1:YOUR_PROJECT_NUMBER:ios:YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_PROJECT_NUMBER',
-    projectId: 'hexbuzz-project',
-    storageBucket: 'hexbuzz-project.appspot.com',
+    apiKey: 'AIzaSyC-QprL7VkdoPr4QBmXmJ08OWxp-FblIGc',
+    appId: '1:384062554696:ios:hexbuzz',
+    messagingSenderId: '384062554696',
+    projectId: 'hexbuzz-game',
+    storageBucket: 'hexbuzz-game.appspot.com',
     iosBundleId: 'com.hexbuzz.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'YOUR_MACOS_API_KEY',
-    appId: '1:YOUR_PROJECT_NUMBER:ios:YOUR_MACOS_APP_ID',
-    messagingSenderId: 'YOUR_PROJECT_NUMBER',
-    projectId: 'hexbuzz-project',
-    storageBucket: 'hexbuzz-project.appspot.com',
-    iosBundleId: 'com.hexbuzz.app',
+    apiKey: 'AIzaSyC-QprL7VkdoPr4QBmXmJ08OWxp-FblIGc',
+    appId: '1:384062554696:macos:hexbuzz',
+    messagingSenderId: '384062554696',
+    projectId: 'hexbuzz-game',
+    storageBucket: 'hexbuzz-game.appspot.com',
+    iosBundleId: 'com.hexbuzz.app.macos',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'YOUR_WINDOWS_API_KEY',
-    appId: '1:YOUR_PROJECT_NUMBER:web:YOUR_WINDOWS_APP_ID',
-    messagingSenderId: 'YOUR_PROJECT_NUMBER',
-    projectId: 'hexbuzz-project',
-    authDomain: 'hexbuzz-project.firebaseapp.com',
-    storageBucket: 'hexbuzz-project.appspot.com',
-    measurementId: 'YOUR_WINDOWS_MEASUREMENT_ID',
+    apiKey: 'AIzaSyC-QprL7VkdoPr4QBmXmJ08OWxp-FblIGc',
+    appId: '1:384062554696:windows:hexbuzz',
+    messagingSenderId: '384062554696',
+    projectId: 'hexbuzz-game',
+    authDomain: 'hexbuzz-game.firebaseapp.com',
+    storageBucket: 'hexbuzz-game.appspot.com',
   );
 }

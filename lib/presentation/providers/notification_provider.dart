@@ -52,7 +52,8 @@ NotificationService createNotificationService({String? userId}) {
 
   // Use FCM for mobile and web platforms
   if (kDebugMode) {
-    debugPrint('Using FCMNotificationService for ${Platform.operatingSystem}');
+    final platform = kIsWeb ? 'web' : Platform.operatingSystem;
+    debugPrint('Using FCMNotificationService for $platform');
   }
   return FCMNotificationService(userId: userId);
 }

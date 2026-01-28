@@ -1,0 +1,122 @@
+# Code Review Committee Swarm
+name: "review_committee"
+description: "Parallel review team with consensus decision"
+type: "consensus_swarm"
+
+topology:
+  structure: "peer_to_peer"
+
+  participants:
+    - agent: "architect"
+      role: "lead_reviewer"
+      vote_weight: 2
+
+    - agent: "flutter_specialist"
+      role: "frontend_reviewer"
+      vote_weight: 1
+
+    - agent: "firebase_specialist"
+      role: "backend_reviewer"
+      vote_weight: 1
+
+    - agent: "security_specialist"
+      role: "security_reviewer"
+      vote_weight: 1.5
+
+    - agent: "test_specialist"
+      role: "quality_reviewer"
+      vote_weight: 1
+
+coordination:
+  consensus_algorithm: "byzantine"
+
+  byzantine_config:
+    fault_tolerance: 1
+    min_agreeing_agents: 4
+    timeout: 30000
+
+  decision_making:
+    strategy: "weighted_vote"
+    approval_threshold: 0.7
+    veto_enabled: true
+    veto_agents: ["architect", "security_specialist"]
+
+  voting_criteria:
+    code_quality:
+      weight: 0.3
+      evaluators: ["architect", "flutter_specialist", "firebase_specialist"]
+
+    security:
+      weight: 0.25
+      evaluators: ["security_specialist"]
+      veto_on_critical: true
+
+    test_coverage:
+      weight: 0.25
+      evaluators: ["test_specialist"]
+
+    architecture:
+      weight: 0.2
+      evaluators: ["architect"]
+      veto_on_violation: true
+
+communication:
+  protocol: "broadcast_then_aggregate"
+
+  phases:
+    independent_review:
+      duration: "parallel"
+      communication: "disabled"
+
+    discussion:
+      duration: 300000  # 5 minutes
+      communication: "enabled"
+
+    voting:
+      duration: 60000  # 1 minute
+      communication: "disabled"
+
+  aggregation:
+    method: "weighted_average"
+    include_comments: true
+    require_justification: true
+
+failure_handling:
+  agent_timeout:
+    strategy: "proceed_without"
+    min_participants: 3
+
+  no_consensus:
+    strategy: "escalate_to_human"
+    provide_summary: true
+
+  critical_issue_detected:
+    strategy: "immediate_reject"
+    notify: true
+
+quality_standards:
+  auto_reject_on:
+    - critical_security_issue
+    - test_coverage_below_threshold
+    - file_size_violation
+    - function_size_violation
+    - band_aid_fix_detected
+
+  require_discussion_on:
+    - major_architectural_change
+    - security_medium_severity
+    - code_smell_detected
+    - test_coverage_below_90_critical
+
+monitoring:
+  track_metrics:
+    - review_duration
+    - consensus_time
+    - disagreement_rate
+    - issues_found_by_agent
+    - approval_rate
+
+  analyze_patterns:
+    - frequently_rejected_patterns
+    - common_issues_by_domain
+    - agent_agreement_correlation

@@ -1,0 +1,37 @@
+{
+  "name": "hex-buzz-claude-flow",
+  "version": "1.0.0",
+  "description": "Claude-Flow configuration for HexBuzz development",
+  "private": true,
+  "scripts": {
+    "setup": "node scripts/setup.js",
+    "daemon": "bash scripts/daemon-manager.sh",
+    "daemon:status": "bash scripts/daemon-manager.sh status",
+    "mcp:start": "npx -y claude-flow@v3alpha mcp start",
+    "mcp:install": "claude mcp add claude-flow -- npx -y claude-flow@v3alpha mcp start",
+    "mcp:remove": "claude mcp remove claude-flow",
+    "init": "npx claude-flow@v3alpha init",
+    "agent:list": "npx claude-flow@v3alpha agent list",
+    "workflow:list": "npx claude-flow@v3alpha workflow list",
+    "swarm:status": "npx claude-flow@v3alpha swarm status",
+    "health": "npx claude-flow@v3alpha health check",
+    "vector:rebuild": "npx claude-flow@v3alpha vector rebuild",
+    "metrics": "npx claude-flow@v3alpha metrics show",
+    "help": "npx claude-flow@v3alpha --help"
+  },
+  "keywords": [
+    "claude-flow",
+    "ai-agents",
+    "multi-agent",
+    "orchestration",
+    "flutter",
+    "firebase"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruvnet/claude-flow.git"
+  }
+}

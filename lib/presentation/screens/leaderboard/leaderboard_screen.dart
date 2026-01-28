@@ -145,8 +145,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
   }
 
   Widget _buildDailyChallengeLeaderboard() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final now = DateTime.now().toUtc();
+    final today = DateTime.utc(now.year, now.month, now.day);
+    print('🏆 Loading daily challenge leaderboard for $today (UTC)');
     final dailyLeaderboardAsync = ref.watch(
       dailyChallengeLeaderboardProvider(today),
     );
