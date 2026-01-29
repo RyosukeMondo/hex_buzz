@@ -56,15 +56,28 @@ class DailyChallengeNotifier
 
   @override
   Future<DailyChallengeState> build() async {
+    print('🏗️ DailyChallengeNotifier.build() called');
     _repository = ref.watch(dailyChallengeRepositoryProvider);
+    print('📦 Repository initialized: ${_repository.runtimeType}');
 
     try {
+      print('🔄 Calling getTodaysChallenge...');
       final challenge = await _repository.getTodaysChallenge();
+      print(
+        '📥 Challenge received: ${challenge != null ? "YES (id=${challenge.id})" : "NULL"}',
+      );
+
+      if (challenge != null) {
+        print('   Level: ${challenge.level.id}, size=${challenge.level.size}');
+      }
+
       return DailyChallengeState(
         challenge: challenge,
         hasCompleted: challenge?.hasUserCompleted ?? false,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ Error in DailyChallengeNotifier.build(): $e');
+      print('Stack trace: $stackTrace');
       return DailyChallengeState(error: e.toString());
     }
   }
