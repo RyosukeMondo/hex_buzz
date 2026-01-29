@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"="width=device-width, initial-scale=1.0">
+    <title>Challenge Load Test - HexBuzz</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { color: #4ec9b0; }
+        .test { margin: 20px 0; padding: 15px; background: #252526; border-radius: 4px; }
+        .pass { border-left: 4px solid #3fb950; }
+        .fail { border-left: 4px solid #f85149; }
+        .pending { border-left: 4px solid #f9c513; }
+        pre { background: #1e1e1e; padding: 10px; overflow-x: auto; }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #1177bb; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Daily Challenge Load Test</h1>
+    <p>Autonomous end-to-end test of the daily challenge system</p>
+
+    <button onclick="runAllTests()">Run All Tests</button>
+    <button onclick="location.reload()">Refresh</button>
+
+    <div id="results"></div>
+
+    <script type="module">
+        window.runAllTests = async function() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="test pending"><h3>Running tests...</h3></div>';
+
+            const tests = [];
+
+            // Test 1: Server-side validation
+            tests.push(await testServerSide());
+
+            // Test 2: Firestore data format
+            tests.push(await testFirestoreFormat());
+
+            // Test 3: Check logs for errors
+            tests.push(await testLogs());
+
+            // Display results
+            resultsDiv.innerHTML = tests.map(t => `
+                <div class="test ${t.pass ? 'pass' : 'fail'}">
+                    <h3>${t.pass ? '✅' : '❌'} ${t.name}</h3>
+                    <p>${t.message}</p>
+                    ${t.details ? `<pre>${t.details}</pre>` : ''}
+                </div>
+            `).join('');
+
+            const allPassed = tests.every(t => t.pass);
+            if (allPassed) {
+                resultsDiv.innerHTML += `
+                    <div class="test pass">
+                        <h3>🎉 ALL TESTS PASSED</h3>
+                        <p>The daily challenge system is working correctly!</p>
+                        <p><strong>Challenge should be visible at:</strong> <a href="/hex_buzz/#/" style="color: #4ec9b0">/hex_buzz/#/</a></p>
+                    </div>
+                `;
+            } else {
+                resultsDiv.innerHTML += `
+                    <div class="test fail">
+                        <h3>❌ SOME TESTS FAILED</h3>
+                        <p>See details above for issues</p>
+                    </div>
+                `;
+            }
+        };
+
+        async function testServerSide() {
+            try {
+                const response = await fetch('https://us-central1-hexbuzz-game.cloudfunctions.net/apiTestClientFlow');
+                const data = await response.json();
+
+                if (data.success) {
+                    return {
+                        name: 'Server-Side Validation',
+                        pass: true,
+                        message: `Challenge exists with ${data.levelSummary.cellCount} cells, ${data.levelSummary.wallCount} walls`,
+                        details: JSON.stringify(data.levelSummary, null, 2)
+                    };
+                } else {
+                    return {
+                        name: 'Server-Side Validation',
+                        pass: false,
+                        message: 'Server test failed: ' + data.issue,
+                        details: data.logs?.join('\n')
+                    };
+                }
+            } catch (error) {
+                return {
+                    name: 'Server-Side Validation',
+                    pass: false,
+                    message: 'Error: ' + error.message
+                };
+            }
+        }
+
+        async function testFirestoreFormat() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const url = `https://firestore.googleapis.com/v1/projects/hexbuzz-game/databases/(default)/documents/dailyChallenges/${today}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (!data.fields?.level?.mapValue?.fields) {
+                    return {
+                        name: 'Firestore Data Format',
+                        pass: false,
+                        message: 'Challenge document missing or malformed'
+                    };
+                }
+
+                const walls = data.fields.level.mapValue.fields.walls.arrayValue.values;
+                if (walls.length === 0) {
+                    return {
+                        name: 'Firestore Data Format',
+                        pass: true,
+                        message: 'No walls in challenge (valid)'
+                    };
+                }
+
+                const firstWall = walls[0].mapValue.fields;
+                const hasCorrectFormat = 'q1' in firstWall && 'r1' in firstWall && 'q2' in firstWall && 'r2' in firstWall;
+                const hasOldFormat = 'cellQ1' in firstWall;
+
+                if (hasCorrectFormat) {
+                    return {
+                        name: 'Firestore Data Format',
+                        pass: true,
+                        message: 'Wall format is correct (q1, r1, q2, r2)',
+                        details: `Wall keys: ${Object.keys(firstWall).join(', ')}`
+                    };
+                } else if (hasOldFormat) {
+                    return {
+                        name: 'Firestore Data Format',
+                        pass: false,
+                        message: 'Wall format is WRONG (cellQ1, cellR1, cellQ2, cellR2)',
+                        details: 'Need to delete and regenerate challenge'
+                    };
+                } else {
+                    return {
+                        name: 'Firestore Data Format',
+                        pass: false,
+                        message: 'Unknown wall format',
+                        details: JSON.stringify(firstWall, null, 2)
+                    };
+                }
+            } catch (error) {
+                return {
+                    name: 'Firestore Data Format',
+                    pass: false,
+                    message: 'Error: ' + error.message
+                };
+            }
+        }
+
+        async function testLogs() {
+            try {
+                const response = await fetch('https://us-central1-hexbuzz-game.cloudfunctions.net/apiLogs?limit=5');
+                const data = await response.json();
+
+                if (data.count === 0) {
+                    return {
+                        name: 'Client Logs',
+                        pass: true,
+                        message: 'No logs yet (app not accessed or logging not triggered)'
+                    };
+                }
+
+                const hasError = data.logs.some(log => log.level === 'ERROR');
+                const latestLog = data.logs[0];
+
+                if (hasError) {
+                    const errorLogs = data.logs.filter(log => log.level === 'ERROR');
+                    return {
+                        name: 'Client Logs',
+                        pass: false,
+                        message: `Found ${errorLogs.length} error(s) in recent logs`,
+                        details: errorLogs.map(l => `[${l.level}] ${l.message}`).join('\n')
+                    };
+                } else {
+                    return {
+                        name: 'Client Logs',
+                        pass: true,
+                        message: 'No errors in recent logs',
+                        details: `Latest: [${latestLog.level}] ${latestLog.message}`
+                    };
+                }
+            } catch (error) {
+                return {
+                    name: 'Client Logs',
+                    pass: false,
+                    message: 'Error: ' + error.message
+                };
+            }
+        }
+
+        // Auto-run on page load
+        window.onload = () => runAllTests();
+    </script>
+</body>
+</html>
