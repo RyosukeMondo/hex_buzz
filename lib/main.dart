@@ -11,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/logging/diagnostic_logger.dart';
 import 'data/firebase/firebase_auth_repository.dart';
 import 'firebase_options.dart';
-import 'data/firebase/firebase_daily_challenge_repository.dart';
+import 'data/firebase/firestore_daily_challenge_repository.dart';
 import 'data/firebase/firebase_leaderboard_repository.dart';
 import 'data/local/local_progress_repository.dart';
 import 'debug/api/server.dart';
@@ -164,10 +164,10 @@ FirebaseAuthRepository _initializeAuthRepository() {
 }
 
 /// Initializes Firebase repositories.
-(FirebaseLeaderboardRepository, FirebaseDailyChallengeRepository)
+(FirebaseLeaderboardRepository, FirestoreDailyChallengeRepository)
 _initializeFirebaseRepositories() {
   final leaderboard = FirebaseLeaderboardRepository();
-  final dailyChallenge = FirebaseDailyChallengeRepository();
+  final dailyChallenge = FirestoreDailyChallengeRepository();
   if (kDebugMode) debugPrint('Firebase repositories initialized');
   return (leaderboard, dailyChallenge);
 }

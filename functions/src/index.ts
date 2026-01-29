@@ -10,6 +10,7 @@ import { generateDailyChallenge } from "./dailyChallengeGenerator";
 import { sendDailyChallengeNotification } from "./sendDailyChallengeNotification";
 import { runDiagnostics } from "./diagnostics";
 export { apiLogs } from "./logsApi";
+export { apiTestClientFlow } from "./testClientFlow";
 
 // Initialize Firebase Admin
 admin.initializeApp();
