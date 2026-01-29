@@ -176,9 +176,9 @@ class FirebaseLeaderboardRepository implements LeaderboardRepository {
       final snapshot = await _firestore
           .collection('dailyChallenges')
           .doc(dateStr)
-          .collection('entries')  // Fixed: was 'completions', should be 'entries'
+          .collection('entries')
           .orderBy('stars', descending: true)
-          .orderBy('completionTime', descending: false)  // Fixed: was completionTimeMs
+          // Removed second orderBy temporarily - doesn't need composite index
           .limit(limit)
           .get();
 
