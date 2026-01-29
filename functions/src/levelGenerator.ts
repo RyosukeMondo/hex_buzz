@@ -1,70 +1,85 @@
 /**
  * Level generator for daily challenges
- * Generates random hexagonal grid levels with obstacles
+ * Generates hexagonal grid levels compatible with Flutter app format
  */
 
 export interface HexCell {
   q: number;
   r: number;
-  isObstacle: boolean;
+  checkpoint?: number;
+}
+
+export interface HexEdge {
+  cellQ1: number;
+  cellR1: number;
+  cellQ2: number;
+  cellR2: number;
 }
 
 export interface Level {
   id: string;
-  gridSize: number;
-  difficulty: string;
+  size: number;
   cells: HexCell[];
-  startPosition: HexCell;
-  endPosition: HexCell;
+  walls: HexEdge[];
+  checkpointCount: number;
 }
 
 /**
  * Generates a random level for daily challenge
  * @param {string} date Date string to use as seed
- * @param {number} gridSize Size of the hexagonal grid
- * @return {Level} Generated level with obstacles
+ * @param {number} size Size of the hexagonal grid
+ * @return {Level} Generated level compatible with Flutter app
  */
-export function generateLevel(date: string, gridSize = 8): Level {
+export function generateLevel(date: string, size = 6): Level {
   // Use date as seed for consistent daily generation
   const seed = hashCode(date);
   const random = seededRandom(seed);
 
   const cells: HexCell[] = [];
+  const walls: HexEdge[] = [];
 
-  // Generate hexagonal grid
-  for (let q = 0; q < gridSize; q++) {
-    for (let r = 0; r < gridSize; r++) {
-      // Skip cells outside hexagonal shape
-      if ((q + r) < gridSize || (q + r) >= gridSize * 2) {
-        continue;
-      }
-
-      // Random 25% of cells are obstacles
-      const isObstacle = random() < 0.25;
-
-      cells.push({ q, r, isObstacle });
+  // Generate hexagonal grid cells
+  for (let q = 0; q < size; q++) {
+    for (let r = 0; r < size; r++) {
+      cells.push({ q, r });
     }
   }
 
-  // Define start and end positions (ensure not obstacles)
-  const start: HexCell = { q: 0, r: gridSize - 1, isObstacle: false };
-  const end: HexCell = { q: gridSize - 1, r: gridSize - 1, isObstacle: false };
+  // Set checkpoints: first cell as checkpoint 1, last as checkpoint 2
+  cells[0].checkpoint = 1; // Start
+  cells[cells.length - 1].checkpoint = 2; // End
 
-  // Remove any existing cells at start/end positions
-  const filteredCells = cells.filter(
-    (c) => !((c.q === start.q && c.r === start.r) ||
-             (c.q === end.q && c.r === end.r))
-  );
+  // Generate random walls between cells (20% chance for each possible edge)
+  for (let i = 0; i < cells.length; i++) {
+    const cell = cells[i];
 
-  filteredCells.push(start, end);
+    // Check right neighbor
+    if (cell.q < size - 1 && random() < 0.2) {
+      walls.push({
+        cellQ1: cell.q,
+        cellR1: cell.r,
+        cellQ2: cell.q + 1,
+        cellR2: cell.r,
+      });
+    }
+
+    // Check bottom-right neighbor
+    if (cell.r < size - 1 && random() < 0.2) {
+      walls.push({
+        cellQ1: cell.q,
+        cellR1: cell.r,
+        cellQ2: cell.q,
+        cellR2: cell.r + 1,
+      });
+    }
+  }
 
   return {
     id: `daily-${date}`,
-    gridSize,
-    difficulty: "medium",
-    cells: filteredCells,
-    startPosition: start,
-    endPosition: end,
+    size,
+    cells,
+    walls,
+    checkpointCount: 2,
   };
 }
 

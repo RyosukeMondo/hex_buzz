@@ -27,8 +27,8 @@ export async function generateDailyChallenge(): Promise<void> {
       return;
     }
 
-    // Generate level
-    const level = generateLevel(dateStr, 8);
+    // Generate level (size 6 for moderate difficulty)
+    const level = generateLevel(dateStr, 6);
 
     // Store in Firestore
     await challengeRef.set({
