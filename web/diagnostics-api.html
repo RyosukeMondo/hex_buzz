@@ -325,6 +325,14 @@
                 </div>
             `;
 
+            // Logs section
+            const logsHtml = data.logs && data.logs.length > 0 ? `
+                <div class="recommendations" style="background: #f0f0f0; border-left-color: #666;">
+                    <h3>📋 Diagnostic Logs</h3>
+                    ${data.logs.map(log => `<div class="recommendation" style="font-family: monospace; font-size: 12px; border-bottom-color: #ccc;">${log}</div>`).join('')}
+                </div>
+            ` : '';
+
             // Timestamp
             const timestampHtml = `
                 <div class="timestamp">
@@ -332,7 +340,7 @@
                 </div>
             `;
 
-            resultsDiv.innerHTML = summaryHtml + testsHtml + recommendationsHtml + timestampHtml;
+            resultsDiv.innerHTML = summaryHtml + testsHtml + recommendationsHtml + logsHtml + timestampHtml;
         }
 
         // Auto-run on load

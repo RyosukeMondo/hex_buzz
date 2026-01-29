@@ -21,6 +21,7 @@ interface DiagnosticResult {
     warnings: number;
   };
   recommendations: string[];
+  logs: string[];
 }
 
 interface TestResult {
@@ -37,11 +38,19 @@ interface TestResult {
  */
 export async function runDiagnostics(): Promise<DiagnosticResult> {
   const db = admin.firestore();
+  const logs: string[] = [];
+
+  const log = (message: string) => {
+    logs.push(`[${new Date().toISOString()}] ${message}`);
+    console.log(message);
+  };
+
+  log("🔍 Starting diagnostics...");
 
   const results: DiagnosticResult = {
     timestamp: new Date().toISOString(),
     tests: {
-      dailyChallenge: await testDailyChallenge(db),
+      dailyChallenge: await testDailyChallenge(db, log),
       leaderboardRead: await testLeaderboardRead(db),
       leaderboardWrite: await testLeaderboardWrite(db),
       firestoreRules: await testFirestoreRules(db),
@@ -53,6 +62,7 @@ export async function runDiagnostics(): Promise<DiagnosticResult> {
       warnings: 0,
     },
     recommendations: [],
+    logs: logs,
   };
 
   // Calculate summary
@@ -65,25 +75,35 @@ export async function runDiagnostics(): Promise<DiagnosticResult> {
   // Generate recommendations
   results.recommendations = generateRecommendations(results.tests);
 
+  log(`✅ Diagnostics complete: ${results.summary.passed} passed, ${results.summary.failed} failed, ${results.summary.warnings} warnings`);
+
   return results;
 }
 
 /**
  * Test 1: Daily Challenge Endpoint
  * @param {admin.firestore.Firestore} db - Firestore database instance
+ * @param {Function} log - Logging function
  * @return {Promise<TestResult>} Test result with status and details
  */
 async function testDailyChallenge(
-  db: admin.firestore.Firestore
+  db: admin.firestore.Firestore,
+  log: (message: string) => void
 ): Promise<TestResult> {
   const start = Date.now();
   const today = formatDate(new Date());
 
+  log(`📅 Testing daily challenge for date: ${today}`);
+
   try {
+    log(`📡 Querying Firestore: dailyChallenges/${today}`);
     const docRef = db.collection("dailyChallenges").doc(today);
     const doc = await docRef.get();
 
+    log(`📄 Document exists: ${doc.exists}`);
+
     if (!doc.exists) {
+      log(`❌ No daily challenge found for ${today}`);
       return {
         name: "Daily Challenge - GET",
         status: "FAIL",
@@ -98,7 +118,30 @@ async function testDailyChallenge(
     }
 
     const data = doc.data()!;
+    log(`📊 Document data keys: ${Object.keys(data).join(", ")}`);
+
     const level = data.level || {};
+    log(`🎮 Level data present: ${!!data.level}`);
+
+    if (data.level) {
+      log(`🎮 Level structure keys: ${Object.keys(level).join(", ")}`);
+      log(`   - size: ${level.size}`);
+      log(`   - checkpointCount: ${level.checkpointCount}`);
+      log(`   - cells: ${level.cells?.length || 0} items`);
+      log(`   - walls: ${level.walls?.length || 0} items`);
+
+      // Sample first cell structure
+      if (level.cells && level.cells.length > 0) {
+        const firstCell = level.cells[0];
+        log(`   - Sample cell: ${JSON.stringify(firstCell)}`);
+      }
+
+      // Sample first wall structure
+      if (level.walls && level.walls.length > 0) {
+        const firstWall = level.walls[0];
+        log(`   - Sample wall: ${JSON.stringify(firstWall)}`);
+      }
+    }
 
     // Validate level structure
     const hasRequiredFields =
@@ -108,6 +151,7 @@ async function testDailyChallenge(
       level.walls;
 
     if (!hasRequiredFields) {
+      log("⚠️ Level structure incomplete");
       return {
         name: "Daily Challenge - GET",
         status: "WARN",
@@ -127,6 +171,7 @@ async function testDailyChallenge(
       };
     }
 
+    log("✅ Daily challenge validated successfully");
     return {
       name: "Daily Challenge - GET",
       status: "PASS",
@@ -145,6 +190,8 @@ async function testDailyChallenge(
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
+    log(`❌ Error testing daily challenge: ${error.message}`);
+    log(`   Stack: ${error.stack}`);
     return {
       name: "Daily Challenge - GET",
       status: "FAIL",
