@@ -26,31 +26,44 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
   Future<DailyChallenge?> getTodaysChallenge() async {
     try {
       final today = _getTodayDateString();
+      print('🗓️ getTodaysChallenge called for date: $today');
 
       // Check cache first
       if (_cachedChallenge != null && _cachedChallengeDate == today) {
+        print('✅ Returning cached challenge for $today');
         return _cachedChallenge;
       }
 
       // Query Firestore
+      print('📡 Fetching challenge from Firestore: dailyChallenges/$today');
       final doc = await _firestore
           .collection('dailyChallenges')
           .doc(today)
           .get();
 
+      print('📄 Document exists: ${doc.exists}');
       if (!doc.exists) {
+        print('❌ No daily challenge found for $today');
         return null;
       }
 
       final data = doc.data()!;
+      print('📊 Raw data keys: ${data.keys.toList()}');
 
       // Parse the level data
       final levelData = data['level'] as Map<String, dynamic>?;
+      print('🎮 Level data present: ${levelData != null}');
       if (levelData == null) {
+        print('❌ Level data is null');
         return null;
       }
 
+      print('🎮 Level data keys: ${levelData.keys.toList()}');
+      print('🎮 Parsing level...');
       final level = Level.fromJson(levelData);
+      print(
+        '✅ Level parsed: ${level.id}, size=${level.size}, cells=${level.cells.length}',
+      );
 
       // Create challenge object
       final challenge = DailyChallenge(
@@ -63,15 +76,20 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
         userRank: data['userRank'] as int?,
       );
 
+      print('✅ Daily challenge created successfully');
+
       // Cache the result
       _cachedChallenge = challenge;
       _cachedChallengeDate = today;
 
       return challenge;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ Error in getTodaysChallenge: $e');
+      print('Stack trace: $stackTrace');
       // On error, return cached data if available for today
       final today = _getTodayDateString();
       if (_cachedChallenge != null && _cachedChallengeDate == today) {
+        print('⚠️ Returning cached challenge after error');
         return _cachedChallenge;
       }
       return null;
