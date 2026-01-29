@@ -6,7 +6,7 @@ class DiagnosticLogger {
   factory DiagnosticLogger() => _instance;
   DiagnosticLogger._internal();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore? _firestore;
   final List<Map<String, dynamic>> _buffer = [];
   bool _enabled = true;
   String? _sessionId;
@@ -14,11 +14,21 @@ class DiagnosticLogger {
   /// Initialize with a unique session ID
   void init() {
     _sessionId = DateTime.now().millisecondsSinceEpoch.toString();
+    try {
+      _firestore = FirebaseFirestore.instance;
+    } catch (e) {
+      // Firebase not initialized, disable logging
+      _enabled = false;
+    }
   }
 
   /// Log a message with automatic Firestore persistence
   Future<void> log(String level, String message, {Map<String, dynamic>? data}) async {
-    if (!_enabled) return;
+    if (!_enabled || _firestore == null) {
+      // Just print locally if Firestore not available
+      print('[$level] $message ${data != null ? data.toString() : ''}');
+      return;
+    }
 
     final logEntry = {
       'timestamp': FieldValue.serverTimestamp(),
@@ -34,7 +44,7 @@ class DiagnosticLogger {
     if (_buffer.length > 100) _buffer.removeAt(0);
 
     // Send to Firestore asynchronously (don't wait)
-    _firestore.collection('diagnosticLogs').add(logEntry).catchError((e) {
+    _firestore!.collection('diagnosticLogs').add(logEntry).catchError((e) {
       print('Failed to send log to Firestore: $e');
     });
 

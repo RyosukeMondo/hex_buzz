@@ -10,10 +10,10 @@ export interface HexCell {
 }
 
 export interface HexEdge {
-  cellQ1: number;
-  cellR1: number;
-  cellQ2: number;
-  cellR2: number;
+  q1: number;
+  r1: number;
+  q2: number;
+  r2: number;
 }
 
 export interface Level {
@@ -56,20 +56,20 @@ export function generateLevel(date: string, size = 6): Level {
     // Check right neighbor
     if (cell.q < size - 1 && random() < 0.2) {
       walls.push({
-        cellQ1: cell.q,
-        cellR1: cell.r,
-        cellQ2: cell.q + 1,
-        cellR2: cell.r,
+        q1: cell.q,
+        r1: cell.r,
+        q2: cell.q + 1,
+        r2: cell.r,
       });
     }
 
     // Check bottom-right neighbor
     if (cell.r < size - 1 && random() < 0.2) {
       walls.push({
-        cellQ1: cell.q,
-        cellR1: cell.r,
-        cellQ2: cell.q,
-        cellR2: cell.r + 1,
+        q1: cell.q,
+        r1: cell.r,
+        q2: cell.q,
+        r2: cell.r + 1,
       });
     }
   }
