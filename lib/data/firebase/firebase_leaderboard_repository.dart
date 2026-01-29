@@ -171,15 +171,18 @@ class FirebaseLeaderboardRepository implements LeaderboardRepository {
     try {
       // Format date as YYYY-MM-DD for consistent storage
       final dateStr = _formatDate(date);
+      print('🏆 Fetching daily challenge leaderboard for $dateStr');
 
       final snapshot = await _firestore
           .collection('dailyChallenges')
           .doc(dateStr)
-          .collection('completions')
+          .collection('entries')  // Fixed: was 'completions', should be 'entries'
           .orderBy('stars', descending: true)
-          .orderBy('completionTimeMs', descending: false)
+          .orderBy('completionTime', descending: false)  // Fixed: was completionTimeMs
           .limit(limit)
           .get();
+
+      print('🏆 Found ${snapshot.docs.length} entries');
 
       final entries = <LeaderboardEntry>[];
       int rank = 1;
@@ -187,34 +190,32 @@ class FirebaseLeaderboardRepository implements LeaderboardRepository {
       for (var doc in snapshot.docs) {
         try {
           final data = doc.data();
+          print('🏆 Processing entry for user: ${data['userId']}');
 
-          // Fetch user data for display name and photo
-          final userId = data['userId'] as String;
-          final userDoc = await _firestore
-              .collection('users')
-              .doc(userId)
-              .get();
-          final userData = userDoc.data();
-
+          // Data already includes username and avatarUrl from submission
           final entry = LeaderboardEntry(
             rank: rank,
-            userId: userId,
-            username: userData?['username'] ?? 'Anonymous',
-            avatarUrl: userData?['photoURL'],
+            userId: data['userId'] as String,
+            username: data['username'] as String? ?? 'Anonymous',
+            avatarUrl: data['avatarUrl'] as String?,
             totalStars: data['stars'] as int,
             updatedAt:
                 (data['completedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+            completionTime: data['completionTime'] as int?,
+            stars: data['stars'] as int?,
           );
           entries.add(entry);
           rank++;
         } catch (e) {
-          // Skip invalid entries
+          print('❌ Error processing entry: $e');
           continue;
         }
       }
 
+      print('✅ Returning ${entries.length} leaderboard entries');
       return entries;
     } catch (e) {
+      print('❌ Error fetching daily challenge leaderboard: $e');
       return [];
     }
   }

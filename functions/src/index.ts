@@ -11,6 +11,7 @@ import { sendDailyChallengeNotification } from "./sendDailyChallengeNotification
 import { runDiagnostics } from "./diagnostics";
 export { apiLogs } from "./logsApi";
 export { apiTestClientFlow } from "./testClientFlow";
+export { apiTestLeaderboard } from "./testLeaderboard";
 
 // Initialize Firebase Admin
 admin.initializeApp();
