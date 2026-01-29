@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/logging/diagnostic_logger.dart';
 import 'data/firebase/firebase_auth_repository.dart';
 import 'firebase_options.dart';
 import 'data/firebase/firebase_daily_challenge_repository.dart';
@@ -63,6 +64,9 @@ void main() async {
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   if (kDebugMode) debugPrint('Firebase initialized');
+
+  // Initialize Diagnostic Logger for autonomous debugging
+  DiagnosticLogger().init();
 
   // Initialize Firebase Performance Monitoring
   final performance = FirebasePerformance.instance;

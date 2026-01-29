@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/logging/diagnostic_logger.dart';
 import '../../domain/models/daily_challenge.dart';
 import '../../domain/services/daily_challenge_repository.dart';
 
@@ -56,28 +57,30 @@ class DailyChallengeNotifier
 
   @override
   Future<DailyChallengeState> build() async {
-    print('🏗️ DailyChallengeNotifier.build() called');
+    final logger = DiagnosticLogger();
+    await logger.info('DailyChallengeNotifier.build() called');
     _repository = ref.watch(dailyChallengeRepositoryProvider);
-    print('📦 Repository initialized: ${_repository.runtimeType}');
+    await logger.info('Repository initialized', data: {'type': _repository.runtimeType.toString()});
 
     try {
-      print('🔄 Calling getTodaysChallenge...');
+      await logger.info('Calling getTodaysChallenge');
       final challenge = await _repository.getTodaysChallenge();
-      print(
-        '📥 Challenge received: ${challenge != null ? "YES (id=${challenge.id})" : "NULL"}',
-      );
-
-      if (challenge != null) {
-        print('   Level: ${challenge.level.id}, size=${challenge.level.size}');
-      }
+      await logger.info('Challenge received', data: {
+        'hasChallenge': challenge != null,
+        'id': challenge?.id,
+        'levelId': challenge?.level.id,
+        'levelSize': challenge?.level.size,
+      });
 
       return DailyChallengeState(
         challenge: challenge,
         hasCompleted: challenge?.hasUserCompleted ?? false,
       );
     } catch (e, stackTrace) {
-      print('❌ Error in DailyChallengeNotifier.build(): $e');
-      print('Stack trace: $stackTrace');
+      await logger.error('Error in DailyChallengeNotifier.build()', data: {
+        'error': e.toString(),
+        'stackTrace': stackTrace.toString(),
+      });
       return DailyChallengeState(error: e.toString());
     }
   }

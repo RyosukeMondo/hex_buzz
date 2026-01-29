@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Logs - HexBuzz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4ec9b0;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .controls {
+            background: #252526;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #1177bb;
+        }
+        button.secondary {
+            background: #3c3c3c;
+        }
+        button.secondary:hover {
+            background: #505050;
+        }
+        input {
+            background: #3c3c3c;
+            color: #d4d4d4;
+            border: 1px solid #555;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: inherit;
+            flex: 1;
+            max-width: 300px;
+        }
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .status.loading { background: #264f78; color: #4fc1ff; }
+        .status.success { background: #0e4429; color: #3fb950; }
+        .status.error { background: #4b1e1e; color: #f85149; }
+        .logs {
+            background: #252526;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .log-entry {
+            padding: 12px 15px;
+            border-bottom: 1px solid #333;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        .log-header {
+            display: flex;
+            gap: 15px;
+            align-items: baseline;
+            margin-bottom: 5px;
+        }
+        .log-time {
+            color: #858585;
+            font-size: 12px;
+        }
+        .log-level {
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .log-level.INFO { background: #264f78; color: #4fc1ff; }
+        .log-level.WARN { background: #4d3800; color: #f9c513; }
+        .log-level.ERROR { background: #4b1e1e; color: #f85149; }
+        .log-message {
+            color: #d4d4d4;
+            margin-bottom: 5px;
+        }
+        .log-data {
+            background: #1e1e1e;
+            padding: 8px;
+            border-radius: 3px;
+            color: #ce9178;
+            font-size: 12px;
+            overflow-x: auto;
+            margin-top: 5px;
+        }
+        .log-session {
+            color: #608b4e;
+            font-size: 12px;
+        }
+        .empty {
+            padding: 40px;
+            text-align: center;
+            color: #858585;
+        }
+        .stats {
+            background: #252526;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 30px;
+        }
+        .stat {
+            display: flex;
+            flex-direction: column;
+        }
+        .stat-label {
+            color: #858585;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        .stat-value {
+            color: #4ec9b0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Diagnostic Logs</h1>
+
+        <div class="controls">
+            <button onclick="fetchLogs()">Refresh</button>
+            <button class="secondary" onclick="toggleAutoRefresh()">Auto-refresh: OFF</button>
+            <input type="number" id="limitInput" placeholder="Limit (default: 100)" value="100" min="10" max="1000">
+            <input type="text" id="sessionInput" placeholder="Filter by session ID (optional)">
+            <button class="secondary" onclick="clearLogs()">Clear All Logs</button>
+            <span id="statusDiv" class="status" style="display: none;"></span>
+        </div>
+
+        <div class="stats" id="statsDiv" style="display: none;">
+            <div class="stat">
+                <span class="stat-label">Total Logs</span>
+                <span class="stat-value" id="totalLogs">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Errors</span>
+                <span class="stat-value" id="errorCount" style="color: #f85149;">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Warnings</span>
+                <span class="stat-value" id="warnCount" style="color: #f9c513;">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Sessions</span>
+                <span class="stat-value" id="sessionCount">0</span>
+            </div>
+        </div>
+
+        <div id="logsContainer" class="logs">
+            <div class="empty">Loading logs...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://us-central1-hexbuzz-game.cloudfunctions.net';
+        let autoRefreshInterval = null;
+
+        function showStatus(message, type = 'loading') {
+            const div = document.getElementById('statusDiv');
+            div.textContent = message;
+            div.className = 'status ' + type;
+            div.style.display = 'inline-block';
+            if (type !== 'loading') {
+                setTimeout(() => div.style.display = 'none', 3000);
+            }
+        }
+
+        async function fetchLogs() {
+            showStatus('Loading...', 'loading');
+            try {
+                const limit = document.getElementById('limitInput').value || '100';
+                const sessionId = document.getElementById('sessionInput').value.trim();
+
+                let url = `${API_BASE}/apiLogs?limit=${limit}`;
+                if (sessionId) {
+                    url += `&sessionId=${encodeURIComponent(sessionId)}`;
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.success) {
+                    displayLogs(data.logs);
+                    displayStats(data.logs);
+                    showStatus(`Loaded ${data.count} logs`, 'success');
+                } else {
+                    showStatus('Error: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Failed to fetch logs: ' + error.message, 'error');
+                console.error(error);
+            }
+        }
+
+        function displayStats(logs) {
+            const statsDiv = document.getElementById('statsDiv');
+            const sessions = new Set();
+            let errors = 0, warnings = 0;
+
+            logs.forEach(log => {
+                sessions.add(log.sessionId);
+                if (log.level === 'ERROR') errors++;
+                if (log.level === 'WARN') warnings++;
+            });
+
+            document.getElementById('totalLogs').textContent = logs.length;
+            document.getElementById('errorCount').textContent = errors;
+            document.getElementById('warnCount').textContent = warnings;
+            document.getElementById('sessionCount').textContent = sessions.size;
+            statsDiv.style.display = 'flex';
+        }
+
+        function displayLogs(logs) {
+            const container = document.getElementById('logsContainer');
+
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="empty">No logs found</div>';
+                return;
+            }
+
+            container.innerHTML = logs.map(log => {
+                const time = new Date(log.timestamp || log.clientTime).toLocaleString();
+                const dataHtml = log.data ? `<div class="log-data">${JSON.stringify(log.data, null, 2)}</div>` : '';
+
+                return `
+                    <div class="log-entry">
+                        <div class="log-header">
+                            <span class="log-time">${time}</span>
+                            <span class="log-level ${log.level}">${log.level}</span>
+                            <span class="log-session">Session: ${log.sessionId.slice(-8)}</span>
+                        </div>
+                        <div class="log-message">${log.message}</div>
+                        ${dataHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleAutoRefresh() {
+            const button = event.target;
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                button.textContent = 'Auto-refresh: OFF';
+            } else {
+                fetchLogs();
+                autoRefreshInterval = setInterval(fetchLogs, 5000);
+                button.textContent = 'Auto-refresh: ON (5s)';
+            }
+        }
+
+        async function clearLogs() {
+            if (!confirm('Are you sure you want to clear all diagnostic logs? This cannot be undone.')) {
+                return;
+            }
+            showStatus('Clearing logs...', 'loading');
+            // We can't delete from client, so just show a message
+            showStatus('Note: Log clearing must be done server-side via Firebase Console', 'error');
+        }
+
+        // Auto-load on page load
+        window.onload = () => {
+            fetchLogs();
+        };
+    </script>
+</body>
+</html>

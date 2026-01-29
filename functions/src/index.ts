@@ -9,6 +9,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { generateDailyChallenge } from "./dailyChallengeGenerator";
 import { sendDailyChallengeNotification } from "./sendDailyChallengeNotification";
 import { runDiagnostics } from "./diagnostics";
+export { apiLogs } from "./logsApi";
 
 // Initialize Firebase Admin
 admin.initializeApp();

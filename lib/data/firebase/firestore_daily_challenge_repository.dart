@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../core/logging/diagnostic_logger.dart';
 import '../../domain/models/daily_challenge.dart';
 import '../../domain/models/leaderboard_entry.dart';
 import '../../domain/models/level.dart';
@@ -24,46 +25,49 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
 
   @override
   Future<DailyChallenge?> getTodaysChallenge() async {
+    final logger = DiagnosticLogger();
     try {
       final today = _getTodayDateString();
-      print('🗓️ getTodaysChallenge called for date: $today');
+      await logger.info('getTodaysChallenge called', data: {'date': today});
 
       // Check cache first
       if (_cachedChallenge != null && _cachedChallengeDate == today) {
-        print('✅ Returning cached challenge for $today');
+        await logger.info('Returning cached challenge', data: {'date': today});
         return _cachedChallenge;
       }
 
       // Query Firestore
-      print('📡 Fetching challenge from Firestore: dailyChallenges/$today');
+      await logger.info('Fetching from Firestore', data: {'path': 'dailyChallenges/$today'});
       final doc = await _firestore
           .collection('dailyChallenges')
           .doc(today)
           .get();
 
-      print('📄 Document exists: ${doc.exists}');
+      await logger.info('Document query result', data: {'exists': doc.exists});
       if (!doc.exists) {
-        print('❌ No daily challenge found for $today');
+        await logger.warn('No daily challenge found', data: {'date': today});
         return null;
       }
 
       final data = doc.data()!;
-      print('📊 Raw data keys: ${data.keys.toList()}');
+      await logger.info('Raw data retrieved', data: {'keys': data.keys.toList()});
 
       // Parse the level data
       final levelData = data['level'] as Map<String, dynamic>?;
-      print('🎮 Level data present: ${levelData != null}');
+      await logger.info('Level data check', data: {'present': levelData != null});
       if (levelData == null) {
-        print('❌ Level data is null');
+        await logger.error('Level data is null', data: {'date': today});
         return null;
       }
 
-      print('🎮 Level data keys: ${levelData.keys.toList()}');
-      print('🎮 Parsing level...');
+      await logger.info('Level data structure', data: {'keys': levelData.keys.toList()});
+      await logger.info('Parsing level from JSON');
       final level = Level.fromJson(levelData);
-      print(
-        '✅ Level parsed: ${level.id}, size=${level.size}, cells=${level.cells.length}',
-      );
+      await logger.info('Level parsed successfully', data: {
+        'id': level.id,
+        'size': level.size,
+        'cells': level.cells.length,
+      });
 
       // Create challenge object
       final challenge = DailyChallenge(
@@ -76,7 +80,7 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
         userRank: data['userRank'] as int?,
       );
 
-      print('✅ Daily challenge created successfully');
+      await logger.info('Daily challenge created successfully', data: {'id': today});
 
       // Cache the result
       _cachedChallenge = challenge;
@@ -84,12 +88,14 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
 
       return challenge;
     } catch (e, stackTrace) {
-      print('❌ Error in getTodaysChallenge: $e');
-      print('Stack trace: $stackTrace');
+      await logger.error('Error in getTodaysChallenge', data: {
+        'error': e.toString(),
+        'stackTrace': stackTrace.toString(),
+      });
       // On error, return cached data if available for today
       final today = _getTodayDateString();
       if (_cachedChallenge != null && _cachedChallengeDate == today) {
-        print('⚠️ Returning cached challenge after error');
+        await logger.warn('Returning cached challenge after error');
         return _cachedChallenge;
       }
       return null;
