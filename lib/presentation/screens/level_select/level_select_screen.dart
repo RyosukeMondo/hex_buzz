@@ -33,6 +33,7 @@ class LevelSelectScreen extends ConsumerWidget {
         Navigator.of(context).pushReplacementNamed(AppRoutes.front);
       },
       child: Scaffold(
+        backgroundColor: HoneyTheme.warmCream,
         body: SafeArea(
           child: progressAsync.when(
             data: (progressState) => _buildContent(
@@ -336,30 +337,67 @@ class LevelSelectScreen extends ConsumerWidget {
       return const Center(child: Text('No levels available'));
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(HoneyTheme.spacingLg),
-      child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: HoneyTheme.gridColumns,
-          mainAxisSpacing: HoneyTheme.gridSpacing,
-          crossAxisSpacing: HoneyTheme.gridSpacing,
-          childAspectRatio: 1,
-        ),
-        itemCount: totalLevels,
-        itemBuilder: (context, index) {
-          final progress = progressState.getProgress(index);
-          final isUnlocked = progressState.isUnlocked(index);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Responsive grid columns based on screen width
+        final int crossAxisCount;
+        final double cellSize;
+        final double spacing;
 
-          return LevelCellWidget(
-            levelNumber: index + 1,
-            stars: progress.stars,
-            isUnlocked: isUnlocked,
-            isCompleted: progress.completed,
-            bestTime: progress.bestTime,
-            onTap: () => _navigateToLevel(context, ref, index),
-          );
-        },
-      ),
+        if (constraints.maxWidth >= 1200) {
+          // Desktop/Large tablets - 6 columns
+          crossAxisCount = 6;
+          cellSize = 140;
+          spacing = 20;
+        } else if (constraints.maxWidth >= 900) {
+          // Tablets landscape - 5 columns
+          crossAxisCount = 5;
+          cellSize = 130;
+          spacing = 18;
+        } else if (constraints.maxWidth >= 600) {
+          // Tablets portrait / large phones - 4 columns
+          crossAxisCount = 4;
+          cellSize = 120;
+          spacing = 16;
+        } else if (constraints.maxWidth >= 400) {
+          // Medium phones - 3 columns
+          crossAxisCount = 3;
+          cellSize = 110;
+          spacing = 14;
+        } else {
+          // Small phones - 2 columns
+          crossAxisCount = 2;
+          cellSize = 140;
+          spacing = 12;
+        }
+
+        return Padding(
+          padding: EdgeInsets.all(spacing),
+          child: GridView.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: spacing,
+              crossAxisSpacing: spacing,
+              childAspectRatio: 1,
+            ),
+            itemCount: totalLevels,
+            itemBuilder: (context, index) {
+              final progress = progressState.getProgress(index);
+              final isUnlocked = progressState.isUnlocked(index);
+
+              return LevelCellWidget(
+                levelNumber: index + 1,
+                stars: progress.stars,
+                isUnlocked: isUnlocked,
+                isCompleted: progress.completed,
+                bestTime: progress.bestTime,
+                size: cellSize,
+                onTap: () => _navigateToLevel(context, ref, index),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 

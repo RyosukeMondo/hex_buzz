@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>HexBuzz API Diagnostics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #5a6268;
+        }
+        button.success {
+            background: #28a745;
+        }
+        button.success:hover {
+            background: #218838;
+        }
+        .content {
+            padding: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .test-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .test-header h2 {
+            font-size: 18px;
+            color: #333;
+        }
+        .status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status.pending {
+            background: #ffc107;
+            color: #000;
+        }
+        .status.running {
+            background: #17a2b8;
+            color: white;
+        }
+        .status.success {
+            background: #28a745;
+            color: white;
+        }
+        .status.error {
+            background: #dc3545;
+            color: white;
+        }
+        .test-body {
+            padding: 20px;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result pre {
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .metric {
+            display: inline-block;
+            margin: 5px 10px 5px 0;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .metric strong {
+            color: #667eea;
+        }
+        .summary {
+            background: #e7f3ff;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .error-msg {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 4px;
+            color: #c62828;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6c757d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab:hover {
+            color: #667eea;
+            background: #f8f9fa;
+        }
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 HexBuzz API Diagnostics</h1>
+            <p>Comprehensive Firebase & Firestore API Testing</p>
+        </div>
+
+        <div class="controls">
+            <button onclick="runAllTests()">▶️ Run All Tests</button>
+            <button onclick="testDailyChallenge()" class="secondary">Test Daily Challenge</button>
+            <button onclick="testLeaderboard()" class="secondary">Test Leaderboard</button>
+            <button onclick="testSubmission()" class="success">Test Submission</button>
+            <button onclick="clearResults()">🗑️ Clear Results</button>
+        </div>
+
+        <div class="content">
+            <div class="summary" id="summary" style="display: none;">
+                <strong>Test Summary:</strong>
+                <div id="summaryContent"></div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('overview')">Overview</button>
+                <button class="tab" onclick="switchTab('daily')">Daily Challenge</button>
+                <button class="tab" onclick="switchTab('leaderboard')">Leaderboard</button>
+                <button class="tab" onclick="switchTab('submission')">Submission</button>
+                <button class="tab" onclick="switchTab('raw')">Raw API Responses</button>
+            </div>
+
+            <div id="overview" class="tab-content active">
+                <h2>System Status</h2>
+                <div id="systemStatus"></div>
+            </div>
+
+            <div id="daily" class="tab-content">
+                <div class="test-section">
+                    <div class="test-header">
+                        <h2>Daily Challenge - GET Request</h2>
+                        <span class="status pending" id="dailyStatus">Pending</span>
+                    </div>
+                    <div class="test-body">
+                        <p><strong>Endpoint:</strong> <code id="dailyEndpoint"></code></p>
+                        <div class="metric"><strong>Status:</strong> <span id="dailyHttpStatus">-</span></div>
+                        <div class="metric"><strong>Response Time:</strong> <span id="dailyTime">-</span></div>
+                        <div class="metric"><strong>Data Size:</strong> <span id="dailySize">-</span></div>
+                        <div class="result" id="dailyResult"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="leaderboard" class="tab-content">
+                <div class="test-section">
+                    <div class="test-header">
+                        <h2>Leaderboard Entries - GET Request</h2>
+                        <span class="status pending" id="leaderboardStatus">Pending</span>
+                    </div>
+                    <div class="test-body">
+                        <p><strong>Endpoint:</strong> <code id="leaderboardEndpoint"></code></p>
+                        <div class="metric"><strong>Status:</strong> <span id="leaderboardHttpStatus">-</span></div>
+                        <div class="metric"><strong>Response Time:</strong> <span id="leaderboardTime">-</span></div>
+                        <div class="metric"><strong>Entries Found:</strong> <span id="leaderboardCount">-</span></div>
+                        <div class="result" id="leaderboardResult"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="submission" class="tab-content">
+                <div class="test-section">
+                    <div class="test-header">
+                        <h2>Submission Test - WRITE Request</h2>
+                        <span class="status pending" id="submissionStatus">Pending</span>
+                    </div>
+                    <div class="test-body">
+                        <p><strong>Endpoint:</strong> <code id="submissionEndpoint"></code></p>
+                        <div class="metric"><strong>Status:</strong> <span id="submissionHttpStatus">-</span></div>
+                        <div class="metric"><strong>Response Time:</strong> <span id="submissionTime">-</span></div>
+                        <div class="result" id="submissionResult"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="raw" class="tab-content">
+                <h2>Raw API Responses</h2>
+                <div class="result" id="rawResponses" style="max-height: 600px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'AIzaSyC-QprL7VkdoPr4QBmXmJ08OWxp-FblIGc';
+        const PROJECT_ID = 'hexbuzz-game';
+        const BASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
+
+        let testResults = {
+            daily: null,
+            leaderboard: null,
+            submission: null
+        };
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        async function runAllTests() {
+            console.log('🚀 Starting comprehensive API diagnostics...');
+            clearResults();
+
+            await testDailyChallenge();
+            await new Promise(r => setTimeout(r, 500));
+            await testLeaderboard();
+            await new Promise(r => setTimeout(r, 500));
+
+            updateSummary();
+        }
+
+        async function testDailyChallenge() {
+            const today = new Date().toISOString().split('T')[0];
+            const endpoint = `${BASE_URL}/dailyChallenges/${today}?key=${API_KEY}`;
+
+            document.getElementById('dailyEndpoint').textContent = endpoint;
+            document.getElementById('dailyStatus').className = 'status running';
+            document.getElementById('dailyStatus').textContent = 'Running...';
+
+            const startTime = performance.now();
+
+            try {
+                const response = await fetch(endpoint);
+                const endTime = performance.now();
+                const data = await response.json();
+
+                testResults.daily = { success: response.ok, data, status: response.status };
+
+                document.getElementById('dailyHttpStatus').textContent = response.status;
+                document.getElementById('dailyTime').textContent = `${(endTime - startTime).toFixed(2)}ms`;
+                document.getElementById('dailySize').textContent = `${JSON.stringify(data).length} bytes`;
+
+                if (response.ok) {
+                    document.getElementById('dailyStatus').className = 'status success';
+                    document.getElementById('dailyStatus').textContent = 'Success';
+
+                    const analysis = analyzeDailyChallenge(data);
+                    document.getElementById('dailyResult').innerHTML = `
+                        <div style="margin-bottom: 15px;">
+                            <strong>✅ Daily Challenge Found</strong><br>
+                            <strong>ID:</strong> ${analysis.id}<br>
+                            <strong>Grid Size:</strong> ${analysis.gridSize}<br>
+                            <strong>Checkpoints:</strong> ${analysis.checkpointCount}<br>
+                            <strong>Cells:</strong> ${analysis.cellCount}<br>
+                            <strong>Walls:</strong> ${analysis.wallCount}<br>
+                            <strong>Completions:</strong> ${analysis.completions}<br>
+                            <strong>Notification Sent:</strong> ${analysis.notificationSent}
+                        </div>
+                        <details>
+                            <summary style="cursor: pointer; font-weight: bold; margin-bottom: 10px;">📋 Full Response</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    document.getElementById('dailyStatus').className = 'status error';
+                    document.getElementById('dailyStatus').textContent = 'Error';
+                    document.getElementById('dailyResult').innerHTML = `
+                        <div class="error-msg">
+                            <strong>❌ Error ${response.status}</strong><br>
+                            ${data.error?.message || 'Unknown error'}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+
+                updateRawResponses('Daily Challenge', endpoint, data);
+
+            } catch (error) {
+                const endTime = performance.now();
+                document.getElementById('dailyTime').textContent = `${(endTime - startTime).toFixed(2)}ms`;
+                document.getElementById('dailyStatus').className = 'status error';
+                document.getElementById('dailyStatus').textContent = 'Failed';
+                document.getElementById('dailyResult').innerHTML = `
+                    <div class="error-msg">
+                        <strong>❌ Network Error</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+                testResults.daily = { success: false, error: error.message };
+            }
+        }
+
+        async function testLeaderboard() {
+            const today = new Date().toISOString().split('T')[0];
+            const endpoint = `${BASE_URL}/dailyChallenges/${today}/entries?key=${API_KEY}`;
+
+            document.getElementById('leaderboardEndpoint').textContent = endpoint;
+            document.getElementById('leaderboardStatus').className = 'status running';
+            document.getElementById('leaderboardStatus').textContent = 'Running...';
+
+            const startTime = performance.now();
+
+            try {
+                const response = await fetch(endpoint);
+                const endTime = performance.now();
+                const data = await response.json();
+
+                testResults.leaderboard = { success: response.ok, data, status: response.status };
+
+                document.getElementById('leaderboardHttpStatus').textContent = response.status;
+                document.getElementById('leaderboardTime').textContent = `${(endTime - startTime).toFixed(2)}ms`;
+
+                if (response.ok) {
+                    const entries = data.documents || [];
+                    document.getElementById('leaderboardCount').textContent = entries.length;
+
+                    if (entries.length > 0) {
+                        document.getElementById('leaderboardStatus').className = 'status success';
+                        document.getElementById('leaderboardStatus').textContent = 'Success';
+
+                        const entriesHtml = entries.map((doc, index) => {
+                            const fields = doc.fields || {};
+                            return `
+                                <div style="border-bottom: 1px solid #dee2e6; padding: 10px 0;">
+                                    <strong>#${index + 1}</strong>
+                                    <strong>User:</strong> ${doc.name.split('/').pop()}<br>
+                                    <strong>Username:</strong> ${fields.username?.stringValue || 'N/A'}<br>
+                                    <strong>Stars:</strong> ${fields.stars?.integerValue || 'N/A'}<br>
+                                    <strong>Time:</strong> ${fields.completionTime?.integerValue || 'N/A'}ms<br>
+                                    <strong>Total Stars:</strong> ${fields.totalStars?.integerValue || 'N/A'}
+                                </div>
+                            `;
+                        }).join('');
+
+                        document.getElementById('leaderboardResult').innerHTML = `
+                            <div style="margin-bottom: 15px;">
+                                <strong>✅ Found ${entries.length} Leaderboard Entries</strong>
+                            </div>
+                            ${entriesHtml}
+                            <details style="margin-top: 15px;">
+                                <summary style="cursor: pointer; font-weight: bold; margin-bottom: 10px;">📋 Full Response</summary>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </details>
+                        `;
+                    } else {
+                        document.getElementById('leaderboardStatus').className = 'status error';
+                        document.getElementById('leaderboardStatus').textContent = 'No Data';
+                        document.getElementById('leaderboardCount').textContent = '0';
+                        document.getElementById('leaderboardResult').innerHTML = `
+                            <div class="error-msg">
+                                <strong>⚠️ No Entries Found</strong><br>
+                                The collection exists but contains no documents.<br>
+                                This means no one has completed today's challenge yet.
+                            </div>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        `;
+                    }
+                } else {
+                    document.getElementById('leaderboardStatus').className = 'status error';
+                    document.getElementById('leaderboardStatus').textContent = 'Error';
+                    document.getElementById('leaderboardCount').textContent = '0';
+                    document.getElementById('leaderboardResult').innerHTML = `
+                        <div class="error-msg">
+                            <strong>❌ Error ${response.status}</strong><br>
+                            ${data.error?.message || 'Unknown error'}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+
+                updateRawResponses('Leaderboard Entries', endpoint, data);
+
+            } catch (error) {
+                const endTime = performance.now();
+                document.getElementById('leaderboardTime').textContent = `${(endTime - startTime).toFixed(2)}ms`;
+                document.getElementById('leaderboardStatus').className = 'status error';
+                document.getElementById('leaderboardStatus').textContent = 'Failed';
+                document.getElementById('leaderboardCount').textContent = '0';
+                document.getElementById('leaderboardResult').innerHTML = `
+                    <div class="error-msg">
+                        <strong>❌ Network Error</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+                testResults.leaderboard = { success: false, error: error.message };
+            }
+        }
+
+        async function testSubmission() {
+            const today = new Date().toISOString().split('T')[0];
+            const testUserId = 'diagnostic-test-' + Date.now();
+            const endpoint = `${BASE_URL}/dailyChallenges/${today}/entries/${testUserId}?key=${API_KEY}`;
+
+            document.getElementById('submissionEndpoint').textContent = endpoint;
+            document.getElementById('submissionStatus').className = 'status running';
+            document.getElementById('submissionStatus').textContent = 'Running...';
+
+            const testData = {
+                fields: {
+                    userId: { stringValue: testUserId },
+                    username: { stringValue: 'Diagnostic Test User' },
+                    stars: { integerValue: '3' },
+                    completionTime: { integerValue: '12345' },
+                    totalStars: { integerValue: '100' },
+                    completedAt: { timestampValue: new Date().toISOString() }
+                }
+            };
+
+            const startTime = performance.now();
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const endTime = performance.now();
+                const data = await response.json();
+
+                testResults.submission = { success: response.ok, data, status: response.status };
+
+                document.getElementById('submissionHttpStatus').textContent = response.status;
+                document.getElementById('submissionTime').textContent = `${(endTime - startTime).toFixed(2)}ms`;
+
+                if (response.ok) {
+                    document.getElementById('submissionStatus').className = 'status success';
+                    document.getElementById('submissionStatus').textContent = 'Success';
+                    document.getElementById('submissionResult').innerHTML = `
+                        <div style="margin-bottom: 15px;">
+                            <strong>✅ Submission Successful</strong><br>
+                            Test entry created with ID: ${testUserId}
+                        </div>
+                        <details>
+                            <summary style="cursor: pointer; font-weight: bold; margin-bottom: 10px;">📋 Full Response</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    document.getElementById('submissionStatus').className = 'status error';
+                    document.getElementById('submissionStatus').textContent = 'Error';
+                    document.getElementById('submissionResult').innerHTML = `
+                        <div class="error-msg">
+                            <strong>❌ Error ${response.status}</strong><br>
+                            ${data.error?.message || 'Unknown error'}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+
+                updateRawResponses('Submission Test', endpoint, data);
+
+            } catch (error) {
+                const endTime = performance.now();
+                document.getElementById('submissionTime').textContent = `${(endTime - startTime).toFixed(2)}ms`;
+                document.getElementById('submissionStatus').className = 'status error';
+                document.getElementById('submissionStatus').textContent = 'Failed';
+                document.getElementById('submissionResult').innerHTML = `
+                    <div class="error-msg">
+                        <strong>❌ Network Error</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+                testResults.submission = { success: false, error: error.message };
+            }
+        }
+
+        function analyzeDailyChallenge(data) {
+            const fields = data.fields || {};
+            const level = fields.level?.mapValue?.fields || {};
+
+            return {
+                id: fields.id?.stringValue || 'N/A',
+                gridSize: level.size?.integerValue || level.gridSize?.integerValue || 'N/A',
+                checkpointCount: level.checkpointCount?.integerValue || 'N/A',
+                cellCount: level.cells?.arrayValue?.values?.length || 'N/A',
+                wallCount: level.walls?.arrayValue?.values?.length || 'N/A',
+                completions: fields.completionCount?.integerValue || '0',
+                notificationSent: fields.notificationSent?.booleanValue ? 'Yes' : 'No'
+            };
+        }
+
+        function updateRawResponses(title, endpoint, data) {
+            const rawDiv = document.getElementById('rawResponses');
+            const entry = document.createElement('div');
+            entry.style.marginBottom = '20px';
+            entry.innerHTML = `
+                <strong>${title}</strong><br>
+                <small>${endpoint}</small>
+                <pre style="margin-top: 10px;">${JSON.stringify(data, null, 2)}</pre>
+                <hr style="margin-top: 20px;">
+            `;
+            rawDiv.appendChild(entry);
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary');
+            const content = document.getElementById('summaryContent');
+
+            const tests = [
+                { name: 'Daily Challenge', result: testResults.daily },
+                { name: 'Leaderboard', result: testResults.leaderboard },
+            ];
+
+            const passed = tests.filter(t => t.result?.success).length;
+            const total = tests.filter(t => t.result !== null).length;
+
+            content.innerHTML = `
+                <div class="metric"><strong>Tests Run:</strong> ${total}</div>
+                <div class="metric"><strong>Passed:</strong> ${passed}</div>
+                <div class="metric"><strong>Failed:</strong> ${total - passed}</div>
+            `;
+
+            summary.style.display = 'block';
+        }
+
+        function clearResults() {
+            testResults = { daily: null, leaderboard: null, submission: null };
+            document.getElementById('summary').style.display = 'none';
+            document.getElementById('rawResponses').innerHTML = '';
+
+            ['daily', 'leaderboard', 'submission'].forEach(test => {
+                document.getElementById(test + 'Status').className = 'status pending';
+                document.getElementById(test + 'Status').textContent = 'Pending';
+                document.getElementById(test + 'Result').innerHTML = '';
+            });
+        }
+
+        // Auto-run on load
+        window.onload = () => {
+            console.log('🔍 HexBuzz API Diagnostics Ready');
+            runAllTests();
+        };
+    </script>
+</body>
+</html>

@@ -8,6 +8,7 @@ import * as admin from "firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { generateDailyChallenge } from "./dailyChallengeGenerator";
 import { sendDailyChallengeNotification } from "./sendDailyChallengeNotification";
+import { runDiagnostics } from "./diagnostics";
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -183,5 +184,41 @@ export const updateLeaderboardOnCompletion = functions
     } catch (error) {
       console.error("Error updating leaderboard:", error);
       throw error;
+    }
+  });
+
+/**
+ * HTTP function to run comprehensive API diagnostics
+ * Returns JSON with all test results - zero UAT required
+ */
+export const apiDiagnostics = functions
+  .runWith({
+    timeoutSeconds: 60,
+    memory: "256MB",
+  })
+  .https.onRequest(async (req, res) => {
+    // Set CORS headers
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+
+    // Handle OPTIONS request for CORS preflight
+    if (req.method === "OPTIONS") {
+      res.status(204).send("");
+      return;
+    }
+
+    try {
+      console.log("Running API diagnostics...");
+      const results = await runDiagnostics();
+
+      res.status(200).json(results);
+    } catch (error) {
+      console.error("Error running diagnostics:", error);
+      res.status(500).json({
+        error: "Diagnostics failed",
+        message: String(error),
+        timestamp: new Date().toISOString(),
+      });
     }
   });
