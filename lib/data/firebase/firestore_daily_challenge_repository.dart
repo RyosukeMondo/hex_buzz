@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/logging/diagnostic_logger.dart';
 import '../../core/logging/logger.dart';
 import '../../domain/models/daily_challenge.dart';
+import '../../domain/models/daily_challenge_completion.dart';
 import '../../domain/models/leaderboard_entry.dart';
 import '../../domain/models/level.dart';
 import '../../domain/services/daily_challenge_repository.dart';
@@ -348,6 +349,67 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
       return doc.exists;
     } catch (e) {
       return false;
+    }
+  }
+
+  @override
+  Future<DailyChallengeCompletion?> getCompletion({
+    required String userId,
+    required String dateId,
+  }) async {
+    try {
+      DiagnosticLogger.logEvent(
+        'getCompletion called',
+        data: {'userId': userId, 'dateId': dateId},
+        level: LogLevel.info,
+      );
+
+      final doc = await _firestore
+          .collection('dailyChallenges')
+          .doc(dateId)
+          .collection('entries')
+          .doc(userId)
+          .get();
+
+      if (!doc.exists) {
+        DiagnosticLogger.logEvent(
+          'No completion found',
+          data: {'userId': userId, 'dateId': dateId},
+          level: LogLevel.debug,
+        );
+        return null;
+      }
+
+      final data = doc.data()!;
+      final completion = DailyChallengeCompletion(
+        userId: userId,
+        dateId: dateId,
+        stars: data['stars'] as int? ?? 0,
+        completionTimeMs: data['completionTime'] as int? ?? 0,
+        completedAt: (data['completedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        rank: data['rank'] as int?,
+      );
+
+      DiagnosticLogger.logEvent(
+        'Completion found',
+        data: {
+          'userId': userId,
+          'dateId': dateId,
+          'stars': completion.stars,
+          'time': completion.completionTimeMs,
+        },
+        level: LogLevel.info,
+      );
+
+      return completion;
+    } catch (e, stackTrace) {
+      DiagnosticLogger.logError(
+        'Error in getCompletion',
+        error: e,
+        stackTrace: stackTrace,
+        data: {'userId': userId, 'dateId': dateId},
+      );
+      return null;
     }
   }
 

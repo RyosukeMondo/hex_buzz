@@ -1,4 +1,5 @@
 import '../models/daily_challenge.dart';
+import '../models/daily_challenge_completion.dart';
 import '../models/leaderboard_entry.dart';
 
 /// Abstract interface for daily challenge operations.
@@ -51,4 +52,16 @@ abstract class DailyChallengeRepository {
   /// Returns true if the user identified by [userId] has completed today's
   /// daily challenge (UTC date), false otherwise.
   Future<bool> hasCompletedToday(String userId);
+
+  /// Gets the completion data for a specific user and date.
+  ///
+  /// Returns [DailyChallengeCompletion] if the user completed the challenge
+  /// on the specified date, null otherwise.
+  ///
+  /// The [userId] identifies the user.
+  /// The [dateId] is the date in YYYY-MM-DD format.
+  Future<DailyChallengeCompletion?> getCompletion({
+    required String userId,
+    required String dateId,
+  });
 }
