@@ -2,9 +2,9 @@
 
 ## Progress Summary (Updated: 2026-01-30)
 
-**Overall Status**: Phases 1, 2, & 3 Complete - Backend, state management, and social sharing implemented
+**Overall Status**: Phases 1, 2, 3, & 4 Complete - Backend, state management, social sharing, and UI integration implemented
 
-**Completed**: 15/23 tasks (65%)
+**Completed**: 17/23 tasks (74%)
 - ✅ Task 1: Firestore security rules enforce one-attempt-per-day
 - ✅ Task 2: validateDailyChallengeCompletion Cloud Function implemented
 - ✅ Task 3: Comprehensive tests for completion validation
@@ -17,6 +17,8 @@
 - ✅ Task 10: MisskeyInstancePicker dialog implemented
 - ✅ Task 11: ShareButton widget created
 - ✅ Task 12: DailyChallengeCompletionDialog implemented
+- ✅ Task 13: DailyChallengeScreen updated for new state machine
+- ✅ Task 14: Daily leaderboard widget added to completion flow
 - ✅ Task 15: Global leaderboard navigation removed
 - ✅ Task 16: Global leaderboard files deleted
 - ✅ Task 17: Notification configuration verified
@@ -39,10 +41,11 @@
 - ✅ Social sharing implemented (url_launcher, ShareService, share buttons)
 - ✅ Completion dialog with share buttons implemented
 - ✅ Global leaderboard removed (navigation and files deleted)
-- ❌ DailyChallengeScreen not updated for new state machine
+- ✅ DailyChallengeScreen updated for new state machine
+- ✅ Daily leaderboard widget integrated
 - ❌ No integration tests or documentation
 
-**Next Steps**: Phase 4 (UI Integration) - Update DailyChallengeScreen to use new state machine.
+**Next Steps**: Phase 5 (Notification Testing) & Phase 6 (Integration Testing & Cleanup)
 
 ---
 
@@ -169,9 +172,9 @@
   - **Status**: Completed - Dialog with stats, share buttons (daily leaderboard placeholder for task 14)
 
 ## Phase 4: UI Integration & Post-Completion UX
-**Status**: Partially Completed - Global leaderboard removed, DailyChallengeScreen needs update
+**Status**: Completed
 
-- [ ] 13. Update DailyChallengeScreen for new state management
+- [x] 13. Update DailyChallengeScreen for new state management
   - File: lib/presentation/screens/daily_challenge_screen.dart
   - Consume DailyChallengeProvider state
   - Show different UI for each state (notStarted, playing, suspended, completed, alreadyCompleted)
@@ -179,9 +182,9 @@
   - Purpose: Complete daily challenge user experience
   - _Leverage: DailyChallengeProvider, DailyChallengeCompletionDialog, existing screen patterns_
   - _Requirements: Spec Task 5 - Post-Completion UX, Task 1 - One-Attempt-Per-Day_
-  - _Prompt: Role: Flutter Screen Developer with expertise in Riverpod and complex state management | Task: Refactor lib/presentation/screens/daily_challenge_screen.dart to consume DailyChallengeProvider state and render different UI for each state: (1) loading - show CircularProgressIndicator, (2) notStarted - show challenge preview, "Start Challenge" button (calls provider.startChallenge()), (3) playing - show GameBoard with level, timer (using startTime), suspend button (calls provider.suspend()), no restart button, onComplete calls provider.complete(), (4) suspended - show "Challenge Paused" message, "Timer is still running!" warning, Resume button (calls provider.resume()), (5) completed/alreadyCompleted - show DailyChallengeCompletionDialog with stats, share buttons, daily leaderboard, "Back to Menu" button (no retry option), (6) error - show error message | Use ref.listen to show completion dialog when state transitions to completed | Restrictions: Never show restart/retry button after completion, timer must not be resettable, follow existing screen structure | Success: All states render correctly, transitions smooth, no retry possible after completion, completion dialog shows automatically, excellent UX_
+  - **Status**: Completed - Screen refactored with pattern matching for all 7 states, auto-show completion dialog, no retry buttons
 
-- [ ] 14. Add daily leaderboard widget to completion flow
+- [x] 14. Add daily leaderboard widget to completion flow
   - File: lib/presentation/widgets/daily_leaderboard.dart
   - Query and display dailyChallenges/{dateId}/entries
   - Show rank, username, stars, time for each entry
@@ -189,7 +192,7 @@
   - Purpose: Show leaderboard after completion
   - _Leverage: Existing leaderboard patterns, Firestore queries_
   - _Requirements: Spec Task 5 - Post-Completion UX_
-  - _Prompt: Role: Flutter Developer with Firestore and list widgets expertise | Task: Create DailyLeaderboard widget in lib/presentation/widgets/daily_leaderboard.dart as ConsumerWidget accepting dateId. Query Firestore dailyChallenges/{dateId}/entries ordered by stars DESC, completionTimeMs ASC, limit 50. Display list with: (1) Rank number with medal icons (🥇🥈🥉) for top 3, (2) Username, (3) Stars with star icons, (4) Formatted time, (5) Highlight current user's row with different background | Use StreamBuilder or ref.watch with stream provider for real-time updates | Restrictions: Handle empty leaderboard gracefully, show loading state, limit to 50 entries for performance | Success: Leaderboard displays correctly, updates in real-time, current user highlighted, performance is good, handles edge cases_
+  - **Status**: Completed - DailyLeaderboard widget with real-time Firestore stream, medals for top 3, user highlighting, integrated into completion dialog
 
 - [x] 15. Remove global leaderboard navigation
   - File: lib/presentation/screens/level_select_screen.dart, lib/main.dart, lib/presentation/screens/game/game_screen.dart
