@@ -5,7 +5,6 @@ import 'package:hex_buzz/data/local/local_guest_auth_repository.dart';
 import 'package:hex_buzz/domain/models/auth_result.dart';
 import 'package:hex_buzz/domain/models/progress_state.dart';
 import 'package:hex_buzz/domain/models/user.dart';
-import 'package:hex_buzz/domain/services/leaderboard_repository.dart';
 import 'package:hex_buzz/domain/services/progress_repository.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -17,14 +16,11 @@ class MockLocalGuestAuthRepository extends Mock
 
 class MockProgressRepository extends Mock implements ProgressRepository {}
 
-class MockLeaderboardRepository extends Mock implements LeaderboardRepository {}
-
 void main() {
   late MockFirebaseAuthRepository mockFirebaseRepo;
   late MockLocalGuestAuthRepository mockGuestRepo;
   late MockProgressRepository mockLocalProgress;
   late MockProgressRepository mockFirestoreProgress;
-  late MockLeaderboardRepository mockLeaderboard;
   late HybridAuthRepository hybridRepo;
 
   setUpAll(() {
@@ -37,7 +33,6 @@ void main() {
     mockGuestRepo = MockLocalGuestAuthRepository();
     mockLocalProgress = MockProgressRepository();
     mockFirestoreProgress = MockProgressRepository();
-    mockLeaderboard = MockLeaderboardRepository();
 
     // Setup default stubs for auth state streams
     when(
@@ -51,14 +46,12 @@ void main() {
   HybridAuthRepository createHybridRepo({
     ProgressRepository? localProgress,
     ProgressRepository? firestoreProgress,
-    LeaderboardRepository? leaderboard,
   }) {
     return HybridAuthRepository(
       firebaseRepo: mockFirebaseRepo,
       guestRepo: mockGuestRepo,
       localProgress: localProgress ?? mockLocalProgress,
       firestoreProgress: firestoreProgress ?? mockFirestoreProgress,
-      leaderboard: leaderboard ?? mockLeaderboard,
     );
   }
 
@@ -297,17 +290,15 @@ void main() {
       ).thenAnswer((_) async {});
       when(() => mockGuestRepo.signOut()).thenAnswer((_) async {});
 
-      final repoWithoutLeaderboard = createHybridRepo(leaderboard: null);
-      final result = await repoWithoutLeaderboard.signInWithGoogle();
+      final repo = createHybridRepo();
+      final result = await repo.signInWithGoogle();
 
       expect(result, isA<AuthSuccess>());
 
-      // Should migrate progress but not submit to leaderboard
+      // Should migrate progress (no leaderboard submission anymore)
       verify(() => mockFirestoreProgress.saveForUser(any(), any())).called(1);
-      // With no leaderboard, submitScore is not called at all
-      // (no need to verify since leaderboard is null)
 
-      repoWithoutLeaderboard.dispose();
+      repo.dispose();
     });
   });
 }

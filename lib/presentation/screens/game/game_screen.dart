@@ -12,7 +12,6 @@ import '../../../platform/windows/keyboard_shortcuts.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/daily_challenge_provider.dart';
 import '../../providers/game_provider.dart';
-import '../../providers/leaderboard_provider.dart';
 import '../../widgets/completion_overlay/completion_overlay.dart';
 import '../../widgets/hex_grid.dart';
 
@@ -168,27 +167,12 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
           },
           level: LogLevel.info,
         );
-        final success = await ref
-            .read(dailyChallengeProvider.notifier)
-            .submitCompletion(
-              userId: user.id,
-              stars: stars,
-              completionTimeMs: elapsedTimeMs,
-            );
-        DiagnosticLogger.logEvent(
-          'daily_challenge_submission_result',
-          data: {'success': success},
-          level: success ? LogLevel.info : LogLevel.warn,
-        );
-      } else if (widget.levelIndex != null) {
-        // Submit to global leaderboard
-        final levelId = 'level_${widget.levelIndex}';
         await ref
-            .read(leaderboardProvider.notifier)
-            .submitScore(userId: user.id, stars: stars, levelId: levelId);
+            .read(dailyChallengeProvider(user.id).notifier)
+            .complete(stars);
         DiagnosticLogger.logEvent(
-          'global_leaderboard_score_submitted',
-          data: {'userId': user.id, 'levelId': levelId, 'stars': stars},
+          'daily_challenge_submission_complete',
+          data: {'userId': user.id, 'stars': stars},
           level: LogLevel.info,
         );
       }

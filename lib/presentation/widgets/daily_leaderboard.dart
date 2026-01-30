@@ -127,12 +127,11 @@ class DailyLeaderboard extends ConsumerWidget {
 
           const SizedBox(width: 12),
 
-          // Username
+          // Username (using userId since username not available)
           Expanded(
             flex: 2,
             child: Text(
-              completion.username ??
-                  'User ${completion.userId.substring(0, 8)}',
+              'User ${completion.userId.substring(0, 8)}',
               style: TextStyle(
                 fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
                 fontSize: 14,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../domain/models/daily_challenge_state.dart';
 import '../../../domain/models/progress_state.dart';
 import '../../../domain/models/user.dart';
 import '../../../main.dart';
@@ -76,7 +77,10 @@ class LevelSelectScreen extends ConsumerWidget {
     int totalLevels,
     User? user,
   ) {
-    final dailyChallengeAsync = ref.watch(dailyChallengeProvider);
+    // Watch daily challenge state if user is logged in
+    final dailyChallengeState = user != null
+        ? ref.watch(dailyChallengeProvider(user.id))
+        : null;
 
     return Column(
       children: [
@@ -86,7 +90,7 @@ class LevelSelectScreen extends ConsumerWidget {
           progressState,
           totalLevels,
           user,
-          dailyChallengeAsync.valueOrNull,
+          dailyChallengeState,
         ),
         Expanded(
           child: _buildLevelGrid(context, ref, progressState, totalLevels),
@@ -189,10 +193,8 @@ class LevelSelectScreen extends ConsumerWidget {
     BuildContext context,
     DailyChallengeState? dailyChallengeState,
   ) {
-    final showBadge =
-        dailyChallengeState != null &&
-        dailyChallengeState.challenge != null &&
-        !dailyChallengeState.hasCompleted;
+    // Show badge if there's an uncompleted daily challenge
+    final showBadge = dailyChallengeState is DailyChallengeStateNotStarted;
 
     return Center(
       child: _buildNavButton(

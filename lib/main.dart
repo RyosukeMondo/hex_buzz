@@ -93,11 +93,9 @@ void main() async {
   // Initialize all repositories
   final levelRepository = await _initializeLevelRepository();
   final localProgressRepository = await _initializeProgressRepository();
-  final (leaderboardRepository, dailyChallengeRepository) =
-      _initializeFirebaseRepositories();
+  final dailyChallengeRepository = _initializeFirebaseRepositories();
   final authRepository = await _initializeAuthRepository(
     localProgressRepository,
-    leaderboardRepository,
   );
 
   // Initialize notification service (without user ID initially)
@@ -115,7 +113,6 @@ void main() async {
         levelRepositoryProvider.overrideWithValue(levelRepository),
         progressRepositoryProvider.overrideWithValue(localProgressRepository),
         authRepositoryProvider.overrideWithValue(authRepository),
-        leaderboardRepositoryProvider.overrideWithValue(leaderboardRepository),
         dailyChallengeRepositoryProvider.overrideWithValue(
           dailyChallengeRepository,
         ),
@@ -163,7 +160,6 @@ Future<LocalProgressRepository> _initializeProgressRepository() async {
 /// Initializes hybrid auth repository with migration support.
 Future<HybridAuthRepository> _initializeAuthRepository(
   LocalProgressRepository localProgress,
-  FirebaseLeaderboardRepository leaderboard,
 ) async {
   final prefs = await SharedPreferences.getInstance();
   final firebaseRepo = FirebaseAuthRepository();
@@ -175,7 +171,6 @@ Future<HybridAuthRepository> _initializeAuthRepository(
     guestRepo: guestRepo,
     localProgress: localProgress,
     firestoreProgress: firestoreProgress,
-    leaderboard: leaderboard,
   );
 
   if (kDebugMode)
@@ -183,13 +178,11 @@ Future<HybridAuthRepository> _initializeAuthRepository(
   return authRepo;
 }
 
-/// Initializes Firebase repositories.
-(FirebaseLeaderboardRepository, FirestoreDailyChallengeRepository)
-_initializeFirebaseRepositories() {
-  final leaderboard = FirebaseLeaderboardRepository();
+/// Initializes Firebase daily challenge repository.
+FirestoreDailyChallengeRepository _initializeFirebaseRepositories() {
   final dailyChallenge = FirestoreDailyChallengeRepository();
-  if (kDebugMode) debugPrint('Firebase repositories initialized');
-  return (leaderboard, dailyChallenge);
+  if (kDebugMode) debugPrint('Firebase repository initialized');
+  return dailyChallenge;
 }
 
 /// Starts the debug API server on port 8080.

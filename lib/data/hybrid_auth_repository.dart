@@ -7,7 +7,6 @@ import '../core/logging/logger.dart';
 import '../domain/models/auth_result.dart';
 import '../domain/models/user.dart' as domain;
 import '../domain/services/auth_repository.dart';
-import '../domain/services/leaderboard_repository.dart';
 import '../domain/services/progress_repository.dart';
 import 'firebase/firebase_auth_repository.dart';
 import 'local/local_guest_auth_repository.dart';
@@ -25,7 +24,6 @@ class HybridAuthRepository implements AuthRepository {
   final LocalGuestAuthRepository _guestRepo;
   final ProgressRepository? _localProgress;
   final ProgressRepository? _firestoreProgress;
-  final LeaderboardRepository? _leaderboard;
   final StreamController<domain.User?> _authStateController =
       StreamController<domain.User?>.broadcast();
 
@@ -38,12 +36,10 @@ class HybridAuthRepository implements AuthRepository {
     required LocalGuestAuthRepository guestRepo,
     ProgressRepository? localProgress,
     ProgressRepository? firestoreProgress,
-    LeaderboardRepository? leaderboard,
   }) : _firebaseRepo = firebaseRepo,
        _guestRepo = guestRepo,
        _localProgress = localProgress,
        _firestoreProgress = firestoreProgress,
-       _leaderboard = leaderboard,
        _activeRepo = guestRepo {
     // Listen to auth state changes from both repositories
     _firebaseRepo.authStateChanges().listen((user) {
@@ -272,24 +268,6 @@ class HybridAuthRepository implements AuthRepository {
         },
         level: LogLevel.info,
       );
-
-      // Submit total score to leaderboard if available
-      if (_leaderboard != null && localProgress.totalStars > 0) {
-        final submitted = await _leaderboard!.submitScore(
-          userId: firebaseUser.id,
-          stars: localProgress.totalStars,
-        );
-
-        DiagnosticLogger.logEvent(
-          'migration_leaderboard_submitted',
-          data: {
-            'firebaseId': firebaseUser.id,
-            'stars': localProgress.totalStars,
-            'success': submitted,
-          },
-          level: submitted ? LogLevel.info : LogLevel.warn,
-        );
-      }
 
       // Clear local guest data after successful migration
       await _localProgress!.resetForUser(guestUserId);

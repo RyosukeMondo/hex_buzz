@@ -4,9 +4,7 @@ import 'package:hex_buzz/domain/models/auth_result.dart';
 import 'package:hex_buzz/domain/models/user.dart';
 import 'package:hex_buzz/domain/services/auth_repository.dart';
 import 'package:hex_buzz/domain/services/progress_repository.dart';
-import 'package:hex_buzz/domain/services/leaderboard_repository.dart';
 import 'package:hex_buzz/domain/models/progress_state.dart';
-import 'package:hex_buzz/domain/models/leaderboard_entry.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockFirebaseAuthRepository extends Mock implements AuthRepository {}
@@ -18,15 +16,12 @@ class MockLocalProgressRepository extends Mock implements ProgressRepository {}
 class MockFirestoreProgressRepository extends Mock
     implements ProgressRepository {}
 
-class MockLeaderboardRepository extends Mock implements LeaderboardRepository {}
-
 void main() {
   group('HybridAuthRepository Edge Cases', () {
     late MockFirebaseAuthRepository mockFirebaseRepo;
     late MockGuestAuthRepository mockGuestRepo;
     late MockLocalProgressRepository mockLocalProgress;
     late MockFirestoreProgressRepository mockFirestoreProgress;
-    late MockLeaderboardRepository mockLeaderboard;
     late HybridAuthRepository hybridRepo;
 
     setUp(() {
@@ -34,14 +29,12 @@ void main() {
       mockGuestRepo = MockGuestAuthRepository();
       mockLocalProgress = MockLocalProgressRepository();
       mockFirestoreProgress = MockFirestoreProgressRepository();
-      mockLeaderboard = MockLeaderboardRepository();
 
       hybridRepo = HybridAuthRepository(
         firebaseRepo: mockFirebaseRepo,
         guestRepo: mockGuestRepo,
         localProgress: mockLocalProgress,
         firestoreProgress: mockFirestoreProgress,
-        leaderboard: mockLeaderboard,
       );
 
       // Setup default behaviors
