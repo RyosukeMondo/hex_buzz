@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/logging/diagnostic_logger.dart';
 import '../../core/logging/logger.dart';
-import '../../domain/models/daily_challenge.dart';
 import '../../domain/models/daily_challenge_completion.dart';
 import '../../domain/models/daily_challenge_state.dart' as domain;
 import '../../domain/models/hex_cell.dart';

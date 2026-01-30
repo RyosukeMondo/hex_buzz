@@ -96,27 +96,14 @@ class _DailyChallengeScreenState extends ConsumerState<DailyChallengeScreen> {
       domain.DailyChallengeStateLoading() => const Center(
         child: CircularProgressIndicator(),
       ),
-      domain.DailyChallengeStateNotStarted() => _buildNotStarted(
-        state as domain.DailyChallengeStateNotStarted,
-        userId,
-      ),
-      domain.DailyChallengeStatePlaying() => _buildPlaying(
-        state as domain.DailyChallengeStatePlaying,
-        userId,
-      ),
-      domain.DailyChallengeStateSuspended() => _buildSuspended(
-        state as domain.DailyChallengeStateSuspended,
-        userId,
-      ),
-      domain.DailyChallengeStateCompleted() => _buildCompleted(
-        state as domain.DailyChallengeStateCompleted,
-      ),
+      domain.DailyChallengeStateNotStarted() => _buildNotStarted(state, userId),
+      domain.DailyChallengeStatePlaying() => _buildPlaying(state, userId),
+      domain.DailyChallengeStateSuspended() => _buildSuspended(state, userId),
+      domain.DailyChallengeStateCompleted() => _buildCompleted(state),
       domain.DailyChallengeStateAlreadyCompleted() => _buildAlreadyCompleted(
-        state as domain.DailyChallengeStateAlreadyCompleted,
+        state,
       ),
-      domain.DailyChallengeStateError() => _buildError(
-        (state as domain.DailyChallengeStateError).message,
-      ),
+      domain.DailyChallengeStateError(:final message) => _buildError(message),
     };
   }
 
@@ -540,7 +527,7 @@ class _DailyChallengeScreenState extends ConsumerState<DailyChallengeScreen> {
             ),
           ),
           const SizedBox(height: HoneyTheme.spacingMd),
-          _buildStatRow(Icons.grid_on, 'Grid Size', '${gridSize}×$gridSize'),
+          _buildStatRow(Icons.grid_on, 'Grid Size', '$gridSize×$gridSize'),
           const SizedBox(height: HoneyTheme.spacingSm),
           _buildStatRow(Icons.location_on, 'Checkpoints', '$checkpointCount'),
         ],

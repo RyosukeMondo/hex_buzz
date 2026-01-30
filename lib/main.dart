@@ -16,7 +16,6 @@ import 'data/hybrid_auth_repository.dart';
 import 'data/local/local_guest_auth_repository.dart';
 import 'firebase_options.dart';
 import 'data/firebase/firestore_daily_challenge_repository.dart';
-import 'data/firebase/firebase_leaderboard_repository.dart';
 import 'data/local/local_progress_repository.dart';
 import 'debug/api/server.dart';
 import 'domain/data/test_level.dart';

@@ -4,8 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../lib/data/firebase/firestore_daily_challenge_repository.dart';
 import '../../lib/domain/models/level.dart';
-import '../../lib/domain/models/hex_cell.dart';
-import '../../lib/domain/models/hex_edge.dart';
 
 /// Comprehensive autonomous test of daily challenge flow
 void main() {
