@@ -2,22 +2,68 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/daily_challenge.dart';
-import '../../../domain/models/user.dart';
+import '../../../domain/models/daily_challenge_state.dart' as domain;
 import '../../providers/auth_provider.dart';
 import '../../providers/daily_challenge_provider.dart';
 import '../../theme/honey_theme.dart';
+import '../../widgets/daily_challenge_completion_dialog.dart';
 import '../game/game_screen.dart';
 
-/// Daily challenge screen displaying today's challenge.
+/// Daily challenge screen displaying today's challenge with state machine.
 ///
-/// Shows the daily challenge level, completion status, user's best result,
-/// and leaderboard rankings. Allows users to start or replay the challenge.
-class DailyChallengeScreen extends ConsumerWidget {
+/// Shows different UI based on the sealed union state:
+/// - Loading: Shows loading indicator
+/// - NotStarted: Shows challenge preview with "Start Challenge" button
+/// - Playing: Navigates to game screen
+/// - Suspended: Shows "Challenge Paused" message with resume button
+/// - Completed/AlreadyCompleted: Shows completion dialog
+/// - Error: Shows error message
+class DailyChallengeScreen extends ConsumerStatefulWidget {
   const DailyChallengeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final challengeAsync = ref.watch(dailyChallengeProvider);
+  ConsumerState<DailyChallengeScreen> createState() =>
+      _DailyChallengeScreenState();
+}
+
+class _DailyChallengeScreenState extends ConsumerState<DailyChallengeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Listen for completion state to show dialog
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setupStateListener();
+    });
+  }
+
+  void _setupStateListener() {
+    final user = ref.read(authProvider).valueOrNull;
+    if (user == null) return;
+
+    ref.listen<domain.DailyChallengeState>(dailyChallengeProvider(user.id), (
+      previous,
+      next,
+    ) {
+      if (next is domain.DailyChallengeStateCompleted) {
+        _showCompletionDialog(next);
+      }
+    });
+  }
+
+  void _showCompletionDialog(domain.DailyChallengeStateCompleted state) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        DailyChallengeCompletionDialog.show(
+          context,
+          completion: state.completion,
+          dateId: state.completion.dateId,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authAsync = ref.watch(authProvider);
 
     return Scaffold(
@@ -29,66 +75,378 @@ class DailyChallengeScreen extends ConsumerWidget {
         elevation: 0,
       ),
       body: SafeArea(
-        child: challengeAsync.when(
-          data: (state) => _buildContent(context, ref, state, authAsync),
+        child: authAsync.when(
+          data: (user) {
+            if (user == null) {
+              return _buildSignInRequired();
+            }
+            return _buildChallengeContent(user.id);
+          },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) => _buildError(error.toString(), () {
-            ref.invalidate(dailyChallengeProvider);
-          }),
+          error: (error, _) => _buildError('Authentication error: $error'),
         ),
       ),
     );
   }
 
-  Widget _buildContent(
-    BuildContext context,
-    WidgetRef ref,
-    DailyChallengeState state,
-    AsyncValue<User?> authAsync,
+  Widget _buildChallengeContent(String userId) {
+    final state = ref.watch(dailyChallengeProvider(userId));
+
+    return switch (state) {
+      domain.DailyChallengeStateLoading() => const Center(
+        child: CircularProgressIndicator(),
+      ),
+      domain.DailyChallengeStateNotStarted() => _buildNotStarted(
+        state as domain.DailyChallengeStateNotStarted,
+        userId,
+      ),
+      domain.DailyChallengeStatePlaying() => _buildPlaying(
+        state as domain.DailyChallengeStatePlaying,
+        userId,
+      ),
+      domain.DailyChallengeStateSuspended() => _buildSuspended(
+        state as domain.DailyChallengeStateSuspended,
+        userId,
+      ),
+      domain.DailyChallengeStateCompleted() => _buildCompleted(
+        state as domain.DailyChallengeStateCompleted,
+      ),
+      domain.DailyChallengeStateAlreadyCompleted() => _buildAlreadyCompleted(
+        state as domain.DailyChallengeStateAlreadyCompleted,
+      ),
+      domain.DailyChallengeStateError() => _buildError(
+        (state as domain.DailyChallengeStateError).message,
+      ),
+    };
+  }
+
+  Widget _buildNotStarted(
+    domain.DailyChallengeStateNotStarted state,
+    String userId,
   ) {
-    if (state.error != null) {
-      return _buildError(state.error!, () {
-        ref.read(dailyChallengeProvider.notifier).refresh();
-      });
-    }
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(HoneyTheme.spacingLg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildChallengeCard(
+            context: context,
+            title: 'Today\'s Challenge',
+            subtitle: _formatDate(state.challenge.date),
+            buttonText: 'Start Challenge',
+            onPressed: () {
+              ref
+                  .read(dailyChallengeProvider(userId).notifier)
+                  .startChallenge();
+              // Navigate to game after starting
+              _navigateToGame(state.challenge);
+            },
+          ),
+          const SizedBox(height: HoneyTheme.spacingLg),
+          _buildStatsCard(
+            gridSize: state.challenge.level.size,
+            checkpointCount: state.challenge.level.checkpointCount,
+          ),
+        ],
+      ),
+    );
+  }
 
-    if (state.challenge == null) {
-      return _buildEmpty(
-        'No daily challenge available today. Check back later!',
-      );
-    }
+  Widget _buildPlaying(domain.DailyChallengeStatePlaying state, String userId) {
+    // Should not normally see this screen when playing, as we navigate to GameScreen
+    // But if we do, show a message
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.games, size: 64, color: HoneyTheme.honeyGold),
+          const SizedBox(height: HoneyTheme.spacingMd),
+          const Text(
+            'Challenge in Progress',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: HoneyTheme.spacingMd),
+          ElevatedButton(
+            onPressed: () => _navigateToGame(state.challenge),
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+  }
 
-    final user = authAsync.valueOrNull;
+  Widget _buildSuspended(
+    domain.DailyChallengeStateSuspended state,
+    String userId,
+  ) {
+    final elapsedTime = DateTime.now().difference(state.startTime);
 
-    return RefreshIndicator(
-      onRefresh: () => ref.read(dailyChallengeProvider.notifier).refresh(),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(HoneyTheme.spacingLg),
-        physics: const AlwaysScrollableScrollPhysics(),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(HoneyTheme.spacingXl),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildChallengeCard(context, ref, state.challenge!, user),
+            const Icon(
+              Icons.pause_circle_outline,
+              size: HoneyTheme.iconSizeXl,
+              color: HoneyTheme.honeyGold,
+            ),
             const SizedBox(height: HoneyTheme.spacingLg),
-            _buildStatsCard(state.challenge!),
-            if (state.challenge!.hasUserCompleted) ...[
-              const SizedBox(height: HoneyTheme.spacingLg),
-              _buildUserResultCard(state.challenge!),
-            ],
+            const Text(
+              'Challenge Paused',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: HoneyTheme.spacingMd),
+            Container(
+              padding: const EdgeInsets.all(HoneyTheme.spacingMd),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(HoneyTheme.radiusMd),
+                border: Border.all(color: Colors.orange, width: 2),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.warning, color: Colors.orange),
+                  const SizedBox(width: HoneyTheme.spacingSm),
+                  const Text(
+                    'Timer is still running!',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: HoneyTheme.spacingMd),
+            Text(
+              'Elapsed time: ${_formatDuration(elapsedTime)}',
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: HoneyTheme.spacingXl),
+            ElevatedButton.icon(
+              onPressed: () {
+                ref.read(dailyChallengeProvider(userId).notifier).resume();
+                _navigateToGame(state.challenge);
+              },
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Resume Challenge'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: HoneyTheme.deepHoney,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: HoneyTheme.spacingXl,
+                  vertical: HoneyTheme.spacingMd,
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildChallengeCard(
-    BuildContext context,
-    WidgetRef ref,
-    DailyChallenge challenge,
-    User? user,
-  ) {
-    final hasCompleted = challenge.hasUserCompleted;
+  Widget _buildCompleted(domain.DailyChallengeStateCompleted state) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(HoneyTheme.spacingXl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.emoji_events,
+              size: HoneyTheme.iconSizeXl,
+              color: HoneyTheme.honeyGold,
+            ),
+            const SizedBox(height: HoneyTheme.spacingLg),
+            const Text(
+              'Challenge Complete!',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: HoneyTheme.spacingMd),
+            Text(
+              'Stars: ${state.completion.stars}/3',
+              style: const TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: HoneyTheme.spacingSm),
+            Text(
+              'Time: ${_formatTime(state.completion.completionTimeMs)}',
+              style: const TextStyle(fontSize: 18),
+            ),
+            if (state.completion.rank != null) ...[
+              const SizedBox(height: HoneyTheme.spacingSm),
+              Text(
+                'Rank: #${state.completion.rank}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+            const SizedBox(height: HoneyTheme.spacingXl),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: HoneyTheme.honeyGold,
+                foregroundColor: HoneyTheme.textPrimary,
+              ),
+              child: const Text('Back to Menu'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
+  Widget _buildAlreadyCompleted(
+    domain.DailyChallengeStateAlreadyCompleted state,
+  ) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(HoneyTheme.spacingXl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.check_circle_outline,
+              size: HoneyTheme.iconSizeXl,
+              color: HoneyTheme.honeyGold,
+            ),
+            const SizedBox(height: HoneyTheme.spacingLg),
+            const Text(
+              'Already Completed',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: HoneyTheme.spacingMd),
+            const Text(
+              'You\'ve already completed today\'s challenge!',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: HoneyTheme.spacingMd),
+            Text(
+              'Stars: ${state.completion.stars}/3',
+              style: const TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: HoneyTheme.spacingSm),
+            Text(
+              'Time: ${_formatTime(state.completion.completionTimeMs)}',
+              style: const TextStyle(fontSize: 18),
+            ),
+            if (state.completion.rank != null) ...[
+              const SizedBox(height: HoneyTheme.spacingSm),
+              Text(
+                'Rank: #${state.completion.rank}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+            const SizedBox(height: HoneyTheme.spacingXl),
+            const Text(
+              'Come back tomorrow for a new challenge!',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+            ),
+            const SizedBox(height: HoneyTheme.spacingLg),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: HoneyTheme.honeyGold,
+                foregroundColor: HoneyTheme.textPrimary,
+              ),
+              child: const Text('Back to Menu'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSignInRequired() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(HoneyTheme.spacingXl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.lock_outline,
+              size: HoneyTheme.iconSizeXl,
+              color: HoneyTheme.brownAccentLight,
+            ),
+            const SizedBox(height: HoneyTheme.spacingLg),
+            const Text(
+              'Sign In Required',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: HoneyTheme.spacingMd),
+            Text(
+              'Please sign in to participate in daily challenges',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: HoneyTheme.textSecondary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildError(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(HoneyTheme.spacingXl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: HoneyTheme.iconSizeXl,
+              color: Colors.red,
+            ),
+            const SizedBox(height: HoneyTheme.spacingLg),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: HoneyTheme.textSecondary),
+            ),
+            const SizedBox(height: HoneyTheme.spacingLg),
+            ElevatedButton(
+              onPressed: () {
+                final user = ref.read(authProvider).valueOrNull;
+                if (user != null) {
+                  ref
+                      .read(dailyChallengeProvider(user.id).notifier)
+                      .loadChallenge();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: HoneyTheme.honeyGold,
+                foregroundColor: HoneyTheme.textPrimary,
+              ),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChallengeCard({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required String buttonText,
+    required VoidCallback onPressed,
+  }) {
     return Container(
       padding: const EdgeInsets.all(HoneyTheme.spacingXl),
       decoration: BoxDecoration(
@@ -111,15 +469,15 @@ class DailyChallengeScreen extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          Icon(
+          const Icon(
             Icons.calendar_today,
             size: HoneyTheme.iconSizeLg,
             color: HoneyTheme.textPrimary,
           ),
           const SizedBox(height: HoneyTheme.spacingMd),
           Text(
-            'Today\'s Challenge',
-            style: TextStyle(
+            title,
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: HoneyTheme.textPrimary,
@@ -127,16 +485,14 @@ class DailyChallengeScreen extends ConsumerWidget {
           ),
           const SizedBox(height: HoneyTheme.spacingSm),
           Text(
-            _formatDate(challenge.date),
+            subtitle,
             style: TextStyle(fontSize: 16, color: HoneyTheme.textSecondary),
           ),
           const SizedBox(height: HoneyTheme.spacingXl),
           ElevatedButton.icon(
-            onPressed: user == null
-                ? null
-                : () => _startChallenge(context, ref, challenge),
-            icon: Icon(hasCompleted ? Icons.replay : Icons.play_arrow),
-            label: Text(hasCompleted ? 'Play Again' : 'Start Challenge'),
+            onPressed: onPressed,
+            icon: const Icon(Icons.play_arrow),
+            label: Text(buttonText),
             style: ElevatedButton.styleFrom(
               backgroundColor: HoneyTheme.deepHoney,
               foregroundColor: Colors.white,
@@ -150,24 +506,15 @@ class DailyChallengeScreen extends ConsumerWidget {
               ),
             ),
           ),
-          if (user == null)
-            Padding(
-              padding: const EdgeInsets.only(top: HoneyTheme.spacingSm),
-              child: Text(
-                'Sign in to participate',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: HoneyTheme.textSecondary,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 
-  Widget _buildStatsCard(DailyChallenge challenge) {
+  Widget _buildStatsCard({
+    required int gridSize,
+    required int checkpointCount,
+  }) {
     return Container(
       padding: const EdgeInsets.all(HoneyTheme.spacingLg),
       decoration: BoxDecoration(
@@ -184,7 +531,7 @@ class DailyChallengeScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'Challenge Stats',
             style: TextStyle(
               fontSize: 18,
@@ -193,23 +540,9 @@ class DailyChallengeScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: HoneyTheme.spacingMd),
-          _buildStatRow(
-            Icons.people,
-            'Completions',
-            '${challenge.completionCount}',
-          ),
+          _buildStatRow(Icons.grid_on, 'Grid Size', '${gridSize}×$gridSize'),
           const SizedBox(height: HoneyTheme.spacingSm),
-          _buildStatRow(
-            Icons.grid_on,
-            'Grid Size',
-            '${challenge.level.size}×${challenge.level.size}',
-          ),
-          const SizedBox(height: HoneyTheme.spacingSm),
-          _buildStatRow(
-            Icons.location_on,
-            'Checkpoints',
-            '${challenge.level.checkpointCount}',
-          ),
+          _buildStatRow(Icons.location_on, 'Checkpoints', '$checkpointCount'),
         ],
       ),
     );
@@ -228,7 +561,7 @@ class DailyChallengeScreen extends ConsumerWidget {
         ),
         Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: HoneyTheme.textPrimary,
@@ -238,151 +571,7 @@ class DailyChallengeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildUserResultCard(DailyChallenge challenge) {
-    return Container(
-      padding: const EdgeInsets.all(HoneyTheme.spacingLg),
-      decoration: _userResultCardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildResultHeader(),
-          const SizedBox(height: HoneyTheme.spacingMd),
-          _buildResultStats(challenge),
-        ],
-      ),
-    );
-  }
-
-  BoxDecoration _userResultCardDecoration() {
-    return BoxDecoration(
-      color: HoneyTheme.honeyGoldLight.withValues(alpha: 0.3),
-      borderRadius: BorderRadius.circular(HoneyTheme.radiusMd),
-      border: Border.all(color: HoneyTheme.honeyGold, width: 2),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.05),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildResultHeader() {
-    return Row(
-      children: [
-        Icon(Icons.emoji_events, color: HoneyTheme.deepHoney, size: 24),
-        const SizedBox(width: HoneyTheme.spacingSm),
-        Text(
-          'Your Best Result',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: HoneyTheme.textPrimary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildResultStats(DailyChallenge challenge) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildResultStat('Rank', '#${challenge.userRank}', Icons.leaderboard),
-        _buildResultStat('Stars', '${challenge.userStars}', Icons.star),
-        _buildResultStat(
-          'Time',
-          _formatTime(challenge.userBestTime!),
-          Icons.timer,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildResultStat(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(icon, size: 32, color: HoneyTheme.deepHoney),
-        const SizedBox(height: HoneyTheme.spacingXs),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: HoneyTheme.textPrimary,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(fontSize: 14, color: HoneyTheme.textSecondary),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildError(String message, VoidCallback onRetry) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(HoneyTheme.spacingXl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: HoneyTheme.iconSizeXl,
-              color: Colors.red,
-            ),
-            const SizedBox(height: HoneyTheme.spacingLg),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: HoneyTheme.textSecondary),
-            ),
-            const SizedBox(height: HoneyTheme.spacingLg),
-            ElevatedButton(
-              onPressed: onRetry,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HoneyTheme.honeyGold,
-                foregroundColor: HoneyTheme.textPrimary,
-              ),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmpty(String message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(HoneyTheme.spacingXl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.calendar_today_outlined,
-              size: HoneyTheme.iconSizeXl,
-              color: HoneyTheme.brownAccentLight,
-            ),
-            const SizedBox(height: HoneyTheme.spacingLg),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: HoneyTheme.textSecondary),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _startChallenge(
-    BuildContext context,
-    WidgetRef ref,
-    DailyChallenge challenge,
-  ) {
+  void _navigateToGame(DailyChallenge challenge) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => GameScreen(dailyChallenge: challenge),
@@ -391,7 +580,7 @@ class DailyChallengeScreen extends ConsumerWidget {
   }
 
   String _formatDate(DateTime date) {
-    final months = [
+    const months = [
       'Jan',
       'Feb',
       'Mar',
@@ -414,5 +603,11 @@ class DailyChallengeScreen extends ConsumerWidget {
     final seconds = duration.inSeconds % 60;
     final ms = (duration.inMilliseconds % 1000) ~/ 10;
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}.${ms.toString().padLeft(2, '0')}';
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }

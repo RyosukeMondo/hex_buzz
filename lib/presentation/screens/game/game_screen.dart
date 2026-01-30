@@ -425,7 +425,8 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
           : null,
       onReplay: () => ref.read(gameProvider.notifier).reset(),
       onLevelSelect: () => _navigateToLevelSelect(context),
-      onViewLeaderboard: null, // Global leaderboard removed - daily leaderboard shown in completion dialog
+      onViewLeaderboard:
+          null, // Global leaderboard removed - daily leaderboard shown in completion dialog
     );
   }
 

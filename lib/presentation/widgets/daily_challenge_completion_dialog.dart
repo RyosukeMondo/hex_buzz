@@ -3,6 +3,7 @@ import '../../domain/models/daily_challenge_completion.dart';
 import '../../services/share_service.dart';
 import 'share_button.dart';
 import 'misskey_instance_picker.dart';
+import 'daily_leaderboard.dart';
 
 /// Dialog shown when a user completes a daily challenge.
 ///
@@ -124,7 +125,9 @@ class DailyChallengeCompletionDialog extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // TODO: Daily leaderboard will be added here in task 14
+              // Daily leaderboard
+              DailyLeaderboard(dateId: dateId),
+
               const SizedBox(height: 16),
 
               // Come back message
