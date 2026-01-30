@@ -2,33 +2,40 @@
 
 ## Progress Summary (Updated: 2026-01-30)
 
-**Overall Status**: Phase 1 Complete - Backend security implemented, frontend work in progress
+**Overall Status**: Phase 1 & 2 Complete - Backend security and frontend state management implemented
 
-**Completed**: 5/23 tasks (22%)
+**Completed**: 8/23 tasks (35%)
 - ✅ Task 1: Firestore security rules enforce one-attempt-per-day
 - ✅ Task 2: validateDailyChallengeCompletion Cloud Function implemented
 - ✅ Task 3: Comprehensive tests for completion validation
+- ✅ Task 4: DailyChallengeState sealed union created
+- ✅ Task 5: getCompletion method added to repository
+- ✅ Task 6: One-attempt logic implemented in DailyChallengeProvider
 - ✅ Task 7: Provider tests file exists
 - ✅ Task 17: Notification configuration verified
 
 **What Exists**:
-- Basic DailyChallengeRepository with hasCompletedToday() method
-- DailyChallengeProvider with simple state (not sealed union state machine)
-- DailyChallengeScreen displaying challenges
-- Daily challenge Cloud Functions (generation, retrieval, notification triggers)
+- ✅ DailyChallengeRepository with hasCompletedToday() and getCompletion() methods
+- ✅ DailyChallengeProvider with sealed union state machine
+- ✅ DailyChallengeState with 7 states (Loading, NotStarted, Playing, Suspended, Completed, AlreadyCompleted, Error)
+- ✅ One-attempt enforcement (startChallenge, suspend, resume, complete logic)
+- ✅ Timer preservation across suspend/resume (prevents restart)
+- DailyChallengeScreen displaying challenges (needs update for new state machine)
+- Daily challenge Cloud Functions (generation, retrieval, notification triggers, validation)
 - Notification routing for 'daily_challenge' type
 
 **Critical Gaps**:
 - ✅ Firestore security rules now enforce one-attempt-per-day
 - ✅ Backend validation function implemented (validateDailyChallengeCompletion)
-- ❌ No sealed union state machine (loading/notStarted/playing/suspended/completed/alreadyCompleted/error)
-- ❌ No one-attempt enforcement (startChallenge, suspend, resume logic)
+- ✅ Sealed union state machine implemented
+- ✅ One-attempt enforcement implemented (startChallenge, suspend, resume logic)
 - ❌ No social sharing (url_launcher, ShareService, share buttons)
 - ❌ No completion dialog with share buttons
 - ❌ Global leaderboard still exists (needs removal)
+- ❌ DailyChallengeScreen not updated for new state machine
 - ❌ No integration tests or documentation
 
-**Next Steps**: Phase 2 (State Management) for one-attempt enforcement in the frontend, then Phase 3 (Social Sharing).
+**Next Steps**: Phase 3 (Social Sharing) implementation, then Phase 4 (UI Integration).
 
 ---
 
@@ -64,27 +71,27 @@
   - **Status**: Completed - Comprehensive tests cover all validation cases, duplicates, auth, rank calculation
 
 ## Phase 2: Frontend State Management - One Attempt Per Day
-**Status**: Partially Completed - Basic provider exists, but sealed union state machine and one-attempt enforcement not fully implemented
+**Status**: Completed
 
-- [ ] 4. Create DailyChallengeState sealed union
+- [x] 4. Create DailyChallengeState sealed union
   - File: lib/domain/models/daily_challenge_state.dart
   - Define sealed class with states: loading, notStarted, playing, suspended, completed, alreadyCompleted, error
   - Add freezed annotations for immutability
   - Purpose: Type-safe state management for daily challenge flow
   - _Leverage: Existing domain models using freezed package_
   - _Requirements: Spec Task 1 - Enforce One-Attempt-Per-Day_
-  - _Prompt: Role: Flutter Developer specializing in state management and freezed package | Task: Create DailyChallengeState sealed union in lib/domain/models/daily_challenge_state.dart with these states: (1) DailyChallengeStateLoading - initial loading, (2) DailyChallengeStateNotStarted(DailyChallenge challenge) - ready to start, (3) DailyChallengeStatePlaying(DailyChallenge challenge, DateTime startTime, List<HexCoordinate> currentPath) - active gameplay, (4) DailyChallengeStateSuspended(DailyChallenge challenge, DateTime startTime, DateTime suspendedTime, List<HexCoordinate> currentPath) - paused, (5) DailyChallengeStateCompleted(DailyChallengeCompletion completion) - finished today, (6) DailyChallengeStateAlreadyCompleted(DailyChallengeCompletion completion) - attempted to retry, (7) DailyChallengeStateError(String message) - error occurred | Use freezed and json_serializable annotations | Restrictions: Must be immutable, follow existing freezed patterns in codebase | Success: All states compile, freezed generates code without errors, states are type-safe and immutable_
+  - **Status**: Completed - Sealed union with 7 states, immutable classes, type-safe state transitions
 
-- [ ] 5. Add getCompletion method to DailyChallengeRepository
+- [x] 5. Add getCompletion method to DailyChallengeRepository
   - File: lib/domain/repositories/daily_challenge_repository.dart, lib/data/firebase/firestore_daily_challenge_repository.dart
   - Add method to check if user completed today's challenge
   - Return completion data if exists, null otherwise
   - Purpose: Check completion status before allowing challenge start
   - _Leverage: Existing repository pattern and Firestore queries_
   - _Requirements: Spec Task 1 - Enforce One-Attempt-Per-Day_
-  - _Prompt: Role: Flutter Backend Integration Developer with Firestore expertise | Task: Add getCompletion method to daily challenge repository. (1) In lib/domain/repositories/daily_challenge_repository.dart add abstract method: Future<DailyChallengeCompletion?> getCompletion({required String userId, required String dateId}), (2) In lib/data/firebase/firestore_daily_challenge_repository.dart implement method to query dailyChallenges/{dateId}/entries/{userId} and return DailyChallengeCompletion if exists, null if not, (3) Add error handling with DiagnosticLogger | Leverage: Existing Firestore patterns and error handling | Restrictions: Must handle network errors gracefully, return null for missing documents (not error) | Success: Method correctly returns existing completions, handles missing documents, logs errors appropriately_
+  - **Status**: Completed - Method added to interface and Firestore implementation with error handling
 
-- [ ] 6. Implement one-attempt logic in DailyChallengeProvider
+- [x] 6. Implement one-attempt logic in DailyChallengeProvider
   - File: lib/presentation/providers/daily_challenge_provider.dart
   - Add loadChallenge, startChallenge, suspend, resume, complete methods
   - Check for existing completion before allowing start
@@ -92,7 +99,7 @@
   - Purpose: Enforce one-attempt-per-day at application level
   - _Leverage: Existing Riverpod StateNotifier patterns, DailyChallengeState_
   - _Requirements: Spec Task 1 - Enforce One-Attempt-Per-Day, Task 5 - Post-Completion UX_
-  - _Prompt: Role: Flutter State Management Expert with Riverpod expertise | Task: Implement DailyChallengeProvider as StateNotifier<DailyChallengeState> in lib/presentation/providers/daily_challenge_provider.dart with these methods: (1) loadChallenge() - fetches today's challenge and checks for existing completion, sets state to notStarted or alreadyCompleted, (2) startChallenge() - checks no completion exists, sets state to playing with DateTime.now() as startTime, (3) suspend() - transitions playing to suspended, preserving startTime (timer keeps running), (4) resume() - transitions suspended back to playing with same startTime (no restart), (5) complete(int stars) - calls repository.submitCompletion, transitions to completed state | Leverage: Use ref.read for repository access, DiagnosticLogger for events | Restrictions: Never reset startTime (prevents timer restart), always check completion status before operations, handle all state transitions safely | Success: State transitions work correctly, timer cannot be restarted, existing completions prevent new attempts, all operations logged_
+  - **Status**: Completed - StateNotifier with all methods, startTime preservation, one-attempt enforcement
 
 - [x] 7. Add tests for DailyChallengeProvider
   - File: test/presentation/providers/daily_challenge_provider_test.dart
