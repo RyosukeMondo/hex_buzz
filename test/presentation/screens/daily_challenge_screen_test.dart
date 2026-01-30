@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hex_buzz/domain/models/daily_challenge.dart';
+import 'package:hex_buzz/domain/models/daily_challenge_completion.dart';
 import 'package:hex_buzz/domain/models/hex_cell.dart';
 import 'package:hex_buzz/domain/models/hex_edge.dart';
 import 'package:hex_buzz/domain/models/level.dart';
@@ -84,6 +85,12 @@ void main() {
     when(
       () => mockDailyChallengeRepository.getTodaysChallenge(),
     ).thenAnswer((_) async => testChallengeNotCompleted);
+    when(
+      () => mockDailyChallengeRepository.getCompletion(
+        userId: any(named: 'userId'),
+        dateId: any(named: 'dateId'),
+      ),
+    ).thenAnswer((_) async => null);
   });
 
   Widget createTestWidget({User? currentUser}) {
