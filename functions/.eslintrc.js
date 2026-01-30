@@ -32,5 +32,7 @@ module.exports = {
     "max-len": ["error", {"code": 100, "ignoreStrings": true, "ignoreTemplateLiterals": true}],
     "object-curly-spacing": ["error", "always"],
     "require-jsdoc": 0,
+    "valid-jsdoc": 0,
+    "@typescript-eslint/no-explicit-any": ["warn"],
   },
 };

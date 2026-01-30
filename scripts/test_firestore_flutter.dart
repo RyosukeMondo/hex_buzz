@@ -22,14 +22,18 @@ void main() async {
 
     final firestore = FirebaseFirestore.instance;
     final today = DateTime.now().toUtc();
-    final dateStr = '${today.year.toString().padLeft(4, '0')}-'
+    final dateStr =
+        '${today.year.toString().padLeft(4, '0')}-'
         '${today.month.toString().padLeft(2, '0')}-'
         '${today.day.toString().padLeft(2, '0')}';
 
     print('📅 Querying date: $dateStr');
     print('📡 Path: dailyChallenges/$dateStr\n');
 
-    final doc = await firestore.collection('dailyChallenges').doc(dateStr).get();
+    final doc = await firestore
+        .collection('dailyChallenges')
+        .doc(dateStr)
+        .get();
 
     print('📄 Document exists: ${doc.exists}');
 

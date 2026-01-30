@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hex_buzz/core/logging/logger.dart';
 
 /// Autonomous diagnostic logger that sends logs to Firestore for remote debugging
 class DiagnosticLogger {
@@ -10,56 +12,107 @@ class DiagnosticLogger {
   final List<Map<String, dynamic>> _buffer = [];
   bool _enabled = true;
   String? _sessionId;
+  static void Function(Map<String, dynamic>)? _testSink;
 
   /// Initialize with a unique session ID
-  void init() {
-    _sessionId = DateTime.now().millisecondsSinceEpoch.toString();
+  static void init() {
+    _instance._sessionId = DateTime.now().millisecondsSinceEpoch.toString();
     try {
-      _firestore = FirebaseFirestore.instance;
+      _instance._firestore = FirebaseFirestore.instance;
     } catch (e) {
       // Firebase not initialized, disable logging
-      _enabled = false;
+      _instance._enabled = false;
     }
   }
 
-  /// Log a message with automatic Firestore persistence
-  Future<void> log(String level, String message, {Map<String, dynamic>? data}) async {
-    if (!_enabled || _firestore == null) {
-      // Just print locally if Firestore not available
-      print('[$level] $message ${data != null ? data.toString() : ''}');
-      return;
-    }
+  /// Configure test sink for testing
+  static void configure({void Function(Map<String, dynamic>)? sink}) {
+    _testSink = sink;
+  }
 
+  /// Log an event with structured data
+  static void logEvent(
+    String event, {
+    Map<String, dynamic>? data,
+    LogLevel level = LogLevel.info,
+  }) {
     final logEntry = {
-      'timestamp': FieldValue.serverTimestamp(),
-      'level': level,
-      'message': message,
-      'sessionId': _sessionId,
-      'clientTime': DateTime.now().toIso8601String(),
+      'timestamp': DateTime.now().toIso8601String(),
+      'level': level.name,
+      'event': event,
+      'sessionId': _instance._sessionId,
       if (data != null) 'data': data,
     };
 
+    // Send to test sink if configured
+    if (_testSink != null) {
+      _testSink!(logEntry);
+      return;
+    }
+
     // Buffer for local viewing
-    _buffer.add(logEntry);
-    if (_buffer.length > 100) _buffer.removeAt(0);
+    _instance._buffer.add(logEntry);
+    if (_instance._buffer.length > 100) {
+      _instance._buffer.removeAt(0);
+    }
 
-    // Send to Firestore asynchronously (don't wait)
-    _firestore!.collection('diagnosticLogs').add(logEntry).catchError((e) {
-      print('Failed to send log to Firestore: $e');
-    });
+    // Send to Firestore asynchronously if enabled
+    if (_instance._enabled && _instance._firestore != null) {
+      _instance._firestore!
+          .collection('diagnosticLogs')
+          .add({
+            'timestamp': FieldValue.serverTimestamp(),
+            'level': level.name,
+            'event': event,
+            'sessionId': _instance._sessionId,
+            'clientTime': DateTime.now().toIso8601String(),
+            if (data != null) 'data': data,
+          })
+          .catchError((e) {
+            // Silently fail - don't let logging break the app
+          });
+    }
 
-    // Also print locally
-    print('[$level] $message ${data != null ? data.toString() : ''}');
+    // Also log to structured logger
+    final logger = LoggerFactory.create('diagnostic');
+    switch (level) {
+      case LogLevel.debug:
+        logger.debug(event, data);
+        break;
+      case LogLevel.info:
+        logger.info(event, data);
+        break;
+      case LogLevel.warn:
+        logger.warn(event, data);
+        break;
+      case LogLevel.error:
+        logger.error(event, data);
+        break;
+    }
   }
 
-  Future<void> info(String message, {Map<String, dynamic>? data}) =>
-      log('INFO', message, data: data);
+  /// Log an error with stack trace
+  static void logError(
+    String event, {
+    required Object error,
+    StackTrace? stackTrace,
+    Map<String, dynamic>? data,
+  }) {
+    final errorData = <String, dynamic>{
+      'error': error.toString(),
+      if (stackTrace != null) 'stackTrace': stackTrace.toString(),
+      if (data != null) ...data,
+    };
 
-  Future<void> warn(String message, {Map<String, dynamic>? data}) =>
-      log('WARN', message, data: data);
+    logEvent(event, data: errorData, level: LogLevel.error);
+  }
 
-  Future<void> error(String message, {Map<String, dynamic>? data}) =>
-      log('ERROR', message, data: data);
+  /// Get buffered logs for inspection
+  static List<Map<String, dynamic>> getBufferedLogs() =>
+      List.from(_instance._buffer);
 
-  List<Map<String, dynamic>> getBufferedLogs() => List.from(_buffer);
+  /// Clear buffered logs
+  static void clearBuffer() {
+    _instance._buffer.clear();
+  }
 }

@@ -8,7 +8,8 @@ void main() async {
 
   final projectId = 'hexbuzz-game';
   final today = DateTime.now().toUtc();
-  final dateStr = '${today.year.toString().padLeft(4, '0')}-'
+  final dateStr =
+      '${today.year.toString().padLeft(4, '0')}-'
       '${today.month.toString().padLeft(2, '0')}-'
       '${today.day.toString().padLeft(2, '0')}';
 

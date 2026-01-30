@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/logging/diagnostic_logger.dart';
+import '../../core/logging/logger.dart';
 import '../../domain/models/daily_challenge.dart';
 import '../../domain/services/daily_challenge_repository.dart';
 
@@ -57,30 +58,44 @@ class DailyChallengeNotifier
 
   @override
   Future<DailyChallengeState> build() async {
-    final logger = DiagnosticLogger();
-    await logger.info('DailyChallengeNotifier.build() called');
+    DiagnosticLogger.logEvent(
+      'DailyChallengeNotifier.build() called',
+      level: LogLevel.info,
+    );
     _repository = ref.watch(dailyChallengeRepositoryProvider);
-    await logger.info('Repository initialized', data: {'type': _repository.runtimeType.toString()});
+    DiagnosticLogger.logEvent(
+      'Repository initialized',
+      data: {'type': _repository.runtimeType.toString()},
+      level: LogLevel.info,
+    );
 
     try {
-      await logger.info('Calling getTodaysChallenge');
+      DiagnosticLogger.logEvent(
+        'Calling getTodaysChallenge',
+        level: LogLevel.info,
+      );
       final challenge = await _repository.getTodaysChallenge();
-      await logger.info('Challenge received', data: {
-        'hasChallenge': challenge != null,
-        'id': challenge?.id,
-        'levelId': challenge?.level.id,
-        'levelSize': challenge?.level.size,
-      });
+      DiagnosticLogger.logEvent(
+        'Challenge received',
+        data: {
+          'hasChallenge': challenge != null,
+          'id': challenge?.id,
+          'levelId': challenge?.level.id,
+          'levelSize': challenge?.level.size,
+        },
+        level: LogLevel.info,
+      );
 
       return DailyChallengeState(
         challenge: challenge,
         hasCompleted: challenge?.hasUserCompleted ?? false,
       );
     } catch (e, stackTrace) {
-      await logger.error('Error in DailyChallengeNotifier.build()', data: {
-        'error': e.toString(),
-        'stackTrace': stackTrace.toString(),
-      });
+      DiagnosticLogger.logError(
+        'Error in DailyChallengeNotifier.build()',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return DailyChallengeState(error: e.toString());
     }
   }

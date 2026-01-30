@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/logging/diagnostic_logger.dart';
+import '../../../core/logging/logger.dart';
 import '../../../domain/models/leaderboard_entry.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/leaderboard_provider.dart';
@@ -147,7 +149,11 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
   Widget _buildDailyChallengeLeaderboard() {
     final now = DateTime.now().toUtc();
     final today = DateTime.utc(now.year, now.month, now.day);
-    print('🏆 Loading daily challenge leaderboard for $today (UTC)');
+    DiagnosticLogger.logEvent(
+      'loading_daily_challenge_leaderboard',
+      data: {'date': today.toIso8601String(), 'isUtc': true},
+      level: LogLevel.debug,
+    );
     final dailyLeaderboardAsync = ref.watch(
       dailyChallengeLeaderboardProvider(today),
     );

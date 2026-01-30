@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../core/logging/diagnostic_logger.dart';
+import '../../core/logging/logger.dart';
 import '../../domain/models/leaderboard_entry.dart';
 import '../../domain/services/leaderboard_repository.dart';
 
@@ -171,7 +173,11 @@ class FirebaseLeaderboardRepository implements LeaderboardRepository {
     try {
       // Format date as YYYY-MM-DD for consistent storage
       final dateStr = _formatDate(date);
-      print('🏆 Fetching daily challenge leaderboard for $dateStr');
+      DiagnosticLogger.logEvent(
+        'fetching_daily_challenge_leaderboard',
+        data: {'date': dateStr, 'limit': limit},
+        level: LogLevel.info,
+      );
 
       final snapshot = await _firestore
           .collection('dailyChallenges')
@@ -182,7 +188,11 @@ class FirebaseLeaderboardRepository implements LeaderboardRepository {
           .limit(limit)
           .get();
 
-      print('🏆 Found ${snapshot.docs.length} entries');
+      DiagnosticLogger.logEvent(
+        'daily_challenge_entries_fetched',
+        data: {'date': dateStr, 'count': snapshot.docs.length},
+        level: LogLevel.info,
+      );
 
       final entries = <LeaderboardEntry>[];
       int rank = 1;
@@ -190,7 +200,11 @@ class FirebaseLeaderboardRepository implements LeaderboardRepository {
       for (var doc in snapshot.docs) {
         try {
           final data = doc.data();
-          print('🏆 Processing entry for user: ${data['userId']}');
+          DiagnosticLogger.logEvent(
+            'processing_leaderboard_entry',
+            data: {'userId': data['userId'], 'rank': rank},
+            level: LogLevel.debug,
+          );
 
           // Data already includes username and avatarUrl from submission
           final entry = LeaderboardEntry(
@@ -207,15 +221,27 @@ class FirebaseLeaderboardRepository implements LeaderboardRepository {
           entries.add(entry);
           rank++;
         } catch (e) {
-          print('❌ Error processing entry: $e');
+          DiagnosticLogger.logError(
+            'leaderboard_entry_processing_failed',
+            error: e,
+            data: {'docId': doc.id},
+          );
           continue;
         }
       }
 
-      print('✅ Returning ${entries.length} leaderboard entries');
+      DiagnosticLogger.logEvent(
+        'daily_challenge_leaderboard_complete',
+        data: {'date': dateStr, 'entriesCount': entries.length},
+        level: LogLevel.info,
+      );
       return entries;
     } catch (e) {
-      print('❌ Error fetching daily challenge leaderboard: $e');
+      DiagnosticLogger.logError(
+        'daily_challenge_leaderboard_fetch_failed',
+        error: e,
+        data: {'date': _formatDate(date)},
+      );
       return [];
     }
   }

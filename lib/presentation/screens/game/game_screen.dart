@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/logging/diagnostic_logger.dart';
+import '../../../core/logging/logger.dart';
 import '../../../domain/models/daily_challenge.dart';
 import '../../../domain/models/game_mode.dart';
 import '../../../domain/models/hex_cell.dart';
@@ -12,7 +14,7 @@ import '../../providers/daily_challenge_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/leaderboard_provider.dart';
 import '../../widgets/completion_overlay/completion_overlay.dart';
-import '../../widgets/hex_grid/hex_grid_widget.dart';
+import '../../widgets/hex_grid.dart';
 
 /// Main game screen that displays the hexagonal grid and handles gameplay.
 ///
@@ -126,22 +128,26 @@ class _GameScreenContent extends ConsumerStatefulWidget {
 class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
   bool _hasSubmitted = false;
 
-  @override
-  void didUpdateWidget(_GameScreenContent oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    print('🔄 didUpdateWidget called');
-  }
-
   /// Submits the score to the appropriate leaderboard.
   Future<void> _submitScore() async {
     // Only submit if user is logged in
     final authAsync = ref.read(authProvider);
     final user = authAsync.valueOrNull;
-    print(
-      '🎯 _submitScore called: user=${user?.id ?? "null"}, isLoading=${authAsync.isLoading}, hasError=${authAsync.hasError}',
+    DiagnosticLogger.logEvent(
+      'submit_score_called',
+      data: {
+        'userId': user?.id,
+        'isAuthenticated': user != null,
+        'isLoading': authAsync.isLoading,
+        'hasError': authAsync.hasError,
+      },
+      level: LogLevel.debug,
     );
     if (user == null) {
-      print('⚠️ Cannot submit score: user not authenticated');
+      DiagnosticLogger.logEvent(
+        'submit_score_failed_no_user',
+        level: LogLevel.warn,
+      );
       return;
     }
 
@@ -153,8 +159,14 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
     try {
       if (widget.isDailyChallenge && widget.dailyChallenge != null) {
         // Submit to daily challenge leaderboard
-        print(
-          '📊 Submitting daily challenge completion: user=${user.id}, stars=$stars, time=${elapsedTimeMs}ms',
+        DiagnosticLogger.logEvent(
+          'submitting_daily_challenge_completion',
+          data: {
+            'userId': user.id,
+            'stars': stars,
+            'completionTimeMs': elapsedTimeMs,
+          },
+          level: LogLevel.info,
         );
         final success = await ref
             .read(dailyChallengeProvider.notifier)
@@ -163,18 +175,29 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
               stars: stars,
               completionTimeMs: elapsedTimeMs,
             );
-        print('📊 Daily challenge submission result: $success');
+        DiagnosticLogger.logEvent(
+          'daily_challenge_submission_result',
+          data: {'success': success},
+          level: success ? LogLevel.info : LogLevel.warn,
+        );
       } else if (widget.levelIndex != null) {
         // Submit to global leaderboard
         final levelId = 'level_${widget.levelIndex}';
         await ref
             .read(leaderboardProvider.notifier)
             .submitScore(userId: user.id, stars: stars, levelId: levelId);
+        DiagnosticLogger.logEvent(
+          'global_leaderboard_score_submitted',
+          data: {'userId': user.id, 'levelId': levelId, 'stars': stars},
+          level: LogLevel.info,
+        );
       }
     } catch (e) {
-      // Log error but don't block the game completion
-      print('❌ Failed to submit score: $e');
-      debugPrint('Failed to submit score: $e');
+      DiagnosticLogger.logError(
+        'score_submission_failed',
+        error: e,
+        data: {'userId': user.id, 'isDailyChallenge': widget.isDailyChallenge},
+      );
     }
   }
 
@@ -185,13 +208,25 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
 
     // Listen for game completion and trigger submission
     ref.listen(gameProvider, (previous, next) {
-      print('🔊 Game state changed!');
-      print('   Previous isComplete: ${previous?.isComplete ?? "null"}');
-      print('   Next isComplete: ${next.isComplete}');
-      print('   _hasSubmitted: $_hasSubmitted');
+      DiagnosticLogger.logEvent(
+        'game_state_changed',
+        data: {
+          'previousIsComplete': previous?.isComplete,
+          'nextIsComplete': next.isComplete,
+          'hasSubmitted': _hasSubmitted,
+        },
+        level: LogLevel.debug,
+      );
 
       if (next.isComplete && !_hasSubmitted) {
-        print('🎯 Game just completed! Triggering score submission...');
+        DiagnosticLogger.logEvent(
+          'game_completed',
+          data: {
+            'elapsedTimeMs': next.elapsedTime.inMilliseconds,
+            'isDailyChallenge': widget.isDailyChallenge,
+          },
+          level: LogLevel.info,
+        );
         _hasSubmitted = true;
         widget.onScoreSubmitted();
         _submitScore();
@@ -200,8 +235,11 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
 
     // Log game state changes
     if (gameState.isComplete) {
-      print('🎮 BUILD: Game is COMPLETE, showing completion overlay');
-      print('   scoreSubmitted: ${widget.scoreSubmitted}');
+      DiagnosticLogger.logEvent(
+        'rendering_completion_overlay',
+        data: {'scoreSubmitted': widget.scoreSubmitted},
+        level: LogLevel.debug,
+      );
     }
 
     return KeyboardShortcuts(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Paths to generated game assets.
 ///
@@ -84,11 +85,16 @@ class GameAssets {
   }
 }
 
+/// Provider for tracking asset path changes to trigger reloads.
+final assetPathProvider = StateProvider.family<String, String>(
+  (ref, path) => path,
+);
+
 /// Widget that displays an asset image with a fallback widget.
 ///
 /// Attempts to load the image from [assetPath]. If the asset is not
 /// available, displays [fallback] instead.
-class AssetImageWithFallback extends StatefulWidget {
+class AssetImageWithFallback extends ConsumerStatefulWidget {
   /// Path to the asset image.
   final String assetPath;
 
@@ -114,24 +120,20 @@ class AssetImageWithFallback extends StatefulWidget {
   });
 
   @override
-  State<AssetImageWithFallback> createState() => _AssetImageWithFallbackState();
+  ConsumerState<AssetImageWithFallback> createState() =>
+      _AssetImageWithFallbackState();
 }
 
-class _AssetImageWithFallbackState extends State<AssetImageWithFallback> {
+class _AssetImageWithFallbackState
+    extends ConsumerState<AssetImageWithFallback> {
   bool? _assetExists;
+  String? _currentPath;
 
   @override
   void initState() {
     super.initState();
+    _currentPath = widget.assetPath;
     _checkAsset();
-  }
-
-  @override
-  void didUpdateWidget(AssetImageWithFallback oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.assetPath != widget.assetPath) {
-      _checkAsset();
-    }
   }
 
   Future<void> _checkAsset() async {
@@ -143,6 +145,13 @@ class _AssetImageWithFallbackState extends State<AssetImageWithFallback> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if asset path changed and reload if needed
+    if (_currentPath != widget.assetPath) {
+      _currentPath = widget.assetPath;
+      _assetExists = null;
+      _checkAsset();
+    }
+
     if (_assetExists == null) {
       // Still checking - show fallback to avoid flicker
       return widget.fallback;

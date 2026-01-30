@@ -72,13 +72,6 @@ class _CompletionOverlayState extends State<CompletionOverlay>
     _initButtonsAnimation();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
-    _startAnimations();
-  }
-
   void _initCardAnimation() {
     _cardController = AnimationController(
       duration: const Duration(milliseconds: 400),
@@ -199,6 +192,18 @@ class _CompletionOverlayState extends State<CompletionOverlay>
 
   @override
   Widget build(BuildContext context) {
+    // Check for reduced motion in build instead of didChangeDependencies
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
+
+    // Start animations on first build (moved from didChangeDependencies)
+    if (!_animationsStarted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _startAnimations();
+        }
+      });
+    }
+
     return Stack(
       fit: StackFit.expand,
       children: [

@@ -1,3 +1,5 @@
+import '../../core/logging/diagnostic_logger.dart';
+import '../../core/logging/logger.dart';
 import '../models/game_mode.dart';
 import '../models/game_state.dart';
 import '../models/hex_cell.dart';
@@ -110,9 +112,15 @@ class GameEngine {
     if (winCheck.isWin) {
       newEndTime = _clock();
       _state = _state.copyWith(endTime: newEndTime);
-      print('🎉 GAME WON! Setting endTime, isComplete will be true');
-      print('   Level: ${_state.level.id}');
-      print('   Elapsed time: ${_state.elapsedTime}');
+      DiagnosticLogger.logEvent(
+        'game_won',
+        data: {
+          'levelId': _state.level.id,
+          'elapsedTimeMs': _state.elapsedTime.inMilliseconds,
+          'movesCount': _state.path.length,
+        },
+        level: LogLevel.info,
+      );
       return MoveResult.success(_state, isWin: true);
     }
 

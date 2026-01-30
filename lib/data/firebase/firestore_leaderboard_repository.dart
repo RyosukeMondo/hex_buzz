@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../core/logging/diagnostic_logger.dart';
+import '../../core/logging/logger.dart';
 import '../../domain/models/leaderboard_entry.dart';
 import '../../domain/services/leaderboard_repository.dart';
 
@@ -162,13 +164,21 @@ class FirestoreLeaderboardRepository implements LeaderboardRepository {
           '${date.month.toString().padLeft(2, '0')}-'
           '${date.day.toString().padLeft(2, '0')}';
 
-      print('🏆 Fetching daily challenge leaderboard for $dateStr');
+      DiagnosticLogger.logEvent(
+        'fetching_daily_challenge_leaderboard_with_cache',
+        data: {'date': dateStr, 'limit': limit},
+        level: LogLevel.info,
+      );
 
       // Check cache first
       final cacheKey = 'daily_challenge_${dateStr}_$limit';
       final cached = _getCached(cacheKey);
       if (cached != null) {
-        print('🏆 Returning cached leaderboard: ${cached.length} entries');
+        DiagnosticLogger.logEvent(
+          'leaderboard_cache_hit',
+          data: {'date': dateStr, 'entriesCount': cached.length},
+          level: LogLevel.debug,
+        );
         return cached;
       }
 
@@ -182,8 +192,14 @@ class FirestoreLeaderboardRepository implements LeaderboardRepository {
           .limit(limit);
 
       final snapshot = await query.get();
-      print(
-        '🏆 Query completed: found ${snapshot.docs.length} entries for dailyChallenges/$dateStr/entries',
+      DiagnosticLogger.logEvent(
+        'firestore_leaderboard_query_complete',
+        data: {
+          'date': dateStr,
+          'entriesCount': snapshot.docs.length,
+          'collection': 'dailyChallenges/$dateStr/entries',
+        },
+        level: LogLevel.info,
       );
 
       // Convert documents to LeaderboardEntry objects

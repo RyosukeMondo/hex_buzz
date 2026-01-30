@@ -56,9 +56,6 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
 
-  /// Whether reduced motion is enabled.
-  bool _reduceMotion = false;
-
   /// Whether the mouse is hovering over this cell.
   bool _isHovered = false;
 
@@ -83,28 +80,27 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
-  }
-
-  @override
   void dispose() {
     _shakeController.dispose();
     super.dispose();
   }
 
-  void _handleTap() {
+  void _handleTap(BuildContext context) {
     if (widget.isUnlocked) {
       widget.onTap?.call();
-    } else if (!_reduceMotion) {
+    } else {
       // Only animate shake if reduced motion is not enabled.
-      _shakeController.forward(from: 0);
+      final reduceMotion = MediaQuery.of(context).disableAnimations;
+      if (!reduceMotion) {
+        _shakeController.forward(from: 0);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Check for reduced motion in build instead of didChangeDependencies
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
     final String semanticsLabel;
     if (widget.isUnlocked) {
       if (widget.isCompleted) {
@@ -129,7 +125,7 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
         onEnter: (_) => setState(() => _isHovered = true),
         onExit: (_) => setState(() => _isHovered = false),
         child: GestureDetector(
-          onTap: _handleTap,
+          onTap: () => _handleTap(context),
           child: AnimatedBuilder(
             animation: _shakeAnimation,
             builder: (context, child) {
@@ -139,7 +135,7 @@ class _LevelCellWidgetState extends State<LevelCellWidget>
               );
             },
             child: AnimatedScale(
-              scale: _isHovered && widget.isUnlocked && !_reduceMotion
+              scale: _isHovered && widget.isUnlocked && !reduceMotion
                   ? 1.05
                   : 1.0,
               duration: const Duration(milliseconds: 150),

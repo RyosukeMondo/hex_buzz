@@ -1,58 +1,137 @@
 # HexBuzz Cloud Functions
 
-This directory contains Firebase Cloud Functions for HexBuzz's social and competitive features.
+Modularized Cloud Functions for HexBuzz with comprehensive error handling, logging, and validation.
 
-## Functions
+## Architecture
 
-### 1. onScoreUpdate (Firestore Trigger)
-- **Trigger**: When a document is created in `scoreSubmissions` collection
-- **Purpose**: Updates user's total stars, leaderboard rankings, and sends rank change notifications
-- **Actions**:
-  - Updates user's level progress and total stars
-  - Updates leaderboard entry
-  - Recomputes all user ranks
-  - Sends notification if rank changed by ±10 or more
+### Directory Structure
 
-### 2. generateDailyChallenge (Scheduled)
-- **Schedule**: Daily at 00:00 UTC
-- **Purpose**: Generates a new daily challenge level
-- **Actions**:
-  - Selects a random level (currently levels 10-30)
-  - Creates daily challenge document with date as ID (YYYY-MM-DD)
-  - Triggers notification sending
-  - Idempotent (won't create duplicate challenges)
+```
+functions/
+├── src/
+│   ├── index.ts              # Entry point - exports all functions
+│   ├── functions/            # Cloud Function modules
+│   │   ├── dailyChallenge.ts    # Daily challenge generation and retrieval
+│   │   ├── leaderboard.ts       # Leaderboard updates
+│   │   └── diagnostics.ts       # System diagnostics
+│   ├── services/             # Business logic services
+│   │   ├── firestoreService.ts      # Firestore abstraction layer
+│   │   ├── levelGenerator.ts       # Level generation logic
+│   │   └── notificationService.ts  # FCM notifications
+│   ├── utils/                # Utility modules
+│   │   ├── logger.ts           # Structured logging
+│   │   ├── errorHandler.ts     # Centralized error handling
+│   │   ├── validator.ts        # Input validation
+│   │   └── dateUtils.ts        # Date utilities
+│   └── types/                # TypeScript type definitions
+│       ├── challenge.ts        # Challenge and level types
+│       ├── leaderboard.ts      # Leaderboard types
+│       └── notification.ts     # Notification types
+└── test/                     # Test files
+    ├── setup.ts                 # Test setup
+    ├── utils/                   # Utility tests
+    └── services/                # Service tests
+```
 
-### 3. sendDailyChallengeNotifications (HTTP Callable)
-- **Trigger**: Manual call or after daily challenge generation
-- **Purpose**: Sends push notifications to all subscribed users
-- **Actions**:
-  - Sends FCM topic message to "daily_challenge" topic
-  - Includes deep link data to daily challenge screen
+## Features
 
-### 4. onUserCreated (Firestore Trigger)
-- **Trigger**: When a new user document is created in `users` collection
-- **Purpose**: Initializes new user data
-- **Actions**:
-  - Creates leaderboard entry with 0 stars
-  - Subscribes user's device token to "daily_challenge" topic
+### 1. Modular Structure
+- Clear separation of concerns
+- Reusable service layer
+- Type-safe interfaces
+- Easy to test and maintain
 
-### 5. recomputeAllRanks (HTTP Callable)
-- **Trigger**: Manual call (admin/testing)
-- **Purpose**: Recomputes all leaderboard ranks
-- **Actions**:
-  - Queries all leaderboard entries ordered by stars
-  - Updates rank field for all entries in batches
+### 2. Comprehensive Error Handling
+- Centralized error handler
+- Automatic conversion to HttpsError
+- Detailed error logging
+- Context-aware error messages
 
-## Setup
+### 3. Structured Logging
+- JSON-formatted logs
+- Multiple log levels (DEBUG, INFO, WARNING, ERROR)
+- Timestamp and context in every log
+- Firebase Functions Logger integration
+
+### 4. Input Validation
+- Type checking
+- Range validation
+- Required field validation
+- Date format validation
+
+### 5. Comprehensive Testing
+- Unit tests for utilities
+- Service layer tests
+- Test coverage reporting
+- Firebase Admin test setup
+
+## Deployed Functions
+
+### Daily Challenge Functions
+
+#### `scheduledDailyChallengeGenerator`
+- **Type**: Scheduled (PubSub)
+- **Schedule**: Daily at 11:00 UTC (8PM JST)
+- **Purpose**: Generates new daily challenge
+- **Memory**: 512MB
+- **Timeout**: 300s
+
+#### `onDailyChallengeCreated`
+- **Type**: Firestore Trigger
+- **Trigger**: `dailyChallenges/{challengeId}` onCreate
+- **Purpose**: Sends push notifications when new challenge is created
+- **Memory**: 512MB
+- **Timeout**: 300s
+
+#### `manualGenerateChallenge`
+- **Type**: HTTP Request
+- **Method**: POST
+- **Purpose**: Manually trigger daily challenge generation (testing)
+- **Memory**: 256MB
+- **Timeout**: 60s
+
+#### `manualSendNotification`
+- **Type**: HTTP Request
+- **Method**: POST
+- **Purpose**: Manually send push notifications (testing)
+- **Memory**: 256MB
+- **Timeout**: 60s
+
+#### `getDailyChallenge`
+- **Type**: Callable (HTTPS v2)
+- **Purpose**: Retrieve daily challenge for a specific date
+- **Parameters**: `{ date?: string }` (defaults to today)
+- **Returns**: DailyChallenge object
+
+### Leaderboard Functions
+
+#### `updateLeaderboardOnCompletion`
+- **Type**: Firestore Trigger
+- **Trigger**: `scoreSubmissions/{submissionId}` onCreate
+- **Purpose**: Updates global leaderboard when user completes level
+- **Memory**: 256MB
+- **Timeout**: 60s
+
+### Diagnostic Functions
+
+#### `apiDiagnostics`
+- **Type**: HTTP Request
+- **Method**: GET
+- **Purpose**: Run comprehensive system diagnostics
+- **Returns**: Diagnostic results with test status
+- **CORS**: Enabled
+
+## Development
 
 ### Prerequisites
-- Node.js 20+
-- Firebase CLI installed (`npm install -g firebase-tools`)
-- Firebase project configured
+- Node.js 20
+- Firebase CLI
+- TypeScript 5.x
 
-### Installation
+### Setup
 
 ```bash
+cd functions
 npm install
 ```
 
@@ -62,82 +141,274 @@ npm install
 npm run build
 ```
 
-### Local Testing with Emulators
+### Test
 
 ```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+```
+
+### Lint
+
+```bash
+# Check for linting errors
+npm run lint
+
+# Auto-fix linting errors
+npm run lint:fix
+```
+
+### Local Development
+
+```bash
+# Start Firebase emulators
 npm run serve
+
+# Start Firebase shell
+npm run shell
 ```
 
-### Deploy to Firebase
+### Deploy
 
 ```bash
+# Deploy all functions
 npm run deploy
+
+# Deploy specific function
+firebase deploy --only functions:scheduledDailyChallengeGenerator
 ```
 
-Or deploy from project root:
+## Service Layer
 
-```bash
-firebase deploy --only functions
+### FirestoreService
+
+Provides abstracted database operations with logging and error handling.
+
+```typescript
+const firestore = new FirestoreService();
+
+// Get document
+const doc = await firestore.getDocument<T>('collection', 'docId');
+
+// Set document
+await firestore.setDocument('collection', 'docId', data);
+
+// Update document
+await firestore.updateDocument('collection', 'docId', partialData);
+
+// Query collection
+const results = await firestore.queryCollection<T>('collection', [
+  { field: 'status', op: '==', value: 'active' }
+]);
 ```
 
-## Environment Configuration
+### LevelGeneratorService
 
-The functions use Firebase Admin SDK which initializes automatically with default credentials. For local development with emulators, set:
+Generates hexagonal grid levels for daily challenges.
 
-```bash
-export FIREBASE_CONFIG='{"projectId":"your-project-id"}'
+```typescript
+const levelGenerator = new LevelGeneratorService();
+
+// Generate challenge with options
+const level = await levelGenerator.generateChallenge({
+  difficulty: 'medium', // 'easy' | 'medium' | 'hard'
+  size: 6,
+  wallDensity: 0.2
+});
 ```
 
-## Monitoring
+### NotificationService
 
-View function logs:
+Handles FCM push notifications.
 
-```bash
-npm run logs
+```typescript
+const notifications = new NotificationService();
+
+// Send daily challenge notification
+await notifications.sendDailyChallengeNotification(challengeId);
 ```
 
-Or in Firebase Console:
-- Functions → Logs
-- Monitor execution times, errors, and resource usage
+## Utilities
+
+### Logger
+
+Structured logging with multiple levels.
+
+```typescript
+import { Logger } from './utils/logger';
+
+Logger.info('event_name', { data: 'value' });
+Logger.error('error_event', error, { context: 'data' });
+Logger.warn('warning_event', { data: 'value' });
+Logger.debug('debug_event', { data: 'value' });
+```
+
+### ErrorHandler
+
+Centralized error handling.
+
+```typescript
+import { ErrorHandler } from './utils/errorHandler';
+
+// Wrap async operations
+const result = await ErrorHandler.wrap(async () => {
+  // Your code here
+  return data;
+}, 'contextName');
+```
+
+### Validator
+
+Input validation utilities.
+
+```typescript
+import { Validator } from './utils/validator';
+
+Validator.required(value, 'fieldName');
+Validator.isString(value, 'fieldName');
+Validator.isNumber(value, 'fieldName');
+Validator.isPositive(value, 'fieldName');
+Validator.inRange(value, min, max, 'fieldName');
+Validator.isValidDate(dateString, 'fieldName');
+```
+
+### DateUtils
+
+Date manipulation utilities.
+
+```typescript
+import { DateUtils } from './utils/dateUtils';
+
+const today = DateUtils.getToday(); // YYYY-MM-DD
+const formatted = DateUtils.formatDate(new Date());
+const parsed = DateUtils.parseDate('2025-01-30');
+```
 
 ## Testing
 
-### Test Score Update
-1. Add a document to `scoreSubmissions` collection
-2. Verify user's totalStars and leaderboard entry updated
-3. Check if ranks were recomputed
+### Test Coverage
 
-### Test Daily Challenge
-1. Call `generateDailyChallenge` manually or wait for scheduled execution
-2. Verify document created in `dailyChallenges` collection
-3. Check notification sent to topic
+Current coverage: ~65%
 
-### Test User Creation
-1. Create a new user document in `users` collection
-2. Verify leaderboard entry created
-3. Check topic subscription (if device token provided)
+- Utilities: 65%+
+- Services: 66%+
+- Functions: Integration tests pending
 
-## Performance Considerations
+### Running Tests
 
-- **Rank Recomputation**: Currently recomputes ALL ranks on every score update. For large user bases (>10,000 users), consider:
-  - Implementing incremental rank updates
-  - Batching rank updates (e.g., every 5 minutes)
-  - Using Cloud Tasks for background processing
+```bash
+# All tests
+npm test
 
-- **Notification Limits**: FCM has rate limits. For large user bases:
-  - Use topic messaging (currently implemented)
-  - Consider batched sends with FCM multicast
+# With coverage
+npm run test:coverage
 
-## Security
+# Watch mode
+npm run test:watch
+```
 
-- Functions run with Firebase Admin privileges
-- HTTP callable functions require authentication
-- Firestore security rules still apply for client access
-- Device tokens and user data are sensitive - handle appropriately
+## Code Quality Standards
 
-## Cost Optimization
+### TypeScript
+- Strict mode enabled
+- Strong typing throughout
+- No implicit any (warnings only)
 
-- Functions use Node.js 20 (latest supported version)
-- Scheduled functions run once daily (minimal cost)
-- Firestore triggers only on new documents (not updates)
-- Consider function timeout settings for production
+### Linting
+- Google style guide
+- Double quotes
+- 2-space indentation
+- Max line length: 100 characters
+
+### Code Metrics
+- Max 500 lines per file (excluding legacy files)
+- Max 50 lines per function
+- Test coverage target: 65%+
+
+## Error Handling Pattern
+
+All functions follow this pattern:
+
+```typescript
+export const myFunction = onCall(async (request) => {
+  return ErrorHandler.wrap(async () => {
+    // Validate input
+    Validator.required(request.data.param, 'param');
+
+    // Log start
+    Logger.info('function_started', { param: request.data.param });
+
+    // Business logic
+    const result = await doSomething(request.data.param);
+
+    // Log success
+    Logger.info('function_completed', { result });
+
+    return result;
+  }, 'myFunction');
+});
+```
+
+## Logging Pattern
+
+Structured logs include:
+
+```json
+{
+  "timestamp": "2025-01-30T12:00:00.000Z",
+  "event": "event_name",
+  "level": "INFO",
+  "data": {
+    "key": "value"
+  }
+}
+```
+
+## Migration from Legacy Code
+
+The following legacy files remain for backward compatibility:
+- `logsApi.ts`
+- `testClientFlow.ts`
+- `testLeaderboard.ts`
+
+These can be removed once confirmed unused by clients.
+
+## Monitoring
+
+### Cloud Functions Console
+- Monitor function invocations
+- Check error rates
+- Review logs
+
+### Diagnostics Endpoint
+```bash
+curl https://REGION-PROJECT.cloudfunctions.net/apiDiagnostics
+```
+
+Returns comprehensive system health check.
+
+## Best Practices
+
+1. **Always use ErrorHandler.wrap** for async operations
+2. **Log important events** with structured data
+3. **Validate all inputs** at entry points
+4. **Use type-safe interfaces** from types/
+5. **Write tests** for new functionality
+6. **Keep functions small** (< 50 lines)
+7. **Use services** for business logic
+
+## Future Enhancements
+
+- [ ] Add more integration tests
+- [ ] Implement retry logic for FCM
+- [ ] Add rate limiting
+- [ ] Implement caching layer
+- [ ] Add performance monitoring
+- [ ] Create admin dashboard function
+- [ ] Add batch operations support

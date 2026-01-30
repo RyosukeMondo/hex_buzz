@@ -1,7 +1,6 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hex_buzz/data/firebase/firebase_auth_repository.dart';
 import 'package:hex_buzz/domain/models/auth_result.dart';
 import 'package:mocktail/mocktail.dart';
@@ -15,31 +14,22 @@ class MockUser extends Mock implements firebase_auth.User {}
 
 class MockUserMetadata extends Mock implements firebase_auth.UserMetadata {}
 
-class MockGoogleSignIn extends Mock implements GoogleSignIn {}
-
-class MockGoogleSignInAccount extends Mock implements GoogleSignInAccount {}
-
-class MockGoogleSignInAuthentication extends Mock
-    implements GoogleSignInAuthentication {}
-
-class FakeAuthCredential extends Fake implements firebase_auth.AuthCredential {}
+class FakeAuthProvider extends Fake implements firebase_auth.AuthProvider {}
 
 void main() {
   // Register fallback values for mocktail
   setUpAll(() {
-    registerFallbackValue(FakeAuthCredential());
+    registerFallbackValue(FakeAuthProvider());
   });
 
   group('FirebaseAuthRepository', () {
     late MockFirebaseAuth mockFirebaseAuth;
     late FakeFirebaseFirestore fakeFirestore;
-    late MockGoogleSignIn mockGoogleSignIn;
     late FirebaseAuthRepository repository;
 
     setUp(() {
       mockFirebaseAuth = MockFirebaseAuth();
       fakeFirestore = FakeFirebaseFirestore();
-      mockGoogleSignIn = MockGoogleSignIn();
 
       // Default stub for currentUser
       when(() => mockFirebaseAuth.currentUser).thenReturn(null);
@@ -52,29 +42,18 @@ void main() {
       repository = FirebaseAuthRepository(
         firebaseAuth: mockFirebaseAuth,
         firestore: fakeFirestore,
-        googleSignIn: mockGoogleSignIn,
       );
     });
 
     group('signInWithGoogle', () {
       test('succeeds with valid Google account and creates new user', () async {
         // Setup mocks
-        final mockGoogleUser = MockGoogleSignInAccount();
-        final mockGoogleAuth = MockGoogleSignInAuthentication();
         final mockUserCredential = MockUserCredential();
         final mockFirebaseUser = MockUser();
         final mockUserMetadata = MockUserMetadata();
 
         when(
-          () => mockGoogleSignIn.signIn(),
-        ).thenAnswer((_) async => mockGoogleUser);
-        when(
-          () => mockGoogleUser.authentication,
-        ).thenAnswer((_) async => mockGoogleAuth);
-        when(() => mockGoogleAuth.accessToken).thenReturn('mock_access_token');
-        when(() => mockGoogleAuth.idToken).thenReturn('mock_id_token');
-        when(
-          () => mockFirebaseAuth.signInWithCredential(any()),
+          () => mockFirebaseAuth.signInWithPopup(any()),
         ).thenAnswer((_) async => mockUserCredential);
         when(() => mockUserCredential.user).thenReturn(mockFirebaseUser);
         when(() => mockFirebaseUser.uid).thenReturn('test-uid');
@@ -119,22 +98,12 @@ void main() {
         });
 
         // Setup mocks
-        final mockGoogleUser = MockGoogleSignInAccount();
-        final mockGoogleAuth = MockGoogleSignInAuthentication();
         final mockUserCredential = MockUserCredential();
         final mockFirebaseUser = MockUser();
         final mockUserMetadata = MockUserMetadata();
 
         when(
-          () => mockGoogleSignIn.signIn(),
-        ).thenAnswer((_) async => mockGoogleUser);
-        when(
-          () => mockGoogleUser.authentication,
-        ).thenAnswer((_) async => mockGoogleAuth);
-        when(() => mockGoogleAuth.accessToken).thenReturn('mock_access_token');
-        when(() => mockGoogleAuth.idToken).thenReturn('mock_id_token');
-        when(
-          () => mockFirebaseAuth.signInWithCredential(any()),
+          () => mockFirebaseAuth.signInWithPopup(any()),
         ).thenAnswer((_) async => mockUserCredential);
         when(() => mockUserCredential.user).thenReturn(mockFirebaseUser);
         when(() => mockFirebaseUser.uid).thenReturn('existing-uid');
@@ -164,28 +133,8 @@ void main() {
         expect(userDoc.data()!['totalStars'], 150); // Unchanged
       });
 
-      test('returns failure when user cancels sign-in', () async {
-        when(() => mockGoogleSignIn.signIn()).thenAnswer((_) async => null);
-
-        final result = await repository.signInWithGoogle();
-
-        expect(result, isA<AuthFailure>());
-        expect((result as AuthFailure).error, 'Sign-in cancelled by user');
-      });
-
       test('returns failure when Firebase auth fails', () async {
-        final mockGoogleUser = MockGoogleSignInAccount();
-        final mockGoogleAuth = MockGoogleSignInAuthentication();
-
-        when(
-          () => mockGoogleSignIn.signIn(),
-        ).thenAnswer((_) async => mockGoogleUser);
-        when(
-          () => mockGoogleUser.authentication,
-        ).thenAnswer((_) async => mockGoogleAuth);
-        when(() => mockGoogleAuth.accessToken).thenReturn('mock_access_token');
-        when(() => mockGoogleAuth.idToken).thenReturn('mock_id_token');
-        when(() => mockFirebaseAuth.signInWithCredential(any())).thenThrow(
+        when(() => mockFirebaseAuth.signInWithPopup(any())).thenThrow(
           firebase_auth.FirebaseAuthException(code: 'network-request-failed'),
         );
 
@@ -199,19 +148,8 @@ void main() {
       });
 
       test('maps Firebase auth error codes correctly', () async {
-        final mockGoogleUser = MockGoogleSignInAccount();
-        final mockGoogleAuth = MockGoogleSignInAuthentication();
-
         when(
-          () => mockGoogleSignIn.signIn(),
-        ).thenAnswer((_) async => mockGoogleUser);
-        when(
-          () => mockGoogleUser.authentication,
-        ).thenAnswer((_) async => mockGoogleAuth);
-        when(() => mockGoogleAuth.accessToken).thenReturn('mock_access_token');
-        when(() => mockGoogleAuth.idToken).thenReturn('mock_id_token');
-        when(
-          () => mockFirebaseAuth.signInWithCredential(any()),
+          () => mockFirebaseAuth.signInWithPopup(any()),
         ).thenThrow(firebase_auth.FirebaseAuthException(code: 'user-disabled'));
 
         final result = await repository.signInWithGoogle();
@@ -221,20 +159,10 @@ void main() {
       });
 
       test('returns failure when no user returned from credential', () async {
-        final mockGoogleUser = MockGoogleSignInAccount();
-        final mockGoogleAuth = MockGoogleSignInAuthentication();
         final mockUserCredential = MockUserCredential();
 
         when(
-          () => mockGoogleSignIn.signIn(),
-        ).thenAnswer((_) async => mockGoogleUser);
-        when(
-          () => mockGoogleUser.authentication,
-        ).thenAnswer((_) async => mockGoogleAuth);
-        when(() => mockGoogleAuth.accessToken).thenReturn('mock_access_token');
-        when(() => mockGoogleAuth.idToken).thenReturn('mock_id_token');
-        when(
-          () => mockFirebaseAuth.signInWithCredential(any()),
+          () => mockFirebaseAuth.signInWithPopup(any()),
         ).thenAnswer((_) async => mockUserCredential);
         when(() => mockUserCredential.user).thenReturn(null);
 
@@ -249,21 +177,18 @@ void main() {
     });
 
     group('signOut', () {
-      test('signs out from both Firebase and Google', () async {
+      test('signs out from Firebase', () async {
         when(() => mockFirebaseAuth.signOut()).thenAnswer((_) async => {});
-        when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async => null);
 
         await repository.signOut();
 
         verify(() => mockFirebaseAuth.signOut()).called(1);
-        verify(() => mockGoogleSignIn.signOut()).called(1);
       });
 
       test('completes even if sign out fails', () async {
         when(
           () => mockFirebaseAuth.signOut(),
         ).thenThrow(Exception('Sign out failed'));
-        when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async => null);
 
         // Should not throw
         await repository.signOut();
@@ -378,7 +303,6 @@ void main() {
         final testRepo = FirebaseAuthRepository(
           firebaseAuth: mockFirebaseAuth,
           firestore: fakeFirestore,
-          googleSignIn: mockGoogleSignIn,
         );
 
         final user = await testRepo.authStateChanges().first;
@@ -406,7 +330,6 @@ void main() {
         final testRepo = FirebaseAuthRepository(
           firebaseAuth: mockFirebaseAuth,
           firestore: fakeFirestore,
-          googleSignIn: mockGoogleSignIn,
         );
 
         final user = await testRepo.authStateChanges().first;
@@ -442,12 +365,10 @@ void main() {
 
       test('logout delegates to signOut', () async {
         when(() => mockFirebaseAuth.signOut()).thenAnswer((_) async => {});
-        when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async => null);
 
         await repository.logout();
 
         verify(() => mockFirebaseAuth.signOut()).called(1);
-        verify(() => mockGoogleSignIn.signOut()).called(1);
       });
     });
 

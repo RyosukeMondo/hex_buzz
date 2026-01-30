@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../core/logging/diagnostic_logger.dart';
+import '../../core/logging/logger.dart';
 import '../../domain/models/daily_challenge.dart';
 import '../../domain/models/leaderboard_entry.dart';
 import '../../domain/models/level.dart';
@@ -25,49 +26,87 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
 
   @override
   Future<DailyChallenge?> getTodaysChallenge() async {
-    final logger = DiagnosticLogger();
     try {
       final today = _getTodayDateString();
-      await logger.info('getTodaysChallenge called', data: {'date': today});
+      DiagnosticLogger.logEvent(
+        'getTodaysChallenge called',
+        data: {'date': today},
+        level: LogLevel.info,
+      );
 
       // Check cache first
       if (_cachedChallenge != null && _cachedChallengeDate == today) {
-        await logger.info('Returning cached challenge', data: {'date': today});
+        DiagnosticLogger.logEvent(
+          'Returning cached challenge',
+          data: {'date': today},
+          level: LogLevel.info,
+        );
         return _cachedChallenge;
       }
 
       // Query Firestore
-      await logger.info('Fetching from Firestore', data: {'path': 'dailyChallenges/$today'});
+      DiagnosticLogger.logEvent(
+        'Fetching from Firestore',
+        data: {'path': 'dailyChallenges/$today'},
+        level: LogLevel.info,
+      );
       final doc = await _firestore
           .collection('dailyChallenges')
           .doc(today)
           .get();
 
-      await logger.info('Document query result', data: {'exists': doc.exists});
+      DiagnosticLogger.logEvent(
+        'Document query result',
+        data: {'exists': doc.exists},
+        level: LogLevel.info,
+      );
       if (!doc.exists) {
-        await logger.warn('No daily challenge found', data: {'date': today});
+        DiagnosticLogger.logEvent(
+          'No daily challenge found',
+          data: {'date': today},
+          level: LogLevel.warn,
+        );
         return null;
       }
 
       final data = doc.data()!;
-      await logger.info('Raw data retrieved', data: {'keys': data.keys.toList()});
+      DiagnosticLogger.logEvent(
+        'Raw data retrieved',
+        data: {'keys': data.keys.toList()},
+        level: LogLevel.info,
+      );
 
       // Parse the level data
       final levelData = data['level'] as Map<String, dynamic>?;
-      await logger.info('Level data check', data: {'present': levelData != null});
+      DiagnosticLogger.logEvent(
+        'Level data check',
+        data: {'present': levelData != null},
+        level: LogLevel.info,
+      );
       if (levelData == null) {
-        await logger.error('Level data is null', data: {'date': today});
+        DiagnosticLogger.logError(
+          'Level data is null',
+          error: Exception('Level data is null'),
+          data: {'date': today},
+        );
         return null;
       }
 
-      await logger.info('Level data structure', data: {'keys': levelData.keys.toList()});
-      await logger.info('Parsing level from JSON');
+      DiagnosticLogger.logEvent(
+        'Level data structure',
+        data: {'keys': levelData.keys.toList()},
+        level: LogLevel.info,
+      );
+      DiagnosticLogger.logEvent(
+        'Parsing level from JSON',
+        level: LogLevel.info,
+      );
       final level = Level.fromJson(levelData);
-      await logger.info('Level parsed successfully', data: {
-        'id': level.id,
-        'size': level.size,
-        'cells': level.cells.length,
-      });
+      DiagnosticLogger.logEvent(
+        'Level parsed successfully',
+        data: {'id': level.id, 'size': level.size, 'cells': level.cells.length},
+        level: LogLevel.info,
+      );
 
       // Create challenge object
       final challenge = DailyChallenge(
@@ -80,7 +119,11 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
         userRank: data['userRank'] as int?,
       );
 
-      await logger.info('Daily challenge created successfully', data: {'id': today});
+      DiagnosticLogger.logEvent(
+        'Daily challenge created successfully',
+        data: {'id': today},
+        level: LogLevel.info,
+      );
 
       // Cache the result
       _cachedChallenge = challenge;
@@ -88,14 +131,18 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
 
       return challenge;
     } catch (e, stackTrace) {
-      await logger.error('Error in getTodaysChallenge', data: {
-        'error': e.toString(),
-        'stackTrace': stackTrace.toString(),
-      });
+      DiagnosticLogger.logError(
+        'Error in getTodaysChallenge',
+        error: e,
+        stackTrace: stackTrace,
+      );
       // On error, return cached data if available for today
       final today = _getTodayDateString();
       if (_cachedChallenge != null && _cachedChallengeDate == today) {
-        await logger.warn('Returning cached challenge after error');
+        DiagnosticLogger.logEvent(
+          'Returning cached challenge after error',
+          level: LogLevel.warn,
+        );
         return _cachedChallenge;
       }
       return null;
@@ -110,10 +157,16 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
   }) async {
     try {
       final today = _getTodayDateString();
-      print('📝 Submitting challenge completion for $today');
-      print('   User: $userId');
-      print('   Stars: $stars');
-      print('   Time: ${completionTimeMs}ms');
+      DiagnosticLogger.logEvent(
+        'submitting_challenge_completion',
+        data: {
+          'date': today,
+          'userId': userId,
+          'stars': stars,
+          'completionTimeMs': completionTimeMs,
+        },
+        level: LogLevel.info,
+      );
 
       final entryRef = _firestore
           .collection('dailyChallenges')
@@ -137,6 +190,15 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
             stars == existingStars && completionTimeMs < existingTime;
 
         if (!isBetterStars && !isBetterTime) {
+          DiagnosticLogger.logEvent(
+            'challenge_completion_not_improved',
+            data: {
+              'userId': userId,
+              'existingStars': existingStars,
+              'newStars': stars,
+            },
+            level: LogLevel.debug,
+          );
           // Not an improvement, don't update
           return true;
         }
@@ -145,6 +207,11 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
       // Get user document from Firestore
       final userDoc = await _firestore.collection('users').doc(userId).get();
       if (!userDoc.exists) {
+        DiagnosticLogger.logEvent(
+          'user_not_found_for_challenge',
+          data: {'userId': userId},
+          level: LogLevel.warn,
+        );
         return false;
       }
 
@@ -154,7 +221,14 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
       final totalStars = userData['totalStars'] as int? ?? 0;
 
       // Submit to daily challenge entries
-      print('   Writing to dailyChallenges/$today/entries/$userId');
+      DiagnosticLogger.logEvent(
+        'writing_challenge_entry',
+        data: {
+          'path': 'dailyChallenges/$today/entries/$userId',
+          'username': username,
+        },
+        level: LogLevel.debug,
+      );
       await entryRef.set({
         'userId': userId,
         'username': username,
@@ -164,26 +238,51 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
         'completionTime': completionTimeMs,
         'completedAt': FieldValue.serverTimestamp(),
       });
-      print('   ✓ Entry written successfully');
+      DiagnosticLogger.logEvent(
+        'challenge_entry_written',
+        data: {'userId': userId},
+        level: LogLevel.debug,
+      );
 
       // Only increment completion count if this is the first completion
       if (isFirstCompletion) {
-        print('   Incrementing completion count (first completion)');
+        DiagnosticLogger.logEvent(
+          'incrementing_completion_count',
+          data: {'date': today, 'isFirstCompletion': true},
+          level: LogLevel.debug,
+        );
         await _firestore.collection('dailyChallenges').doc(today).update({
           'completionCount': FieldValue.increment(1),
         });
-        print('   ✓ Completion count incremented');
+        DiagnosticLogger.logEvent(
+          'completion_count_incremented',
+          data: {'date': today},
+          level: LogLevel.debug,
+        );
       } else {
-        print('   Skipping completion count (already completed)');
+        DiagnosticLogger.logEvent(
+          'skipping_completion_count',
+          data: {'date': today, 'isFirstCompletion': false},
+          level: LogLevel.debug,
+        );
       }
 
       // Invalidate cache
       _cachedChallenge = null;
       _cachedChallengeDate = null;
 
-      print('✅ Challenge completion submitted successfully!');
+      DiagnosticLogger.logEvent(
+        'challenge_completion_submitted_successfully',
+        data: {'userId': userId, 'date': today, 'stars': stars},
+        level: LogLevel.info,
+      );
       return true;
     } catch (e) {
+      DiagnosticLogger.logError(
+        'challenge_completion_submission_failed',
+        error: e,
+        data: {'userId': userId},
+      );
       return false;
     }
   }

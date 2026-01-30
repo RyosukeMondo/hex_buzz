@@ -9,7 +9,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/logging/diagnostic_logger.dart';
+import 'core/logging/logger.dart';
 import 'data/firebase/firebase_auth_repository.dart';
+import 'data/firebase/firestore_progress_repository.dart';
+import 'data/hybrid_auth_repository.dart';
+import 'data/local/local_guest_auth_repository.dart';
 import 'firebase_options.dart';
 import 'data/firebase/firestore_daily_challenge_repository.dart';
 import 'data/firebase/firebase_leaderboard_repository.dart';
@@ -66,7 +70,7 @@ void main() async {
   if (kDebugMode) debugPrint('Firebase initialized');
 
   // Initialize Diagnostic Logger for autonomous debugging
-  DiagnosticLogger().init();
+  DiagnosticLogger.init();
 
   // Initialize Firebase Performance Monitoring
   final performance = FirebasePerformance.instance;
@@ -91,10 +95,13 @@ void main() async {
 
   // Initialize all repositories
   final levelRepository = await _initializeLevelRepository();
-  final progressRepository = await _initializeProgressRepository();
-  final authRepository = _initializeAuthRepository();
+  final localProgressRepository = await _initializeProgressRepository();
   final (leaderboardRepository, dailyChallengeRepository) =
       _initializeFirebaseRepositories();
+  final authRepository = await _initializeAuthRepository(
+    localProgressRepository,
+    leaderboardRepository,
+  );
 
   // Initialize notification service (without user ID initially)
   final notificationService = createNotificationService();
@@ -109,7 +116,7 @@ void main() async {
     ProviderScope(
       overrides: [
         levelRepositoryProvider.overrideWithValue(levelRepository),
-        progressRepositoryProvider.overrideWithValue(progressRepository),
+        progressRepositoryProvider.overrideWithValue(localProgressRepository),
         authRepositoryProvider.overrideWithValue(authRepository),
         leaderboardRepositoryProvider.overrideWithValue(leaderboardRepository),
         dailyChallengeRepositoryProvider.overrideWithValue(
@@ -156,10 +163,26 @@ Future<LocalProgressRepository> _initializeProgressRepository() async {
   return progressRepo;
 }
 
-/// Initializes Firebase auth repository.
-FirebaseAuthRepository _initializeAuthRepository() {
-  final authRepo = FirebaseAuthRepository();
-  if (kDebugMode) debugPrint('Firebase auth repository initialized');
+/// Initializes hybrid auth repository with migration support.
+Future<HybridAuthRepository> _initializeAuthRepository(
+  LocalProgressRepository localProgress,
+  FirebaseLeaderboardRepository leaderboard,
+) async {
+  final prefs = await SharedPreferences.getInstance();
+  final firebaseRepo = FirebaseAuthRepository();
+  final guestRepo = LocalGuestAuthRepository(prefs: prefs);
+  final firestoreProgress = FirestoreProgressRepository();
+
+  final authRepo = HybridAuthRepository(
+    firebaseRepo: firebaseRepo,
+    guestRepo: guestRepo,
+    localProgress: localProgress,
+    firestoreProgress: firestoreProgress,
+    leaderboard: leaderboard,
+  );
+
+  if (kDebugMode)
+    debugPrint('Hybrid auth repository initialized with migration support');
   return authRepo;
 }
 
@@ -230,17 +253,8 @@ void _initializeNotificationService(
     // Subscribe to enabled topics based on user preferences
     await initializeNotificationSubscriptions(notificationService, prefs);
 
-    // Listen to incoming notification messages
-    notificationService.onMessageReceived.listen((message) {
-      if (kDebugMode) {
-        debugPrint('Notification received: $message');
-      }
-      // TODO: Handle notification navigation and UI display
-      // For example:
-      // - Navigate to leaderboard on rank change notification
-      // - Navigate to daily challenge on new challenge notification
-      // - Show foreground notification toast/snackbar
-    });
+    // Note: Notification navigation is handled by HexBuzzApp's navigatorKey
+    // The stream handler will be set up in HexBuzzApp.initState()
   } catch (e) {
     if (kDebugMode) {
       debugPrint('Error initializing notification service: $e');
@@ -248,12 +262,125 @@ void _initializeNotificationService(
   }
 }
 
-class HexBuzzApp extends StatelessWidget {
+class HexBuzzApp extends ConsumerStatefulWidget {
   const HexBuzzApp({super.key});
+
+  @override
+  ConsumerState<HexBuzzApp> createState() => _HexBuzzAppState();
+}
+
+class _HexBuzzAppState extends ConsumerState<HexBuzzApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _setupNotificationHandlers();
+  }
+
+  /// Sets up handlers for incoming notifications.
+  ///
+  /// Listens to the notification service stream and handles navigation
+  /// and UI display based on notification type.
+  void _setupNotificationHandlers() {
+    final notificationService = ref.read(notificationServiceProvider);
+
+    notificationService.onMessageReceived.listen((message) {
+      if (kDebugMode) {
+        debugPrint('Notification received: $message');
+      }
+
+      _handleNotificationMessage(message);
+    });
+  }
+
+  /// Handles a received notification message.
+  ///
+  /// Shows a snackbar for foreground notifications and navigates
+  /// based on the notification type and data.
+  void _handleNotificationMessage(Map<String, dynamic> message) {
+    final context = _navigatorKey.currentContext;
+    if (context == null) return;
+
+    final title = message['title'] as String? ?? '';
+    final body = message['body'] as String? ?? '';
+    final data = message['data'] as Map<String, dynamic>? ?? {};
+
+    DiagnosticLogger.logEvent(
+      'notification_received',
+      data: {'title': title, 'type': data['type']},
+      level: LogLevel.info,
+    );
+
+    // Show snackbar for foreground notifications
+    if (title.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              if (body.isNotEmpty) Text(body),
+            ],
+          ),
+          action: SnackBarAction(
+            label: 'View',
+            onPressed: () => _navigateFromNotification(data),
+          ),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
+  }
+
+  /// Navigates to the appropriate screen based on notification data.
+  void _navigateFromNotification(Map<String, dynamic> data) {
+    final type = data['type'] as String?;
+    final route = data['route'] as String?;
+
+    DiagnosticLogger.logEvent(
+      'notification_navigation',
+      data: {'type': type, 'route': route},
+      level: LogLevel.info,
+    );
+
+    switch (type) {
+      case 'daily_challenge':
+        _navigatorKey.currentState?.pushNamed(AppRoutes.dailyChallenge);
+        break;
+
+      case 'leaderboard_update':
+      case 'rank_change':
+        _navigatorKey.currentState?.pushNamed(AppRoutes.leaderboard);
+        break;
+
+      case 'new_level':
+        final levelIndex = data['levelIndex'] as int?;
+        _navigatorKey.currentState?.pushNamed(
+          AppRoutes.game,
+          arguments: levelIndex,
+        );
+        break;
+
+      default:
+        // Generic route from notification data
+        if (route != null) {
+          _navigatorKey.currentState?.pushNamed(route);
+        } else {
+          // Default to front screen
+          _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+            AppRoutes.front,
+            (route) => false,
+          );
+        }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'HexBuzz',
       theme: HoneyTheme.lightTheme,
       initialRoute: AppRoutes.front,

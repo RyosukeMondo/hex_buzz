@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/foundation.dart';
 
+import '../../core/logging/diagnostic_logger.dart';
+import '../../core/logging/logger.dart';
 import '../../domain/models/auth_result.dart';
 import '../../domain/models/user.dart' as domain;
 import '../../domain/services/auth_repository.dart';
@@ -26,7 +28,11 @@ class FirebaseAuthRepository implements AuthRepository {
        _firestore = firestore ?? FirebaseFirestore.instance {
     // Listen to Firebase auth state changes and emit to our stream
     _firebaseAuth.authStateChanges().listen((firebaseUser) async {
-      print('🔐 Auth state change: ${firebaseUser?.uid ?? "signed out"}');
+      DiagnosticLogger.logEvent(
+        'firebase_auth_state_changed',
+        data: {'userId': firebaseUser?.uid, 'isSignedIn': firebaseUser != null},
+        level: LogLevel.info,
+      );
 
       if (firebaseUser == null) {
         _authStateController.add(null);
@@ -41,14 +47,24 @@ class FirebaseAuthRepository implements AuthRepository {
               _authStateController.add(fullUser);
             })
             .catchError((e) {
-              print('⚠️ Firestore sync failed: $e');
+              DiagnosticLogger.logError(
+                'firestore_user_sync_failed',
+                error: e,
+                data: {'userId': firebaseUser.uid},
+              );
               // Keep the quick user if Firestore fails
             });
       }
     });
 
-    print('🔐 FirebaseAuthRepository initialized');
-    print('🔐 Current user: ${_firebaseAuth.currentUser?.uid ?? "none"}');
+    DiagnosticLogger.logEvent(
+      'firebase_auth_repository_initialized',
+      data: {
+        'hasCurrentUser': _firebaseAuth.currentUser != null,
+        'currentUserId': _firebaseAuth.currentUser?.uid,
+      },
+      level: LogLevel.info,
+    );
   }
 
   @override
@@ -101,7 +117,11 @@ class FirebaseAuthRepository implements AuthRepository {
   @override
   Future<domain.User?> getCurrentUser() async {
     final firebaseUser = _firebaseAuth.currentUser;
-    print('🔐 getCurrentUser called: ${firebaseUser?.uid ?? "no user"}');
+    DiagnosticLogger.logEvent(
+      'get_current_user_called',
+      data: {'hasUser': firebaseUser != null, 'userId': firebaseUser?.uid},
+      level: LogLevel.debug,
+    );
     if (firebaseUser == null) {
       return null;
     }

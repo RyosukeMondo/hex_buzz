@@ -40,8 +40,8 @@ class _AnimatedCellPaintState extends State<AnimatedCellPaint>
   /// Track if we've already animated to avoid re-triggering on rebuilds.
   bool _hasAnimated = false;
 
-  /// Whether reduced motion is enabled.
-  bool _reduceMotion = false;
+  /// Track previous isVisited value to detect changes.
+  bool _previousIsVisited = false;
 
   @override
   void initState() {
@@ -66,35 +66,7 @@ class _AnimatedCellPaintState extends State<AnimatedCellPaint>
       _controller.value = 1.0;
       _hasAnimated = true;
     }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _reduceMotion = MediaQuery.of(context).disableAnimations;
-
-    // If reduce motion is enabled and we haven't animated yet, jump to final state.
-    if (_reduceMotion && !_hasAnimated && widget.isVisited) {
-      _controller.value = 1.0;
-      _hasAnimated = true;
-    }
-  }
-
-  @override
-  void didUpdateWidget(AnimatedCellPaint oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // Trigger animation only when isVisited changes from false to true
-    // and we haven't animated yet.
-    if (widget.isVisited && !oldWidget.isVisited && !_hasAnimated) {
-      _hasAnimated = true;
-      if (_reduceMotion) {
-        // Skip animation, jump to final state.
-        _controller.value = 1.0;
-      } else {
-        _controller.forward(from: 0.0);
-      }
-    }
+    _previousIsVisited = widget.isVisited;
   }
 
   @override
@@ -105,13 +77,41 @@ class _AnimatedCellPaintState extends State<AnimatedCellPaint>
 
   @override
   Widget build(BuildContext context) {
+    // Check for reduced motion in build instead of didChangeDependencies
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+
+    // Trigger animation when isVisited changes from false to true
+    // This replaces didUpdateWidget lifecycle method
+    if (widget.isVisited && !_previousIsVisited && !_hasAnimated) {
+      _hasAnimated = true;
+      if (reduceMotion) {
+        // Skip animation, jump to final state.
+        _controller.value = 1.0;
+      } else {
+        // Schedule animation for next frame to avoid calling setState during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _controller.forward(from: 0.0);
+          }
+        });
+      }
+    }
+
+    // Handle case where reduce motion is enabled after init
+    if (reduceMotion && !_hasAnimated && widget.isVisited) {
+      _controller.value = 1.0;
+      _hasAnimated = true;
+    }
+
+    _previousIsVisited = widget.isVisited;
+
     // If not visited, show nothing (or could show the child with no effect).
     if (!widget.isVisited) {
       return const SizedBox.shrink();
     }
 
     // If reduced motion, show static final state.
-    if (_reduceMotion) {
+    if (reduceMotion) {
       return widget.child;
     }
 

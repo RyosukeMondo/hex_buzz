@@ -26,8 +26,11 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
   late AnimationController _pulseController;
   late Animation<double> _opacityAnimation;
 
-  /// Whether reduced motion is enabled.
+  /// Whether reduced motion is enabled (cached from previous build).
   bool _reduceMotion = false;
+
+  /// Whether animation has been started.
+  bool _animationStarted = false;
 
   @override
   void initState() {
@@ -40,24 +43,6 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
     _opacityAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final shouldReduceMotion = MediaQuery.of(context).disableAnimations;
-
-    if (shouldReduceMotion != _reduceMotion) {
-      _reduceMotion = shouldReduceMotion;
-      if (_reduceMotion) {
-        _pulseController.stop();
-        _pulseController.value = 1.0;
-      } else {
-        _pulseController.repeat(reverse: true);
-      }
-    } else if (!_reduceMotion && !_pulseController.isAnimating) {
-      _pulseController.repeat(reverse: true);
-    }
   }
 
   @override
@@ -77,6 +62,34 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Check for reduced motion in build instead of didChangeDependencies
+    final shouldReduceMotion = MediaQuery.of(context).disableAnimations;
+
+    // Handle animation state changes based on reduced motion setting
+    if (shouldReduceMotion != _reduceMotion) {
+      _reduceMotion = shouldReduceMotion;
+      if (_reduceMotion) {
+        _pulseController.stop();
+        _pulseController.value = 1.0;
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && !_pulseController.isAnimating) {
+            _pulseController.repeat(reverse: true);
+          }
+        });
+      }
+    } else if (!_reduceMotion &&
+        !_pulseController.isAnimating &&
+        !_animationStarted) {
+      // Start animation on first build if reduced motion is not enabled
+      _animationStarted = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _pulseController.repeat(reverse: true);
+        }
+      });
+    }
+
     return Semantics(
       label: 'HexBuzz welcome screen. Tap anywhere to start.',
       button: true,

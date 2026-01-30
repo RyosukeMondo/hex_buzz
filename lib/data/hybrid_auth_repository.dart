@@ -2,9 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../core/logging/diagnostic_logger.dart';
+import '../core/logging/logger.dart';
 import '../domain/models/auth_result.dart';
 import '../domain/models/user.dart' as domain;
 import '../domain/services/auth_repository.dart';
+import '../domain/services/leaderboard_repository.dart';
+import '../domain/services/progress_repository.dart';
 import 'firebase/firebase_auth_repository.dart';
 import 'local/local_guest_auth_repository.dart';
 
@@ -19,6 +23,9 @@ import 'local/local_guest_auth_repository.dart';
 class HybridAuthRepository implements AuthRepository {
   final FirebaseAuthRepository _firebaseRepo;
   final LocalGuestAuthRepository _guestRepo;
+  final ProgressRepository? _localProgress;
+  final ProgressRepository? _firestoreProgress;
+  final LeaderboardRepository? _leaderboard;
   final StreamController<domain.User?> _authStateController =
       StreamController<domain.User?>.broadcast();
 
@@ -29,8 +36,14 @@ class HybridAuthRepository implements AuthRepository {
   HybridAuthRepository({
     required FirebaseAuthRepository firebaseRepo,
     required LocalGuestAuthRepository guestRepo,
+    ProgressRepository? localProgress,
+    ProgressRepository? firestoreProgress,
+    LeaderboardRepository? leaderboard,
   }) : _firebaseRepo = firebaseRepo,
        _guestRepo = guestRepo,
+       _localProgress = localProgress,
+       _firestoreProgress = firestoreProgress,
+       _leaderboard = leaderboard,
        _activeRepo = guestRepo {
     // Listen to auth state changes from both repositories
     _firebaseRepo.authStateChanges().listen((user) {
@@ -58,29 +71,48 @@ class HybridAuthRepository implements AuthRepository {
   }
 
   Future<void> _initializeAuthState() async {
-    print('[HybridAuth] Initializing auth state...');
+    DiagnosticLogger.logEvent(
+      'hybrid_auth_initialization_started',
+      level: LogLevel.debug,
+    );
 
     // Check Firebase first (higher priority)
     final firebaseUser = await _firebaseRepo.getCurrentUser();
     if (firebaseUser != null) {
-      print('[HybridAuth] ✓ Firebase user found: ${firebaseUser.email}');
+      DiagnosticLogger.logEvent(
+        'firebase_user_found',
+        data: {
+          'userId': firebaseUser.id,
+          'email': firebaseUser.email,
+          'isGuest': false,
+        },
+        level: LogLevel.info,
+      );
       _activeRepo = _firebaseRepo;
       _currentUser = firebaseUser;
       _authStateController.add(firebaseUser);
       return;
     }
 
-    print('[HybridAuth] No Firebase user, checking guest...');
+    DiagnosticLogger.logEvent('checking_guest_auth', level: LogLevel.debug);
 
     // Check guest auth
     final guestUser = await _guestRepo.getCurrentUser();
     if (guestUser != null) {
-      print('[HybridAuth] ✓ Guest user found: ${guestUser.username}');
+      DiagnosticLogger.logEvent(
+        'guest_user_found',
+        data: {
+          'userId': guestUser.id,
+          'username': guestUser.username,
+          'isGuest': true,
+        },
+        level: LogLevel.info,
+      );
       _activeRepo = _guestRepo;
       _currentUser = guestUser;
       _authStateController.add(guestUser);
     } else {
-      print('[HybridAuth] No user found');
+      DiagnosticLogger.logEvent('no_user_found', level: LogLevel.info);
     }
   }
 
@@ -119,13 +151,23 @@ class HybridAuthRepository implements AuthRepository {
 
   @override
   Future<domain.User?> getCurrentUser() async {
-    print('[HybridAuth] getCurrentUser() called, _initialized=$_initialized');
+    DiagnosticLogger.logEvent(
+      'hybrid_auth_get_current_user',
+      data: {'initialized': _initialized},
+      level: LogLevel.debug,
+    );
     // Initialize on first call
     if (!_initialized) {
-      print('[HybridAuth] First call, initializing...');
+      DiagnosticLogger.logEvent(
+        'hybrid_auth_first_call_initializing',
+        level: LogLevel.debug,
+      );
       await _initializeAuthState();
       _initialized = true;
-      print('[HybridAuth] Initialization complete');
+      DiagnosticLogger.logEvent(
+        'hybrid_auth_initialization_complete',
+        level: LogLevel.info,
+      );
     }
 
     if (_currentUser != null) {
@@ -170,18 +212,123 @@ class HybridAuthRepository implements AuthRepository {
 
   /// Migrates guest data to Firebase when a guest upgrades to a Firebase account.
   ///
-  /// TODO: Implement data migration logic:
-  /// - Copy progress from SharedPreferences to Firestore
-  /// - Copy level completion data
-  /// - Copy statistics
-  /// - Clean up local guest data
+  /// Copies local progress data to Firestore and submits scores to the leaderboard.
+  /// This process is fault-tolerant - if migration fails, the local data is preserved
+  /// and the user can still use their Firebase account.
   Future<void> _migrateGuestDataToFirebase(
     domain.User guestUser,
     domain.User firebaseUser,
   ) async {
-    // TODO: Implement data migration
-    // For now, just clean up guest session
-    await _guestRepo.signOut();
+    // Skip migration if repositories not provided
+    if (_localProgress == null || _firestoreProgress == null) {
+      DiagnosticLogger.logEvent(
+        'migration_skipped_no_repositories',
+        data: {'guestId': guestUser.id, 'firebaseId': firebaseUser.id},
+        level: LogLevel.warn,
+      );
+      await _guestRepo.signOut();
+      return;
+    }
+
+    try {
+      DiagnosticLogger.logEvent(
+        'migration_started',
+        data: {'guestId': guestUser.id, 'firebaseId': firebaseUser.id},
+        level: LogLevel.info,
+      );
+
+      // Load local guest progress
+      final guestUserId = guestUser.isGuest ? 'guest' : guestUser.id;
+      final localProgress = await _localProgress!.loadForUser(guestUserId);
+
+      if (localProgress.levels.isEmpty) {
+        DiagnosticLogger.logEvent(
+          'migration_no_data',
+          data: {'userId': guestUserId},
+          level: LogLevel.info,
+        );
+        await _guestRepo.signOut();
+        return;
+      }
+
+      DiagnosticLogger.logEvent(
+        'migration_progress_loaded',
+        data: {
+          'userId': guestUserId,
+          'levelsCount': localProgress.levels.length,
+          'totalStars': localProgress.totalStars,
+        },
+        level: LogLevel.info,
+      );
+
+      // Migrate progress to Firestore
+      await _firestoreProgress!.saveForUser(firebaseUser.id, localProgress);
+
+      DiagnosticLogger.logEvent(
+        'migration_progress_saved',
+        data: {
+          'firebaseId': firebaseUser.id,
+          'levelsCount': localProgress.levels.length,
+        },
+        level: LogLevel.info,
+      );
+
+      // Submit total score to leaderboard if available
+      if (_leaderboard != null && localProgress.totalStars > 0) {
+        final submitted = await _leaderboard!.submitScore(
+          userId: firebaseUser.id,
+          stars: localProgress.totalStars,
+        );
+
+        DiagnosticLogger.logEvent(
+          'migration_leaderboard_submitted',
+          data: {
+            'firebaseId': firebaseUser.id,
+            'stars': localProgress.totalStars,
+            'success': submitted,
+          },
+          level: submitted ? LogLevel.info : LogLevel.warn,
+        );
+      }
+
+      // Clear local guest data after successful migration
+      await _localProgress!.resetForUser(guestUserId);
+
+      DiagnosticLogger.logEvent(
+        'migration_completed',
+        data: {
+          'guestId': guestUser.id,
+          'firebaseId': firebaseUser.id,
+          'levelsMigrated': localProgress.levels.length,
+          'totalStars': localProgress.totalStars,
+        },
+        level: LogLevel.info,
+      );
+    } catch (error, stackTrace) {
+      DiagnosticLogger.logEvent(
+        'migration_failed',
+        data: {
+          'guestId': guestUser.id,
+          'firebaseId': firebaseUser.id,
+          'error': error.toString(),
+        },
+        level: LogLevel.error,
+      );
+
+      final logger = LoggerFactory.create('hybrid_auth');
+      logger.error('migration_failed', {
+        'guestId': guestUser.id,
+        'firebaseId': firebaseUser.id,
+        'error': error.toString(),
+        'stackTrace': stackTrace.toString(),
+      });
+
+      // Don't throw - allow user to continue even if migration fails
+      // Local data remains as backup
+    } finally {
+      // Always clean up guest session
+      await _guestRepo.signOut();
+    }
   }
 
   // Legacy methods - delegate to active repo

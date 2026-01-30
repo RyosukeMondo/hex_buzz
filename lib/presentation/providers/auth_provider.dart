@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/logging/diagnostic_logger.dart';
+import '../../core/logging/logger.dart';
 import '../../domain/models/auth_result.dart';
 import '../../domain/models/user.dart';
 import '../../domain/services/auth_repository.dart';
@@ -29,26 +31,48 @@ class AuthNotifier extends AsyncNotifier<User?> {
   Future<User?> build() async {
     _repository = ref.watch(authRepositoryProvider);
 
-    print('🔐 AuthNotifier build started');
+    DiagnosticLogger.logEvent(
+      'auth_notifier_build_started',
+      level: LogLevel.debug,
+    );
 
     // Cancel any existing subscription to avoid duplicates
     _authSubscription?.cancel();
 
     // Listen to auth state changes (session restore, sign in, sign out)
     _authSubscription = _repository.authStateChanges().listen((user) {
-      print('🔐 AuthNotifier stream update: user=${user?.id ?? "null"}');
+      DiagnosticLogger.logEvent(
+        'auth_state_stream_update',
+        data: {
+          'userId': user?.id,
+          'isAuthenticated': user != null,
+          'isGuest': user?.isGuest,
+        },
+        level: LogLevel.info,
+      );
       state = AsyncValue.data(user);
     });
 
     // Clean up subscription when provider is disposed
     ref.onDispose(() {
-      print('🔐 AuthNotifier disposing subscription');
+      DiagnosticLogger.logEvent(
+        'auth_notifier_disposing',
+        level: LogLevel.debug,
+      );
       _authSubscription?.cancel();
     });
 
     // Get initial user (from persisted session)
     final initialUser = await _repository.getCurrentUser();
-    print('🔐 AuthNotifier build: initialUser=${initialUser?.id ?? "null"}');
+    DiagnosticLogger.logEvent(
+      'auth_notifier_build_complete',
+      data: {
+        'hasInitialUser': initialUser != null,
+        'userId': initialUser?.id,
+        'isGuest': initialUser?.isGuest,
+      },
+      level: LogLevel.info,
+    );
 
     return initialUser;
   }
