@@ -4,12 +4,22 @@
  */
 
 import "../setup";
-import { validateDailyChallengeCompletion } from "../../src/functions/dailyChallenge";
+import { validateDailyChallengeCompletionHandler } from "../../src/functions/dailyChallenge";
 import { FirestoreService } from "../../src/services/firestoreService";
 import { DailyChallengeCompletion } from "../../src/types/challenge";
 
 // Mock FirestoreService
-jest.mock("../../src/services/firestoreService");
+jest.mock("../../src/services/firestoreService", () => {
+  return {
+    FirestoreService: jest.fn().mockImplementation(() => {
+      return {
+        getDocument: jest.fn(),
+        setDocument: jest.fn(),
+        queryDocuments: jest.fn(),
+      };
+    }),
+  };
+});
 
 describe("validateDailyChallengeCompletion", () => {
   let mockFirestoreService: jest.Mocked<FirestoreService>;
@@ -18,7 +28,7 @@ describe("validateDailyChallengeCompletion", () => {
     // Reset mocks before each test
     jest.clearAllMocks();
 
-    // Get mocked instance
+    // Get the mocked instance that will be used by the function
     mockFirestoreService = new FirestoreService() as jest.Mocked<FirestoreService>;
   });
 
@@ -61,12 +71,13 @@ describe("validateDailyChallengeCompletion", () => {
     mockFirestoreService.queryDocuments.mockResolvedValue(mockEntries);
 
     // Call function
-    const request = {
-      auth: { uid: userId },
-      data: { dateId, stars, completionTimeMs },
-    };
-
-    const result = await validateDailyChallengeCompletion(request as any);
+    const result = await validateDailyChallengeCompletionHandler(
+      {
+        auth: { uid: userId },
+        data: { dateId, stars, completionTimeMs },
+      },
+      mockFirestoreService
+    );
 
     // Assertions
     expect(result).toEqual({
@@ -116,16 +127,16 @@ describe("validateDailyChallengeCompletion", () => {
     };
     mockFirestoreService.getDocument.mockResolvedValue(existingCompletion);
 
-    // Call function
-    const request = {
-      auth: { uid: userId },
-      data: { dateId, stars, completionTimeMs },
-    };
-
-    // Expect HttpsError to be thrown
-    await expect(validateDailyChallengeCompletion(request as any)).rejects.toThrow(
-      "User has already completed this daily challenge"
-    );
+    // Call function and expect HttpsError to be thrown
+    await expect(
+      validateDailyChallengeCompletionHandler(
+        {
+          auth: { uid: userId },
+          data: { dateId, stars, completionTimeMs },
+        },
+        mockFirestoreService
+      )
+    ).rejects.toThrow("User has already completed this daily challenge");
 
     // setDocument should NOT be called
     expect(mockFirestoreService.setDocument).not.toHaveBeenCalled();
@@ -137,14 +148,12 @@ describe("validateDailyChallengeCompletion", () => {
     const stars = -1;
     const completionTimeMs = 45000;
 
-    const request = {
-      auth: { uid: userId },
-      data: { dateId, stars, completionTimeMs },
-    };
-
-    await expect(validateDailyChallengeCompletion(request as any)).rejects.toThrow(
-      "stars must be between 0 and 3"
-    );
+    await expect(
+      validateDailyChallengeCompletionHandler({
+        auth: { uid: userId },
+        data: { dateId, stars, completionTimeMs },
+      })
+    ).rejects.toThrow("stars must be between 0 and 3");
   });
 
   it("should reject invalid stars (above 3)", async () => {
@@ -153,14 +162,12 @@ describe("validateDailyChallengeCompletion", () => {
     const stars = 4;
     const completionTimeMs = 45000;
 
-    const request = {
-      auth: { uid: userId },
-      data: { dateId, stars, completionTimeMs },
-    };
-
-    await expect(validateDailyChallengeCompletion(request as any)).rejects.toThrow(
-      "stars must be between 0 and 3"
-    );
+    await expect(
+      validateDailyChallengeCompletionHandler({
+        auth: { uid: userId },
+        data: { dateId, stars, completionTimeMs },
+      })
+    ).rejects.toThrow("stars must be between 0 and 3");
   });
 
   it("should reject suspicious completion times (< 1000ms)", async () => {
@@ -169,29 +176,25 @@ describe("validateDailyChallengeCompletion", () => {
     const stars = 3;
     const completionTimeMs = 500;
 
-    const request = {
-      auth: { uid: userId },
-      data: { dateId, stars, completionTimeMs },
-    };
-
-    await expect(validateDailyChallengeCompletion(request as any)).rejects.toThrow(
-      "completionTimeMs must be at least 1000ms"
-    );
+    await expect(
+      validateDailyChallengeCompletionHandler({
+        auth: { uid: userId },
+        data: { dateId, stars, completionTimeMs },
+      })
+    ).rejects.toThrow("completionTimeMs must be at least 1000ms");
   });
 
   it("should reject unauthenticated users", async () => {
-    const request = {
-      auth: null,
-      data: {
-        dateId: "2026-01-30",
-        stars: 3,
-        completionTimeMs: 45000,
-      },
-    };
-
-    await expect(validateDailyChallengeCompletion(request as any)).rejects.toThrow(
-      "User must be authenticated"
-    );
+    await expect(
+      validateDailyChallengeCompletionHandler({
+        auth: null,
+        data: {
+          dateId: "2026-01-30",
+          stars: 3,
+          completionTimeMs: 45000,
+        },
+      })
+    ).rejects.toThrow("User must be authenticated");
   });
 
   it("should correctly calculate rank with multiple users", async () => {
@@ -214,12 +217,13 @@ describe("validateDailyChallengeCompletion", () => {
     ];
     mockFirestoreService.queryDocuments.mockResolvedValue(mockEntries);
 
-    const request = {
-      auth: { uid: userId },
-      data: { dateId, stars, completionTimeMs },
-    };
-
-    const result = await validateDailyChallengeCompletion(request as any);
+    const result = await validateDailyChallengeCompletionHandler(
+      {
+        auth: { uid: userId },
+        data: { dateId, stars, completionTimeMs },
+      },
+      mockFirestoreService
+    );
 
     expect(result).toEqual({
       success: true,
@@ -232,30 +236,27 @@ describe("validateDailyChallengeCompletion", () => {
     const userId = "user123";
 
     // Missing dateId
-    const request1 = {
-      auth: { uid: userId },
-      data: { stars: 3, completionTimeMs: 45000 },
-    };
-    await expect(validateDailyChallengeCompletion(request1 as any)).rejects.toThrow(
-      "dateId is required"
-    );
+    await expect(
+      validateDailyChallengeCompletionHandler({
+        auth: { uid: userId },
+        data: { stars: 3, completionTimeMs: 45000 } as any,
+      })
+    ).rejects.toThrow("dateId is required");
 
     // Missing stars
-    const request2 = {
-      auth: { uid: userId },
-      data: { dateId: "2026-01-30", completionTimeMs: 45000 },
-    };
-    await expect(validateDailyChallengeCompletion(request2 as any)).rejects.toThrow(
-      "stars is required"
-    );
+    await expect(
+      validateDailyChallengeCompletionHandler({
+        auth: { uid: userId },
+        data: { dateId: "2026-01-30", completionTimeMs: 45000 } as any,
+      })
+    ).rejects.toThrow("stars is required");
 
     // Missing completionTimeMs
-    const request3 = {
-      auth: { uid: userId },
-      data: { dateId: "2026-01-30", stars: 3 },
-    };
-    await expect(validateDailyChallengeCompletion(request3 as any)).rejects.toThrow(
-      "completionTimeMs is required"
-    );
+    await expect(
+      validateDailyChallengeCompletionHandler({
+        auth: { uid: userId },
+        data: { dateId: "2026-01-30", stars: 3 } as any,
+      })
+    ).rejects.toThrow("completionTimeMs is required");
   });
 });

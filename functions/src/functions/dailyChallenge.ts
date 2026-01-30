@@ -181,10 +181,16 @@ export const manualSendNotification = functions
   });
 
 /**
- * Callable function to validate and save daily challenge completion
- * Enforces one-attempt-per-day rule and calculates rank
+ * Internal handler for daily challenge completion validation
+ * Exported for testing purposes
  */
-export const validateDailyChallengeCompletion = onCall(async (request) => {
+export async function validateDailyChallengeCompletionHandler(
+  request: {
+    auth?: { uid: string } | null;
+    data: { dateId?: string; stars?: number; completionTimeMs?: number };
+  },
+  firestoreService: FirestoreService = firestore
+) {
   return ErrorHandler.wrap(async () => {
     // 1. Verify user authentication
     if (!request.auth) {
@@ -206,12 +212,19 @@ export const validateDailyChallengeCompletion = onCall(async (request) => {
     Validator.isString(dateId, "dateId");
     Validator.required(stars, "stars");
     Validator.isNumber(stars, "stars");
-    Validator.inRange(stars, 0, 3, "stars");
     Validator.required(completionTimeMs, "completionTimeMs");
     Validator.isNumber(completionTimeMs, "completionTimeMs");
 
+    // After validation, we know these are defined
+    const validatedDateId = dateId as string;
+    const validatedStars = stars as number;
+    const validatedCompletionTimeMs = completionTimeMs as number;
+
+    // Additional range validations
+    Validator.inRange(validatedStars, 0, 3, "stars");
+
     // Validate completion time is reasonable (> 1 second)
-    if (completionTimeMs < 1000) {
+    if (validatedCompletionTimeMs < 1000) {
       throw new HttpsError(
         "invalid-argument",
         "completionTimeMs must be at least 1000ms"
@@ -219,8 +232,8 @@ export const validateDailyChallengeCompletion = onCall(async (request) => {
     }
 
     // 3. Check for existing completion
-    const existingCompletion = await firestore.getDocument<DailyChallengeCompletion>(
-      `dailyChallenges/${dateId}/entries`,
+    const existingCompletion = await firestoreService.getDocument<DailyChallengeCompletion>(
+      `dailyChallenges/${validatedDateId}/entries`,
       userId
     );
 
@@ -234,22 +247,22 @@ export const validateDailyChallengeCompletion = onCall(async (request) => {
     // 4. Save completion to Firestore
     const completion: DailyChallengeCompletion = {
       userId,
-      dateId,
-      stars,
-      completionTimeMs,
+      dateId: validatedDateId,
+      stars: validatedStars,
+      completionTimeMs: validatedCompletionTimeMs,
       completedAt: FieldValue.serverTimestamp(),
     };
 
-    await firestore.setDocument(
-      `dailyChallenges/${dateId}/entries`,
+    await firestoreService.setDocument(
+      `dailyChallenges/${validatedDateId}/entries`,
       userId,
       completion
     );
 
     // 5. Calculate rank by querying leaderboard
     // Query entries ordered by stars DESC, completionTimeMs ASC
-    const entries = await firestore.queryDocuments<DailyChallengeCompletion>(
-      `dailyChallenges/${dateId}/entries`,
+    const entries = await firestoreService.queryDocuments<DailyChallengeCompletion>(
+      `dailyChallenges/${validatedDateId}/entries`,
       [
         { field: "stars", direction: "desc" },
         { field: "completionTimeMs", direction: "asc" },
@@ -262,9 +275,9 @@ export const validateDailyChallengeCompletion = onCall(async (request) => {
 
     Logger.info("daily_challenge_completion_validated", {
       userId,
-      dateId,
-      stars,
-      completionTimeMs,
+      dateId: validatedDateId,
+      stars: validatedStars,
+      completionTimeMs: validatedCompletionTimeMs,
       rank,
       totalPlayers,
     });
@@ -275,4 +288,12 @@ export const validateDailyChallengeCompletion = onCall(async (request) => {
       totalPlayers,
     };
   }, "validateDailyChallengeCompletion");
+}
+
+/**
+ * Callable function to validate and save daily challenge completion
+ * Enforces one-attempt-per-day rule and calculates rank
+ */
+export const validateDailyChallengeCompletion = onCall(async (request) => {
+  return validateDailyChallengeCompletionHandler(request);
 });
