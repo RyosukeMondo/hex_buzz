@@ -11,7 +11,6 @@ import '../../domain/services/level_repository.dart';
 import '../../domain/services/star_calculator.dart';
 import 'auth_provider.dart';
 import 'daily_challenge_provider.dart';
-import 'leaderboard_provider.dart';
 import 'progress_provider.dart';
 
 /// Configuration for creating a game.
@@ -149,11 +148,11 @@ class GameNotifier extends Notifier<GameState> {
         .read(progressProvider.notifier)
         .completeLevel(_currentLevelIndex!, completionTime);
 
-    // Submit to leaderboard and daily challenge if user is logged in
+    // Submit to daily challenge if applicable and user is logged in
     _submitCompletionToCloud(stars, completionTime);
   }
 
-  /// Submits completion to leaderboard and daily challenge repositories.
+  /// Submits completion to daily challenge repository if applicable.
   Future<void> _submitCompletionToCloud(
     int stars,
     Duration completionTime,
@@ -161,29 +160,20 @@ class GameNotifier extends Notifier<GameState> {
     final user = ref.read(authProvider).valueOrNull;
     if (user == null) return;
 
+    // Only submit to daily challenge if this is a daily challenge game
+    if (!_isDailyChallenge) return;
+
     try {
-      // Submit to global leaderboard
       await ref
-          .read(leaderboardRepositoryProvider)
-          .submitScore(
+          .read(dailyChallengeRepositoryProvider)
+          .submitChallengeCompletion(
             userId: user.id,
             stars: stars,
-            levelId: _currentLevelIndex!.toString(),
+            completionTimeMs: completionTime.inMilliseconds,
           );
-
-      // Submit to daily challenge if this is a daily challenge game
-      if (_isDailyChallenge) {
-        await ref
-            .read(dailyChallengeRepositoryProvider)
-            .submitChallengeCompletion(
-              userId: user.id,
-              stars: stars,
-              completionTimeMs: completionTime.inMilliseconds,
-            );
-      }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Failed to submit completion to cloud: $e');
+        debugPrint('Failed to submit daily challenge completion: $e');
       }
     }
   }

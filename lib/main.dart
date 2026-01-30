@@ -27,7 +27,6 @@ import 'domain/services/notification_service.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/daily_challenge_provider.dart';
 import 'presentation/providers/game_provider.dart';
-import 'presentation/providers/leaderboard_provider.dart';
 import 'presentation/providers/notification_provider.dart';
 import 'presentation/providers/progress_provider.dart';
 import 'presentation/screens/auth/auth_screen.dart';

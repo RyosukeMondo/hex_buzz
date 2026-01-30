@@ -1,0 +1,5 @@
+lib/
+coverage/
+jest.config.js
+test/
+*.test.ts
