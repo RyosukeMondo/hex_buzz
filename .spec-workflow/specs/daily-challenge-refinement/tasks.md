@@ -4,7 +4,7 @@
 
 **Overall Status**: Phases 1, 2, & 3 Complete - Backend, state management, and social sharing implemented
 
-**Completed**: 13/23 tasks (57%)
+**Completed**: 15/23 tasks (65%)
 - ✅ Task 1: Firestore security rules enforce one-attempt-per-day
 - ✅ Task 2: validateDailyChallengeCompletion Cloud Function implemented
 - ✅ Task 3: Comprehensive tests for completion validation
@@ -17,6 +17,8 @@
 - ✅ Task 10: MisskeyInstancePicker dialog implemented
 - ✅ Task 11: ShareButton widget created
 - ✅ Task 12: DailyChallengeCompletionDialog implemented
+- ✅ Task 15: Global leaderboard navigation removed
+- ✅ Task 16: Global leaderboard files deleted
 - ✅ Task 17: Notification configuration verified
 
 **What Exists**:
@@ -36,11 +38,11 @@
 - ✅ One-attempt enforcement implemented (startChallenge, suspend, resume logic)
 - ✅ Social sharing implemented (url_launcher, ShareService, share buttons)
 - ✅ Completion dialog with share buttons implemented
-- ❌ Global leaderboard still exists (needs removal)
+- ✅ Global leaderboard removed (navigation and files deleted)
 - ❌ DailyChallengeScreen not updated for new state machine
 - ❌ No integration tests or documentation
 
-**Next Steps**: Phase 4 (UI Integration) - Update DailyChallengeScreen and remove global leaderboard.
+**Next Steps**: Phase 4 (UI Integration) - Update DailyChallengeScreen to use new state machine.
 
 ---
 
@@ -167,7 +169,7 @@
   - **Status**: Completed - Dialog with stats, share buttons (daily leaderboard placeholder for task 14)
 
 ## Phase 4: UI Integration & Post-Completion UX
-**Status**: Partially Completed - Screen exists but doesn't implement full state machine with suspend/resume
+**Status**: Partially Completed - Global leaderboard removed, DailyChallengeScreen needs update
 
 - [ ] 13. Update DailyChallengeScreen for new state management
   - File: lib/presentation/screens/daily_challenge_screen.dart
@@ -189,25 +191,23 @@
   - _Requirements: Spec Task 5 - Post-Completion UX_
   - _Prompt: Role: Flutter Developer with Firestore and list widgets expertise | Task: Create DailyLeaderboard widget in lib/presentation/widgets/daily_leaderboard.dart as ConsumerWidget accepting dateId. Query Firestore dailyChallenges/{dateId}/entries ordered by stars DESC, completionTimeMs ASC, limit 50. Display list with: (1) Rank number with medal icons (🥇🥈🥉) for top 3, (2) Username, (3) Stars with star icons, (4) Formatted time, (5) Highlight current user's row with different background | Use StreamBuilder or ref.watch with stream provider for real-time updates | Restrictions: Handle empty leaderboard gracefully, show loading state, limit to 50 entries for performance | Success: Leaderboard displays correctly, updates in real-time, current user highlighted, performance is good, handles edge cases_
 
-- [ ] 15. Remove global leaderboard navigation
-  - File: lib/presentation/screens/front_screen.dart
+- [x] 15. Remove global leaderboard navigation
+  - File: lib/presentation/screens/level_select_screen.dart, lib/main.dart, lib/presentation/screens/game/game_screen.dart
   - Remove "Leaderboard" button/navigation from main menu
   - Keep only "Daily Challenge" navigation
   - Purpose: Simplify UI, focus on daily challenges only
   - _Leverage: Existing navigation structure_
   - _Requirements: Spec Task 2 - Remove Global Leaderboard_
-  - **Status**: Pending - front_screen.dart doesn't show leaderboard button, but need to verify full navigation
-  - _Prompt: Role: Flutter UI Developer | Task: In lib/presentation/screens/front_screen.dart, remove all references to global leaderboard: (1) Remove "Leaderboard" navigation button/card, (2) Remove route to LeaderboardScreen if defined in this file, (3) Adjust layout to remove gaps from removed button, (4) Ensure "Daily Challenge" button remains prominent | Restrictions: Do not break existing navigation structure, maintain visual balance | Success: Global leaderboard button removed, no navigation to global leaderboard, layout looks clean, Daily Challenge navigation works_
+  - **Status**: Completed - Removed leaderboard button from level select, removed route and notification handling
 
-- [ ] 16. Delete global leaderboard files
-  - Files: lib/presentation/screens/leaderboard_screen.dart, lib/presentation/providers/leaderboard_provider.dart, test/presentation/screens/leaderboard_screen_test.dart, test/presentation/providers/leaderboard_provider_test.dart
+- [x] 16. Delete global leaderboard files
+  - Files: lib/presentation/screens/leaderboard/leaderboard_screen.dart, lib/presentation/providers/leaderboard_provider.dart
   - Remove unused global leaderboard implementation
   - Clean up imports in other files
   - Purpose: Remove dead code
   - _Leverage: IDE refactoring tools_
   - _Requirements: Spec Task 2 - Remove Global Leaderboard_
-  - **Status**: Pending - Files still exist: lib/presentation/screens/leaderboard/leaderboard_screen.dart and lib/presentation/providers/leaderboard_provider.dart
-  - _Prompt: Role: Code Cleanup Specialist | Task: Delete global leaderboard files and clean up: (1) Delete lib/presentation/screens/leaderboard_screen.dart, (2) Delete lib/presentation/providers/leaderboard_provider.dart, (3) Delete test/presentation/screens/leaderboard_screen_test.dart, (4) Delete test/presentation/providers/leaderboard_provider_test.dart, (5) Search for imports of these files in remaining codebase and remove them, (6) Search for routes to '/leaderboard' and remove them | Use IDE find/replace for thorough cleanup | Restrictions: Do not delete daily leaderboard code (DailyLeaderboard widget is different), verify no other code depends on deleted files | Success: All global leaderboard files deleted, no broken imports, no navigation to deleted screens, project compiles successfully_
+  - **Status**: Completed - Deleted screen and provider files, removed imports, removed global leaderboard submission from game_provider
 
 ## Phase 5: Notification Enhancement
 **Status**: Completed - Notification system already properly configured from Track 6
