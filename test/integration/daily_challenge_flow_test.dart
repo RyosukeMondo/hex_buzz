@@ -1,9 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import '../../lib/data/firebase/firestore_daily_challenge_repository.dart';
-import '../../lib/domain/models/level.dart';
+import 'package:hex_buzz/data/firebase/firestore_daily_challenge_repository.dart';
+import 'package:hex_buzz/domain/models/level.dart';
 
 /// Comprehensive autonomous test of daily challenge flow
 void main() {

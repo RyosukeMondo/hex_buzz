@@ -172,8 +172,9 @@ Future<HybridAuthRepository> _initializeAuthRepository(
     firestoreProgress: firestoreProgress,
   );
 
-  if (kDebugMode)
+  if (kDebugMode) {
     debugPrint('Hybrid auth repository initialized with migration support');
+  }
   return authRepo;
 }
 

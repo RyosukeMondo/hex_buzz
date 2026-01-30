@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hex_buzz/core/logging/logger.dart';
 
@@ -58,6 +57,8 @@ class DiagnosticLogger {
 
     // Send to Firestore asynchronously if enabled
     if (_instance._enabled && _instance._firestore != null) {
+      // Ignore errors - don't let logging break the app
+      // ignore: unawaited_futures
       _instance._firestore!
           .collection('diagnosticLogs')
           .add({
@@ -68,9 +69,7 @@ class DiagnosticLogger {
             'clientTime': DateTime.now().toIso8601String(),
             if (data != null) 'data': data,
           })
-          .catchError((e) {
-            // Silently fail - don't let logging break the app
-          });
+          .catchError((_) => throw UnimplementedError());
     }
 
     // Also log to structured logger

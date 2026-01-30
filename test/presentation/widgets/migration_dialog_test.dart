@@ -5,17 +5,14 @@ import 'package:hex_buzz/presentation/widgets/migration_dialog.dart';
 void main() {
   group('MigrationDialog', () {
     testWidgets('displays migration information correctly', (tester) async {
-      bool confirmed = false;
-      bool cancelled = false;
-
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: MigrationDialog(
               levelsToMigrate: 5,
               totalStars: 12,
-              onConfirm: () => confirmed = true,
-              onCancel: () => cancelled = true,
+              onConfirm: () {},
+              onCancel: () {},
             ),
           ),
         ),

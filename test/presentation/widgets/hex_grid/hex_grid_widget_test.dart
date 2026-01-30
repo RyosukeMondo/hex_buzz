@@ -40,8 +40,6 @@ void main() {
         checkpointCount: 1,
       );
 
-      HexCell? enteredCell;
-
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -49,9 +47,7 @@ void main() {
               level: level,
               path: const [],
               visitedCells: const {},
-              onCellEntered: (cell) {
-                enteredCell = cell;
-              },
+              onCellEntered: (cell) {},
             ),
           ),
         ),

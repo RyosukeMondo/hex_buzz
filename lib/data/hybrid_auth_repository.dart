@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
-
 import '../core/logging/diagnostic_logger.dart';
 import '../core/logging/logger.dart';
 import '../domain/models/auth_result.dart';
@@ -235,7 +233,7 @@ class HybridAuthRepository implements AuthRepository {
 
       // Load local guest progress
       final guestUserId = guestUser.isGuest ? 'guest' : guestUser.id;
-      final localProgress = await _localProgress!.loadForUser(guestUserId);
+      final localProgress = await _localProgress.loadForUser(guestUserId);
 
       if (localProgress.levels.isEmpty) {
         DiagnosticLogger.logEvent(
@@ -258,7 +256,7 @@ class HybridAuthRepository implements AuthRepository {
       );
 
       // Migrate progress to Firestore
-      await _firestoreProgress!.saveForUser(firebaseUser.id, localProgress);
+      await _firestoreProgress.saveForUser(firebaseUser.id, localProgress);
 
       DiagnosticLogger.logEvent(
         'migration_progress_saved',
@@ -270,7 +268,7 @@ class HybridAuthRepository implements AuthRepository {
       );
 
       // Clear local guest data after successful migration
-      await _localProgress!.resetForUser(guestUserId);
+      await _localProgress.resetForUser(guestUserId);
 
       DiagnosticLogger.logEvent(
         'migration_completed',

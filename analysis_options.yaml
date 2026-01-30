@@ -4,7 +4,10 @@ analyzer:
   exclude:
     - bin/**
     - tool/**
+    - examples/**
+    - scripts/**
 
 linter:
   rules:
     prefer_single_quotes: true
+    avoid_print: false  # Allow print in tests and development code

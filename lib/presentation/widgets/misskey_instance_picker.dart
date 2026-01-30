@@ -92,7 +92,9 @@ class _MisskeyInstancePickerState extends State<MisskeyInstancePicker> {
               (instance) => RadioListTile<String>(
                 title: Text(instance),
                 value: instance,
+                // ignore: deprecated_member_use
                 groupValue: _isCustom ? null : _selectedInstance,
+                // ignore: deprecated_member_use
                 onChanged: (value) {
                   setState(() {
                     _selectedInstance = value!;
@@ -109,7 +111,9 @@ class _MisskeyInstancePickerState extends State<MisskeyInstancePicker> {
             RadioListTile<bool>(
               title: const Text('Custom'),
               value: true,
+              // ignore: deprecated_member_use
               groupValue: _isCustom ? true : null,
+              // ignore: deprecated_member_use
               onChanged: (value) {
                 setState(() {
                   _isCustom = value!;

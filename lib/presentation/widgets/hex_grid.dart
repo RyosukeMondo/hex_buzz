@@ -10,7 +10,7 @@
 /// - [HexGridGestureHandler]: User interactions
 /// - [HexGridAnimator]: Cell animations
 /// - [HexGridTheme]: Styling configuration
-library hex_grid;
+library;
 
 export 'hex_grid/hex_grid_animator.dart';
 export 'hex_grid/hex_grid_gesture_handler.dart';
