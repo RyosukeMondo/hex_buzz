@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/logging/diagnostic_logger.dart';
 import '../../core/logging/logger.dart';
 import '../../domain/models/daily_challenge.dart';
+import '../../domain/models/daily_challenge_completion.dart';
+import '../../domain/models/daily_challenge_state.dart' as domain;
+import '../../domain/models/hex_cell.dart';
 import '../../domain/services/daily_challenge_repository.dart';
 
 /// Provider for the daily challenge repository (dependency injection point).
@@ -17,174 +20,279 @@ final dailyChallengeRepositoryProvider = Provider<DailyChallengeRepository>((
   );
 });
 
-/// State class for daily challenge data.
-class DailyChallengeState {
-  final DailyChallenge? challenge;
-  final bool isLoading;
-  final String? error;
-  final bool hasCompleted;
-
-  const DailyChallengeState({
-    this.challenge,
-    this.isLoading = false,
-    this.error,
-    this.hasCompleted = false,
-  });
-
-  DailyChallengeState copyWith({
-    DailyChallenge? challenge,
-    bool? isLoading,
-    String? error,
-    bool? hasCompleted,
-    bool clearChallenge = false,
-    bool clearError = false,
-  }) {
-    return DailyChallengeState(
-      challenge: clearChallenge ? null : (challenge ?? this.challenge),
-      isLoading: isLoading ?? this.isLoading,
-      error: clearError ? null : (error ?? this.error),
-      hasCompleted: hasCompleted ?? this.hasCompleted,
-    );
-  }
-}
-
-/// AsyncNotifier for managing daily challenge state.
+/// StateNotifier for managing daily challenge state with one-attempt-per-day enforcement.
 ///
-/// Handles fetching today's challenge, submitting completions, and tracking
-/// completion status. Integrates with [DailyChallengeRepository] for challenge operations.
-class DailyChallengeNotifier
-    extends AutoDisposeAsyncNotifier<DailyChallengeState> {
-  late DailyChallengeRepository _repository;
+/// This provider implements the state machine with sealed union states to enforce:
+/// - One attempt per day (no retries after completion)
+/// - Timer cannot be reset (startTime preserved across suspend/resume)
+/// - Type-safe state transitions
+class DailyChallengeNotifier extends StateNotifier<domain.DailyChallengeState> {
+  final DailyChallengeRepository _repository;
+  final String _userId;
 
-  @override
-  Future<DailyChallengeState> build() async {
-    DiagnosticLogger.logEvent(
-      'DailyChallengeNotifier.build() called',
-      level: LogLevel.info,
-    );
-    _repository = ref.watch(dailyChallengeRepositoryProvider);
-    DiagnosticLogger.logEvent(
-      'Repository initialized',
-      data: {'type': _repository.runtimeType.toString()},
-      level: LogLevel.info,
-    );
+  DailyChallengeNotifier({
+    required DailyChallengeRepository repository,
+    required String userId,
+  }) : _repository = repository,
+       _userId = userId,
+       super(const domain.DailyChallengeStateLoading());
 
+  /// Loads today's challenge and checks for existing completion.
+  ///
+  /// Sets state to:
+  /// - NotStarted if challenge exists and user hasn't completed it
+  /// - AlreadyCompleted if user has already completed it today
+  /// - Error if loading fails
+  Future<void> loadChallenge() async {
     try {
       DiagnosticLogger.logEvent(
-        'Calling getTodaysChallenge',
-        level: LogLevel.info,
-      );
-      final challenge = await _repository.getTodaysChallenge();
-      DiagnosticLogger.logEvent(
-        'Challenge received',
-        data: {
-          'hasChallenge': challenge != null,
-          'id': challenge?.id,
-          'levelId': challenge?.level.id,
-          'levelSize': challenge?.level.size,
-        },
+        'Loading daily challenge',
+        data: {'userId': _userId},
         level: LogLevel.info,
       );
 
-      return DailyChallengeState(
-        challenge: challenge,
-        hasCompleted: challenge?.hasUserCompleted ?? false,
+      state = const domain.DailyChallengeStateLoading();
+
+      final challenge = await _repository.getTodaysChallenge();
+      if (challenge == null) {
+        state = const domain.DailyChallengeStateError(
+          'No daily challenge available for today',
+        );
+        return;
+      }
+
+      // Check for existing completion
+      final completion = await _repository.getCompletion(
+        userId: _userId,
+        dateId: challenge.id,
       );
+
+      if (completion != null) {
+        DiagnosticLogger.logEvent(
+          'User has already completed challenge',
+          data: {'userId': _userId, 'dateId': challenge.id},
+          level: LogLevel.info,
+        );
+        state = domain.DailyChallengeStateAlreadyCompleted(completion);
+      } else {
+        DiagnosticLogger.logEvent(
+          'Challenge ready to start',
+          data: {'userId': _userId, 'dateId': challenge.id},
+          level: LogLevel.info,
+        );
+        state = domain.DailyChallengeStateNotStarted(challenge);
+      }
     } catch (e, stackTrace) {
       DiagnosticLogger.logError(
-        'Error in DailyChallengeNotifier.build()',
+        'Error loading challenge',
         error: e,
         stackTrace: stackTrace,
       );
-      return DailyChallengeState(error: e.toString());
+      state = domain.DailyChallengeStateError(e.toString());
     }
   }
 
-  /// Refreshes the daily challenge data.
+  /// Starts the challenge.
   ///
-  /// Fetches the latest challenge for today.
-  Future<void> refresh() async {
-    state = const AsyncValue.loading();
-
-    try {
-      final challenge = await _repository.getTodaysChallenge();
-      state = AsyncValue.data(
-        DailyChallengeState(
-          challenge: challenge,
-          hasCompleted: challenge?.hasUserCompleted ?? false,
-        ),
+  /// Only allowed from NotStarted state.
+  /// Records startTime to prevent timer resets.
+  void startChallenge() {
+    final currentState = state;
+    if (currentState is! domain.DailyChallengeStateNotStarted) {
+      DiagnosticLogger.logEvent(
+        'Cannot start challenge from current state',
+        data: {'state': currentState.runtimeType.toString()},
+        level: LogLevel.warn,
       );
-    } catch (e) {
-      state = AsyncValue.data(DailyChallengeState(error: e.toString()));
+      return;
+    }
+
+    final startTime = DateTime.now();
+    DiagnosticLogger.logEvent(
+      'Challenge started',
+      data: {
+        'userId': _userId,
+        'challengeId': currentState.challenge.id,
+        'startTime': startTime.toIso8601String(),
+      },
+      level: LogLevel.info,
+    );
+
+    state = domain.DailyChallengeStatePlaying(
+      challenge: currentState.challenge,
+      startTime: startTime,
+      currentPath: const [],
+    );
+  }
+
+  /// Suspends the challenge.
+  ///
+  /// Timer keeps running (startTime is preserved).
+  /// Only allowed from Playing state.
+  void suspend() {
+    final currentState = state;
+    if (currentState is! domain.DailyChallengeStatePlaying) {
+      DiagnosticLogger.logEvent(
+        'Cannot suspend from current state',
+        data: {'state': currentState.runtimeType.toString()},
+        level: LogLevel.warn,
+      );
+      return;
+    }
+
+    final suspendedTime = DateTime.now();
+    DiagnosticLogger.logEvent(
+      'Challenge suspended',
+      data: {
+        'userId': _userId,
+        'startTime': currentState.startTime.toIso8601String(),
+        'suspendedTime': suspendedTime.toIso8601String(),
+      },
+      level: LogLevel.info,
+    );
+
+    state = domain.DailyChallengeStateSuspended(
+      challenge: currentState.challenge,
+      startTime: currentState.startTime, // Preserved - timer keeps running
+      suspendedTime: suspendedTime,
+      currentPath: currentState.currentPath,
+    );
+  }
+
+  /// Resumes the challenge.
+  ///
+  /// Returns to Playing state with same startTime (no timer restart).
+  /// Only allowed from Suspended state.
+  void resume() {
+    final currentState = state;
+    if (currentState is! domain.DailyChallengeStateSuspended) {
+      DiagnosticLogger.logEvent(
+        'Cannot resume from current state',
+        data: {'state': currentState.runtimeType.toString()},
+        level: LogLevel.warn,
+      );
+      return;
+    }
+
+    DiagnosticLogger.logEvent(
+      'Challenge resumed',
+      data: {
+        'userId': _userId,
+        'startTime': currentState.startTime.toIso8601String(),
+      },
+      level: LogLevel.info,
+    );
+
+    state = domain.DailyChallengeStatePlaying(
+      challenge: currentState.challenge,
+      startTime: currentState.startTime, // Same startTime - no restart
+      currentPath: currentState.currentPath,
+    );
+  }
+
+  /// Updates the current path during gameplay.
+  void updatePath(List<HexCell> path) {
+    final currentState = state;
+    if (currentState is domain.DailyChallengeStatePlaying) {
+      state = currentState.copyWith(currentPath: path);
     }
   }
 
-  /// Checks if the user has completed today's challenge.
+  /// Completes the challenge.
   ///
-  /// Updates the state with the completion status.
-  Future<void> checkCompletionStatus(String userId) async {
-    final currentState = state.valueOrNull ?? const DailyChallengeState();
-    state = AsyncValue.data(currentState.copyWith(isLoading: true));
-
-    try {
-      final hasCompleted = await _repository.hasCompletedToday(userId);
-      state = AsyncValue.data(
-        currentState.copyWith(
-          hasCompleted: hasCompleted,
-          isLoading: false,
-          clearError: true,
-        ),
+  /// Submits completion to backend and transitions to Completed state.
+  /// Only allowed from Playing state.
+  Future<void> complete(int stars) async {
+    final currentState = state;
+    if (currentState is! domain.DailyChallengeStatePlaying) {
+      DiagnosticLogger.logEvent(
+        'Cannot complete from current state',
+        data: {'state': currentState.runtimeType.toString()},
+        level: LogLevel.warn,
       );
-    } catch (e) {
-      state = AsyncValue.data(
-        currentState.copyWith(isLoading: false, error: e.toString()),
-      );
+      return;
     }
-  }
 
-  /// Submits a completion for today's daily challenge.
-  ///
-  /// Returns true if submission succeeded, false otherwise.
-  /// Automatically refreshes the challenge data on success to show updated stats.
-  Future<bool> submitCompletion({
-    required String userId,
-    required int stars,
-    required int completionTimeMs,
-  }) async {
-    final currentState = state.valueOrNull ?? const DailyChallengeState();
-    state = AsyncValue.data(currentState.copyWith(isLoading: true));
+    final completionTimeMs = DateTime.now()
+        .difference(currentState.startTime)
+        .inMilliseconds;
+
+    DiagnosticLogger.logEvent(
+      'Submitting challenge completion',
+      data: {
+        'userId': _userId,
+        'stars': stars,
+        'completionTimeMs': completionTimeMs,
+      },
+      level: LogLevel.info,
+    );
 
     try {
       final success = await _repository.submitChallengeCompletion(
-        userId: userId,
+        userId: _userId,
         stars: stars,
         completionTimeMs: completionTimeMs,
       );
 
       if (success) {
-        await refresh();
+        // Get the completion data with rank
+        final completion = await _repository.getCompletion(
+          userId: _userId,
+          dateId: currentState.challenge.id,
+        );
+
+        if (completion != null) {
+          DiagnosticLogger.logEvent(
+            'Challenge completed successfully',
+            data: {
+              'userId': _userId,
+              'stars': stars,
+              'rank': completion.rank,
+            },
+            level: LogLevel.info,
+          );
+          state = domain.DailyChallengeStateCompleted(completion);
+        } else {
+          // Fallback if we can't get completion data
+          state = domain.DailyChallengeStateCompleted(
+            DailyChallengeCompletion(
+              userId: _userId,
+              dateId: currentState.challenge.id,
+              stars: stars,
+              completionTimeMs: completionTimeMs,
+              completedAt: DateTime.now(),
+            ),
+          );
+        }
       } else {
-        state = AsyncValue.data(
-          currentState.copyWith(
-            isLoading: false,
-            error: 'Failed to submit challenge completion',
-          ),
+        state = const domain.DailyChallengeStateError(
+          'Failed to submit completion',
         );
       }
-
-      return success;
-    } catch (e) {
-      state = AsyncValue.data(
-        currentState.copyWith(isLoading: false, error: e.toString()),
+    } catch (e, stackTrace) {
+      DiagnosticLogger.logError(
+        'Error completing challenge',
+        error: e,
+        stackTrace: stackTrace,
       );
-      return false;
+      state = domain.DailyChallengeStateError(e.toString());
     }
   }
 }
 
 /// Provider for daily challenge state management.
-final dailyChallengeProvider =
-    AutoDisposeAsyncNotifierProvider<
-      DailyChallengeNotifier,
-      DailyChallengeState
-    >(DailyChallengeNotifier.new);
+///
+/// Requires userId to be provided via parameter.
+final dailyChallengeProvider = StateNotifierProvider.autoDispose
+    .family<DailyChallengeNotifier, domain.DailyChallengeState, String>(
+  (ref, userId) {
+    final repository = ref.watch(dailyChallengeRepositoryProvider);
+    final notifier = DailyChallengeNotifier(
+      repository: repository,
+      userId: userId,
+    );
+    // Auto-load challenge when provider is created
+    notifier.loadChallenge();
+    return notifier;
+  },
+);
