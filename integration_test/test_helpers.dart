@@ -111,6 +111,12 @@ class MockAuthRepository implements AuthRepository {
   @override
   Stream<User?> authStateChanges() => _authController.stream;
 
+  /// Sets the current user for testing purposes.
+  void setCurrentUser(User user) {
+    _currentUser = user;
+    _authController.add(user);
+  }
+
   void dispose() => _authController.close();
 }
 
