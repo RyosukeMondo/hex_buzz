@@ -15,6 +15,7 @@ export {
   manualGenerateChallenge,
   manualSendNotification,
   getDailyChallenge,
+  validateDailyChallengeCompletion,
 } from "./functions/dailyChallenge";
 
 // Export leaderboard functions
