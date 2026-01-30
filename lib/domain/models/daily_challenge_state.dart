@@ -41,7 +41,8 @@ class DailyChallengeStateNotStarted extends DailyChallengeState {
   int get hashCode => challenge.hashCode;
 
   @override
-  String toString() => 'DailyChallengeStateNotStarted(challenge: ${challenge.id})';
+  String toString() =>
+      'DailyChallengeStateNotStarted(challenge: ${challenge.id})';
 }
 
 /// Challenge is actively being played.
@@ -80,10 +81,12 @@ class DailyChallengeStatePlaying extends DailyChallengeState {
   }
 
   @override
-  int get hashCode => Object.hash(challenge, startTime, Object.hashAll(currentPath));
+  int get hashCode =>
+      Object.hash(challenge, startTime, Object.hashAll(currentPath));
 
   @override
-  String toString() => 'DailyChallengeStatePlaying(challenge: ${challenge.id}, startTime: $startTime, pathLength: ${currentPath.length})';
+  String toString() =>
+      'DailyChallengeStatePlaying(challenge: ${challenge.id}, startTime: $startTime, pathLength: ${currentPath.length})';
 }
 
 /// Challenge is temporarily suspended but timer keeps running.
@@ -114,14 +117,15 @@ class DailyChallengeStateSuspended extends DailyChallengeState {
 
   @override
   int get hashCode => Object.hash(
-        challenge,
-        startTime,
-        suspendedTime,
-        Object.hashAll(currentPath),
-      );
+    challenge,
+    startTime,
+    suspendedTime,
+    Object.hashAll(currentPath),
+  );
 
   @override
-  String toString() => 'DailyChallengeStateSuspended(challenge: ${challenge.id}, startTime: $startTime)';
+  String toString() =>
+      'DailyChallengeStateSuspended(challenge: ${challenge.id}, startTime: $startTime)';
 }
 
 /// Challenge has been completed successfully today.
@@ -141,7 +145,8 @@ class DailyChallengeStateCompleted extends DailyChallengeState {
   int get hashCode => completion.hashCode;
 
   @override
-  String toString() => 'DailyChallengeStateCompleted(completion: ${completion.userId})';
+  String toString() =>
+      'DailyChallengeStateCompleted(completion: ${completion.userId})';
 }
 
 /// User attempted to retry a challenge they already completed today.
@@ -163,7 +168,8 @@ class DailyChallengeStateAlreadyCompleted extends DailyChallengeState {
   int get hashCode => completion.hashCode;
 
   @override
-  String toString() => 'DailyChallengeStateAlreadyCompleted(completion: ${completion.userId})';
+  String toString() =>
+      'DailyChallengeStateAlreadyCompleted(completion: ${completion.userId})';
 }
 
 /// An error occurred while loading or processing the challenge.

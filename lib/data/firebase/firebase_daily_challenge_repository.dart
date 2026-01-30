@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../domain/models/daily_challenge.dart';
+import '../../domain/models/daily_challenge_completion.dart';
 import '../../domain/models/leaderboard_entry.dart';
 import '../../domain/models/level.dart';
 import '../../domain/services/daily_challenge_repository.dart';
@@ -179,6 +180,37 @@ class FirebaseDailyChallengeRepository implements DailyChallengeRepository {
       return doc.exists;
     } catch (e) {
       return false;
+    }
+  }
+
+  @override
+  Future<DailyChallengeCompletion?> getCompletion({
+    required String userId,
+    required String dateId,
+  }) async {
+    try {
+      final doc = await _firestore
+          .collection('dailyChallenges')
+          .doc(dateId)
+          .collection('completions')
+          .doc(userId)
+          .get();
+
+      if (!doc.exists || doc.data() == null) {
+        return null;
+      }
+
+      final data = doc.data()!;
+      return DailyChallengeCompletion(
+        userId: userId,
+        dateId: dateId,
+        stars: data['stars'] as int,
+        completionTimeMs: data['completionTimeMs'] as int,
+        completedAt: (data['completedAt'] as Timestamp).toDate(),
+        rank: data['rank'] as int?,
+      );
+    } catch (e) {
+      return null;
     }
   }
 

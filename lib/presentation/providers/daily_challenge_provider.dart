@@ -244,11 +244,7 @@ class DailyChallengeNotifier extends StateNotifier<domain.DailyChallengeState> {
         if (completion != null) {
           DiagnosticLogger.logEvent(
             'Challenge completed successfully',
-            data: {
-              'userId': _userId,
-              'stars': stars,
-              'rank': completion.rank,
-            },
+            data: {'userId': _userId, 'stars': stars, 'rank': completion.rank},
             level: LogLevel.info,
           );
           state = domain.DailyChallengeStateCompleted(completion);
@@ -284,15 +280,16 @@ class DailyChallengeNotifier extends StateNotifier<domain.DailyChallengeState> {
 ///
 /// Requires userId to be provided via parameter.
 final dailyChallengeProvider = StateNotifierProvider.autoDispose
-    .family<DailyChallengeNotifier, domain.DailyChallengeState, String>(
-  (ref, userId) {
-    final repository = ref.watch(dailyChallengeRepositoryProvider);
-    final notifier = DailyChallengeNotifier(
-      repository: repository,
-      userId: userId,
-    );
-    // Auto-load challenge when provider is created
-    notifier.loadChallenge();
-    return notifier;
-  },
-);
+    .family<DailyChallengeNotifier, domain.DailyChallengeState, String>((
+      ref,
+      userId,
+    ) {
+      final repository = ref.watch(dailyChallengeRepositoryProvider);
+      final notifier = DailyChallengeNotifier(
+        repository: repository,
+        userId: userId,
+      );
+      // Auto-load challenge when provider is created
+      notifier.loadChallenge();
+      return notifier;
+    });

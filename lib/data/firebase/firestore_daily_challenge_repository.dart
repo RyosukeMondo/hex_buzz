@@ -386,7 +386,8 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
         dateId: dateId,
         stars: data['stars'] as int? ?? 0,
         completionTimeMs: data['completionTime'] as int? ?? 0,
-        completedAt: (data['completedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        completedAt:
+            (data['completedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         rank: data['rank'] as int?,
       );
 

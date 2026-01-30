@@ -89,14 +89,8 @@ class DailyChallengeCompletion {
   }
 
   @override
-  int get hashCode => Object.hash(
-        userId,
-        dateId,
-        stars,
-        completionTimeMs,
-        completedAt,
-        rank,
-      );
+  int get hashCode =>
+      Object.hash(userId, dateId, stars, completionTimeMs, completedAt, rank);
 
   @override
   String toString() {

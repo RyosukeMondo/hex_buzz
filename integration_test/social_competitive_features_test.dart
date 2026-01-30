@@ -17,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hex_buzz/domain/models/auth_result.dart';
 import 'package:hex_buzz/domain/models/daily_challenge.dart';
+import 'package:hex_buzz/domain/models/daily_challenge_completion.dart';
 import 'package:hex_buzz/domain/models/hex_cell.dart';
 import 'package:hex_buzz/domain/models/leaderboard_entry.dart';
 import 'package:hex_buzz/domain/models/level.dart';
@@ -289,6 +290,27 @@ class TestDailyChallengeRepository implements DailyChallengeRepository {
   Future<bool> hasCompletedToday(String userId) async {
     final dateKey = _formatDate(DateTime.now().toUtc());
     return _completionStatus['$userId-$dateKey'] ?? false;
+  }
+
+  @override
+  Future<DailyChallengeCompletion?> getCompletion({
+    required String userId,
+    required String dateId,
+  }) async {
+    final completed = _completionStatus['$userId-$dateId'] ?? false;
+    if (!completed) return null;
+
+    final challenge = _challenges[dateId];
+    if (challenge == null) return null;
+
+    return DailyChallengeCompletion(
+      userId: userId,
+      dateId: dateId,
+      stars: challenge.userStars ?? 0,
+      completionTimeMs: challenge.userBestTime ?? 0,
+      completedAt: DateTime.now(),
+      rank: challenge.userRank,
+    );
   }
 
   String _formatDate(DateTime date) {
