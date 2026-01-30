@@ -1,6 +1,6 @@
 # Daily Challenge Refinement
 
-**Status:** in-progress
+**Status:** completed
 **Priority:** high
 **Created:** 2026-01-30
 
@@ -25,13 +25,13 @@ Create a fair, engaging daily challenge experience:
 
 ## Success Criteria
 
-- [ ] Users can only complete daily challenge once per day
-- [ ] Timer cannot be restarted (can suspend/resume)
-- [ ] Only daily leaderboard visible (global removed)
-- [ ] Notifications sent when new challenge available
-- [ ] Tap notification goes directly to daily challenge
-- [ ] After completion: share buttons with time/link
-- [ ] After completion: cannot retry (show result only)
+- [x] Users can only complete daily challenge once per day
+- [x] Timer cannot be restarted (can suspend/resume)
+- [x] Only daily leaderboard visible (global removed)
+- [x] Notifications sent when new challenge available
+- [x] Tap notification goes directly to daily challenge
+- [x] After completion: share buttons with time/link
+- [x] After completion: cannot retry (show result only)
 
 ## Implementation Tasks
 
