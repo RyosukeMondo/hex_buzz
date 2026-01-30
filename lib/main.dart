@@ -34,7 +34,6 @@ import 'presentation/screens/auth/auth_screen.dart';
 import 'presentation/screens/daily_challenge/daily_challenge_screen.dart';
 import 'presentation/screens/front/front_screen.dart';
 import 'presentation/screens/game/game_screen.dart';
-import 'presentation/screens/leaderboard/leaderboard_screen.dart';
 import 'presentation/screens/level_select/level_select_screen.dart';
 import 'presentation/theme/honey_theme.dart';
 import 'platform/windows/window_config.dart';
@@ -45,7 +44,6 @@ class AppRoutes {
   static const String auth = '/auth';
   static const String levels = '/levels';
   static const String game = '/game';
-  static const String leaderboard = '/leaderboard';
   static const String dailyChallenge = '/daily-challenge';
 
   AppRoutes._();
@@ -350,11 +348,6 @@ class _HexBuzzAppState extends ConsumerState<HexBuzzApp> {
         _navigatorKey.currentState?.pushNamed(AppRoutes.dailyChallenge);
         break;
 
-      case 'leaderboard_update':
-      case 'rank_change':
-        _navigatorKey.currentState?.pushNamed(AppRoutes.leaderboard);
-        break;
-
       case 'new_level':
         final levelIndex = data['levelIndex'] as int?;
         _navigatorKey.currentState?.pushNamed(
@@ -413,9 +406,6 @@ class _HexBuzzAppState extends ConsumerState<HexBuzzApp> {
           settings,
           isForward,
         );
-
-      case AppRoutes.leaderboard:
-        return _buildRoute(const LeaderboardScreen(), settings, isForward);
 
       case AppRoutes.dailyChallenge:
         return _buildRoute(const DailyChallengeScreen(), settings, isForward);

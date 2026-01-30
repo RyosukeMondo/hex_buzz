@@ -425,9 +425,7 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
           : null,
       onReplay: () => ref.read(gameProvider.notifier).reset(),
       onLevelSelect: () => _navigateToLevelSelect(context),
-      onViewLeaderboard: widget.isDailyChallenge
-          ? () => _navigateToLeaderboard(context)
-          : null,
+      onViewLeaderboard: null, // Global leaderboard removed - daily leaderboard shown in completion dialog
     );
   }
 
@@ -447,10 +445,5 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
     } else {
       Navigator.of(context).pushReplacementNamed(AppRoutes.levels);
     }
-  }
-
-  void _navigateToLeaderboard(BuildContext context) {
-    // Navigate to leaderboard screen with daily challenge tab selected
-    Navigator.of(context).pushNamed(AppRoutes.leaderboard);
   }
 }

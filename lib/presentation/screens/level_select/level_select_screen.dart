@@ -194,26 +194,15 @@ class LevelSelectScreen extends ConsumerWidget {
         dailyChallengeState.challenge != null &&
         !dailyChallengeState.hasCompleted;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildNavButton(
-          context,
-          label: 'Daily Challenge',
-          icon: Icons.event,
-          showBadge: showBadge,
-          onPressed: () =>
-              Navigator.of(context).pushNamed(AppRoutes.dailyChallenge),
-        ),
-        const SizedBox(width: HoneyTheme.spacingMd),
-        _buildNavButton(
-          context,
-          label: 'Leaderboard',
-          icon: Icons.leaderboard,
-          onPressed: () =>
-              Navigator.of(context).pushNamed(AppRoutes.leaderboard),
-        ),
-      ],
+    return Center(
+      child: _buildNavButton(
+        context,
+        label: 'Daily Challenge',
+        icon: Icons.event,
+        showBadge: showBadge,
+        onPressed: () =>
+            Navigator.of(context).pushNamed(AppRoutes.dailyChallenge),
+      ),
     );
   }
 
