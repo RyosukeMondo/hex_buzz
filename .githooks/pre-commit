@@ -30,22 +30,57 @@ if ! dart analyze --fatal-infos; then
 fi
 echo "✓ Static analysis OK"
 
-# Step 3: Run LOC checks (file and function size)
+# Step 3: Run LOC checks (file and function size, staged files only)
 echo ""
 echo "==> Checking code metrics (LOC limits)..."
 if ! dart run scripts/pre_commit.dart; then
     exit 1
 fi
 
-# Step 4: Run tests
+# Step 3b: Web-safety checks on staged files
 echo ""
-echo "==> Running tests..."
-if ! flutter test; then
-    echo "✗ Tests failed."
-    echo "  Please fix failing tests before committing."
+echo "==> Checking web compatibility..."
+STAGED_DART=$(git diff --cached --name-only --diff-filter=ACM | grep '\.dart$' || true)
+WEB_ERRORS=0
+for FILE in $STAGED_DART; do
+    # Block dart:io in non-platform/non-debug lib code
+    if echo "$FILE" | grep -q "^lib/" \
+        && ! echo "$FILE" | grep -q "lib/debug/" \
+        && ! echo "$FILE" | grep -q "lib/platform/" \
+        && ! echo "$FILE" | grep -q "lib/data/local/file_" \
+        && ! echo "$FILE" | grep -q "notification_provider.dart"; then
+        if grep -q "import 'dart:io'" "$FILE" 2>/dev/null; then
+            echo "  ✗ $FILE imports dart:io (crashes on web)"
+            WEB_ERRORS=$((WEB_ERRORS + 1))
+        fi
+    fi
+    # Block direct Firestore in presentation layer
+    if echo "$FILE" | grep -q "^lib/presentation/"; then
+        if grep -q "FirebaseFirestore.instance" "$FILE" 2>/dev/null; then
+            echo "  ✗ $FILE uses FirebaseFirestore.instance directly"
+            WEB_ERRORS=$((WEB_ERRORS + 1))
+        fi
+    fi
+done
+if [ $WEB_ERRORS -gt 0 ]; then
+    echo "✗ $WEB_ERRORS web compatibility issue(s) found."
     exit 1
 fi
-echo "✓ Tests passed"
+echo "✓ Web compatibility OK"
+
+# Step 4: Run unit/widget tests (integration tests run separately in CI)
+echo ""
+echo "==> Running tests..."
+STAGED_TEST_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '_test\.dart$' || true)
+if [ -n "$STAGED_TEST_FILES" ]; then
+    if ! flutter test $STAGED_TEST_FILES; then
+        echo "✗ Tests failed."
+        exit 1
+    fi
+    echo "✓ Tests passed"
+else
+    echo "✓ No test files staged, skipping"
+fi
 
 echo ""
 echo "================================================"

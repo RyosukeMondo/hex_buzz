@@ -37,7 +37,8 @@ class DailyChallengeCompletion {
       userId: json['userId'] as String,
       dateId: json['dateId'] as String,
       stars: json['stars'] as int,
-      completionTimeMs: json['completionTimeMs'] as int,
+      completionTimeMs:
+          (json['completionTimeMs'] ?? json['completionTime']) as int,
       completedAt: json['completedAt'] is DateTime
           ? json['completedAt'] as DateTime
           : DateTime.parse(json['completedAt'] as String),

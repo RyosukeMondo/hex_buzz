@@ -16,6 +16,7 @@ import 'data/hybrid_auth_repository.dart';
 import 'data/local/local_guest_auth_repository.dart';
 import 'firebase_options.dart';
 import 'data/firebase/firestore_daily_challenge_repository.dart';
+import 'data/firebase/firestore_leaderboard_repository.dart';
 import 'data/local/local_progress_repository.dart';
 import 'debug/api/server.dart';
 import 'domain/data/test_level.dart';
@@ -25,6 +26,7 @@ import 'domain/services/level_repository.dart';
 import 'domain/services/notification_service.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/daily_challenge_provider.dart';
+import 'presentation/providers/leaderboard_provider.dart';
 import 'presentation/providers/game_provider.dart';
 import 'presentation/providers/notification_provider.dart';
 import 'presentation/providers/progress_provider.dart';
@@ -32,6 +34,7 @@ import 'presentation/screens/auth/auth_screen.dart';
 import 'presentation/screens/daily_challenge/daily_challenge_screen.dart';
 import 'presentation/screens/front/front_screen.dart';
 import 'presentation/screens/game/game_screen.dart';
+import 'presentation/screens/leaderboard/leaderboard_screen.dart';
 import 'presentation/screens/level_select/level_select_screen.dart';
 import 'presentation/theme/honey_theme.dart';
 import 'platform/windows/window_config.dart';
@@ -43,6 +46,7 @@ class AppRoutes {
   static const String levels = '/levels';
   static const String game = '/game';
   static const String dailyChallenge = '/daily-challenge';
+  static const String leaderboard = '/leaderboard';
 
   AppRoutes._();
 }
@@ -57,42 +61,15 @@ const bool _enableApiFromEnv = bool.fromEnvironment(
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Windows window configuration
   await WindowConfig.initialize();
-
-  // Initialize Firebase
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  if (kDebugMode) debugPrint('Firebase initialized');
-
-  // Initialize Diagnostic Logger for autonomous debugging
-  DiagnosticLogger.init();
-
-  // Initialize Firebase Performance Monitoring
-  final performance = FirebasePerformance.instance;
-  await performance.setPerformanceCollectionEnabled(true);
-  if (kDebugMode) debugPrint('Firebase Performance Monitoring enabled');
-
-  // Initialize Firebase Crashlytics
-  if (!kDebugMode) {
-    // Only enable Crashlytics in release mode
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-    PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
-    };
-    if (kDebugMode) debugPrint('Firebase Crashlytics enabled');
-  } else {
-    debugPrint('Firebase Crashlytics disabled in debug mode');
-  }
-
-  // Initialize SharedPreferences (needed for notification preferences)
+  await _initializeFirebaseCore();
   final sharedPreferences = await SharedPreferences.getInstance();
 
   // Initialize all repositories
   final levelRepository = await _initializeLevelRepository();
   final localProgressRepository = await _initializeProgressRepository();
   final dailyChallengeRepository = _initializeFirebaseRepositories();
+  final leaderboardRepository = FirestoreLeaderboardRepository();
   final authRepository = await _initializeAuthRepository(
     localProgressRepository,
   );
@@ -115,6 +92,7 @@ void main() async {
         dailyChallengeRepositoryProvider.overrideWithValue(
           dailyChallengeRepository,
         ),
+        leaderboardRepositoryProvider.overrideWithValue(leaderboardRepository),
         sharedPreferencesProvider.overrideWithValue(sharedPreferences),
         notificationServiceProvider.overrideWithValue(notificationService),
         if (apiServer != null)
@@ -126,6 +104,25 @@ void main() async {
 
   // Initialize notification service after app is running
   _initializeNotificationService(notificationService, sharedPreferences);
+}
+
+/// Initializes Firebase, Crashlytics, Performance, and DiagnosticLogger.
+Future<void> _initializeFirebaseCore() async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  if (kDebugMode) debugPrint('Firebase initialized');
+
+  DiagnosticLogger.init();
+
+  final performance = FirebasePerformance.instance;
+  await performance.setPerformanceCollectionEnabled(true);
+
+  if (!kDebugMode) {
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+  }
 }
 
 /// Initializes and pre-loads the level repository.
@@ -401,6 +398,9 @@ class _HexBuzzAppState extends ConsumerState<HexBuzzApp> {
 
       case AppRoutes.dailyChallenge:
         return _buildRoute(const DailyChallengeScreen(), settings, isForward);
+
+      case AppRoutes.leaderboard:
+        return _buildRoute(const LeaderboardScreen(), settings, isForward);
 
       default:
         return _buildRoute(const FrontScreen(), settings, isForward);

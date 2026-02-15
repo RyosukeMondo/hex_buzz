@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 /// Log levels for structured logging.
 enum LogLevel {
@@ -58,8 +57,15 @@ class Logger {
         event: event,
         context: context,
       );
-      final output = _output ?? stdout;
-      output.writeln(entry.toJson());
+      final sink = _output;
+      final json = entry.toJson();
+      if (sink != null) {
+        sink.writeln(json);
+      } else {
+        // Use print instead of dart:io stdout for web compatibility.
+        // ignore: avoid_print
+        print(json);
+      }
     }
   }
 }

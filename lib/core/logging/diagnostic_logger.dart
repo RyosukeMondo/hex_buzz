@@ -69,7 +69,7 @@ class DiagnosticLogger {
             'clientTime': DateTime.now().toIso8601String(),
             if (data != null) 'data': data,
           })
-          .catchError((_) => throw UnimplementedError());
+          .then((_) {}, onError: (_) {});
     }
 
     // Also log to structured logger

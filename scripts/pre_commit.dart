@@ -11,26 +11,31 @@ void main(List<String> args) {
 }
 
 int runChecks() {
-  final libDir = Directory('lib');
-  final testDir = Directory('test');
+  // Only check staged files to avoid blocking on pre-existing violations
+  final stagedResult = Process.runSync('git', [
+    'diff',
+    '--cached',
+    '--name-only',
+    '--diff-filter=ACM',
+  ]);
+  final stagedFiles = (stagedResult.stdout as String)
+      .split('\n')
+      .where((f) => f.endsWith('.dart'))
+      .where((f) => f.startsWith('lib/') || f.startsWith('test/'))
+      .toList();
 
-  if (!libDir.existsSync()) {
-    stderr.writeln('Error: lib directory not found');
-    return 1;
+  if (stagedFiles.isEmpty) {
+    stdout.writeln('✓ No Dart files to check');
+    return 0;
   }
 
   final violations = <String>[];
 
-  for (final dir in [libDir, if (testDir.existsSync()) testDir]) {
-    final files = dir
-        .listSync(recursive: true)
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.dart'));
-
-    for (final file in files) {
-      final fileViolations = checkFile(file);
-      violations.addAll(fileViolations);
-    }
+  for (final path in stagedFiles) {
+    final file = File(path);
+    if (!file.existsSync()) continue;
+    final fileViolations = checkFile(file);
+    violations.addAll(fileViolations);
   }
 
   if (violations.isNotEmpty) {

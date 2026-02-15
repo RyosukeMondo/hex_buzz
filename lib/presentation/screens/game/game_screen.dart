@@ -13,6 +13,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/daily_challenge_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../widgets/completion_overlay/completion_overlay.dart';
+import '../../widgets/daily_challenge_completion_dialog.dart';
 import '../../widgets/hex_grid.dart';
 
 /// Main game screen that displays the hexagonal grid and handles gameplay.
@@ -129,59 +130,71 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
 
   /// Submits the score to the appropriate leaderboard.
   Future<void> _submitScore() async {
-    // Only submit if user is logged in
-    final authAsync = ref.read(authProvider);
-    final user = authAsync.valueOrNull;
-    DiagnosticLogger.logEvent(
-      'submit_score_called',
-      data: {
-        'userId': user?.id,
-        'isAuthenticated': user != null,
-        'isLoading': authAsync.isLoading,
-        'hasError': authAsync.hasError,
-      },
-      level: LogLevel.debug,
-    );
-    if (user == null) {
-      DiagnosticLogger.logEvent(
-        'submit_score_failed_no_user',
-        level: LogLevel.warn,
-      );
-      return;
-    }
+    final user = ref.read(authProvider).valueOrNull;
+    if (user == null) return;
 
     final gameState = ref.read(gameProvider);
-    final elapsedTime = gameState.elapsedTime;
-    final elapsedTimeMs = elapsedTime.inMilliseconds;
-    final stars = StarCalculator.calculateStars(elapsedTime);
+    final elapsedTimeMs = gameState.elapsedTime.inMilliseconds;
+    final stars = StarCalculator.calculateStars(gameState.elapsedTime);
 
+    if (widget.isDailyChallenge && widget.dailyChallenge != null) {
+      await _submitDailyChallenge(user.id, stars, elapsedTimeMs);
+    }
+  }
+
+  /// Submits daily challenge completion via repository and shows dialog.
+  Future<void> _submitDailyChallenge(
+    String userId,
+    int stars,
+    int completionTimeMs,
+  ) async {
+    final repository = ref.read(dailyChallengeRepositoryProvider);
     try {
-      if (widget.isDailyChallenge && widget.dailyChallenge != null) {
-        // Submit to daily challenge leaderboard
-        DiagnosticLogger.logEvent(
-          'submitting_daily_challenge_completion',
-          data: {
-            'userId': user.id,
-            'stars': stars,
-            'completionTimeMs': elapsedTimeMs,
-          },
-          level: LogLevel.info,
+      final success = await repository.submitChallengeCompletion(
+        userId: userId,
+        stars: stars,
+        completionTimeMs: completionTimeMs,
+      );
+      DiagnosticLogger.logEvent(
+        'daily_challenge_submission_complete',
+        data: {'userId': userId, 'stars': stars, 'success': success},
+        level: LogLevel.info,
+      );
+      if (success && mounted) {
+        final completion = await repository.getCompletion(
+          userId: userId,
+          dateId: widget.dailyChallenge!.id,
         );
-        await ref
-            .read(dailyChallengeProvider(user.id).notifier)
-            .complete(stars);
-        DiagnosticLogger.logEvent(
-          'daily_challenge_submission_complete',
-          data: {'userId': user.id, 'stars': stars},
-          level: LogLevel.info,
-        );
+        if (mounted && completion != null) {
+          DailyChallengeCompletionDialog.show(
+            context,
+            completion: completion,
+            dateId: widget.dailyChallenge!.id,
+          );
+        }
       }
     } catch (e) {
       DiagnosticLogger.logError(
         'score_submission_failed',
         error: e,
-        data: {'userId': user.id, 'isDailyChallenge': widget.isDailyChallenge},
+        data: {'userId': userId},
       );
+    }
+  }
+
+  void _onGameStateChanged(dynamic previous, dynamic next) {
+    if (next.isComplete && !_hasSubmitted) {
+      DiagnosticLogger.logEvent(
+        'game_completed',
+        data: {
+          'elapsedTimeMs': next.elapsedTime.inMilliseconds,
+          'isDailyChallenge': widget.isDailyChallenge,
+        },
+        level: LogLevel.info,
+      );
+      _hasSubmitted = true;
+      widget.onScoreSubmitted();
+      _submitScore();
     }
   }
 
@@ -190,41 +203,7 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
     final gameState = ref.watch(gameProvider);
     final visitedCells = gameState.path.toSet();
 
-    // Listen for game completion and trigger submission
-    ref.listen(gameProvider, (previous, next) {
-      DiagnosticLogger.logEvent(
-        'game_state_changed',
-        data: {
-          'previousIsComplete': previous?.isComplete,
-          'nextIsComplete': next.isComplete,
-          'hasSubmitted': _hasSubmitted,
-        },
-        level: LogLevel.debug,
-      );
-
-      if (next.isComplete && !_hasSubmitted) {
-        DiagnosticLogger.logEvent(
-          'game_completed',
-          data: {
-            'elapsedTimeMs': next.elapsedTime.inMilliseconds,
-            'isDailyChallenge': widget.isDailyChallenge,
-          },
-          level: LogLevel.info,
-        );
-        _hasSubmitted = true;
-        widget.onScoreSubmitted();
-        _submitScore();
-      }
-    });
-
-    // Log game state changes
-    if (gameState.isComplete) {
-      DiagnosticLogger.logEvent(
-        'rendering_completion_overlay',
-        data: {'scoreSubmitted': widget.scoreSubmitted},
-        level: LogLevel.debug,
-      );
-    }
+    ref.listen(gameProvider, _onGameStateChanged);
 
     return KeyboardShortcuts(
       onUndo: () {
@@ -409,8 +388,9 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
           : null,
       onReplay: () => ref.read(gameProvider.notifier).reset(),
       onLevelSelect: () => _navigateToLevelSelect(context),
-      onViewLeaderboard:
-          null, // Global leaderboard removed - daily leaderboard shown in completion dialog
+      onViewLeaderboard: widget.isDailyChallenge
+          ? () => Navigator.of(context).pushNamed(AppRoutes.leaderboard)
+          : null,
     );
   }
 
