@@ -86,11 +86,11 @@ void main() {
 
         // Should transition to Playing state
         // The UI should show the game board or "Playing" state indicator
-        final playingState =
-            dailyChallengeRepo.getCurrentState(testUser1.id);
+        final playingState = dailyChallengeRepo.getCurrentState(testUser1.id);
         expect(playingState, isA<DailyChallengeStatePlaying>());
 
-        final startTime = (playingState as DailyChallengeStatePlaying).startTime;
+        final startTime =
+            (playingState as DailyChallengeStatePlaying).startTime;
         print('Challenge started at: $startTime');
 
         // Suspend the challenge
@@ -107,8 +107,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should transition to Suspended state
-        final suspendedState =
-            dailyChallengeRepo.getCurrentState(testUser1.id);
+        final suspendedState = dailyChallengeRepo.getCurrentState(testUser1.id);
         expect(suspendedState, isA<DailyChallengeStateSuspended>());
 
         // Verify startTime is preserved
@@ -131,8 +130,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should transition back to Playing state with same startTime
-        final resumedState =
-            dailyChallengeRepo.getCurrentState(testUser1.id);
+        final resumedState = dailyChallengeRepo.getCurrentState(testUser1.id);
         expect(resumedState, isA<DailyChallengeStatePlaying>());
         expect(
           (resumedState as DailyChallengeStatePlaying).startTime,
@@ -153,10 +151,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should show completion dialog
-        expect(
-          find.byType(DailyChallengeCompletionDialog),
-          findsOneWidget,
-        );
+        expect(find.byType(DailyChallengeCompletionDialog), findsOneWidget);
 
         // Verify share buttons are present
         expect(find.byType(ShareButton), findsWidgets);
@@ -206,51 +201,49 @@ void main() {
       },
     );
 
-    testWidgets(
-      'User 2 can start same challenge after User 1 completes',
-      (tester) async {
-        // User 2 should be able to start the challenge
-        await tester.pumpWidget(buildApp(testUser2));
-        await tester.pumpAndSettle();
+    testWidgets('User 2 can start same challenge after User 1 completes', (
+      tester,
+    ) async {
+      // User 2 should be able to start the challenge
+      await tester.pumpWidget(buildApp(testUser2));
+      await tester.pumpAndSettle();
 
-        // Should show "Start Challenge" button for User 2
-        expect(find.text('Start Challenge'), findsOneWidget);
+      // Should show "Start Challenge" button for User 2
+      expect(find.text('Start Challenge'), findsOneWidget);
 
-        // Tap "Start Challenge"
-        await tester.tap(find.text('Start Challenge'));
-        await tester.pumpAndSettle();
+      // Tap "Start Challenge"
+      await tester.tap(find.text('Start Challenge'));
+      await tester.pumpAndSettle();
 
-        // Should transition to Playing state
-        final playingState =
-            dailyChallengeRepo.getCurrentState(testUser2.id);
-        expect(playingState, isA<DailyChallengeStatePlaying>());
+      // Should transition to Playing state
+      final playingState = dailyChallengeRepo.getCurrentState(testUser2.id);
+      expect(playingState, isA<DailyChallengeStatePlaying>());
 
-        print('User 2 can start challenge independently ✓');
+      print('User 2 can start challenge independently ✓');
 
-        // Complete with different stats
-        await tester.runAsync(() async {
-          final container = ProviderScope.containerOf(
-            tester.element(find.byType(DailyChallengeScreen)),
-          );
-          await container
-              .read(dailyChallengeProvider(testUser2.id).notifier)
-              .complete(2); // 2 stars
-          await Future.delayed(const Duration(milliseconds: 500));
-        });
-        await tester.pumpAndSettle();
-
-        // Verify User 2's completion
-        final completion = await dailyChallengeRepo.getCompletion(
-          userId: testUser2.id,
-          dateId: dailyChallengeRepo.todaysDateId,
+      // Complete with different stats
+      await tester.runAsync(() async {
+        final container = ProviderScope.containerOf(
+          tester.element(find.byType(DailyChallengeScreen)),
         );
-        expect(completion, isNotNull);
-        expect(completion!.stars, equals(2));
-        expect(completion.rank, equals(2)); // Second to complete
+        await container
+            .read(dailyChallengeProvider(testUser2.id).notifier)
+            .complete(2); // 2 stars
+        await Future.delayed(const Duration(milliseconds: 500));
+      });
+      await tester.pumpAndSettle();
 
-        print('User 2 completed with rank: ${completion.rank} ✓');
-      },
-    );
+      // Verify User 2's completion
+      final completion = await dailyChallengeRepo.getCompletion(
+        userId: testUser2.id,
+        dateId: dailyChallengeRepo.todaysDateId,
+      );
+      expect(completion, isNotNull);
+      expect(completion!.stars, equals(2));
+      expect(completion.rank, equals(2)); // Second to complete
+
+      print('User 2 completed with rank: ${completion.rank} ✓');
+    });
 
     testWidgets(
       'Timer cannot be reset - startTime preserved across suspend/resume',
@@ -276,8 +269,9 @@ void main() {
           tester.element(find.byType(DailyChallengeScreen)),
         );
 
-        final initialState =
-            container.read(dailyChallengeProvider(testUser.id));
+        final initialState = container.read(
+          dailyChallengeProvider(testUser.id),
+        );
         expect(initialState, isA<DailyChallengeStatePlaying>());
         final originalStartTime =
             (initialState as DailyChallengeStatePlaying).startTime;
@@ -289,11 +283,14 @@ void main() {
 
         // Suspend and resume multiple times
         for (int i = 0; i < 3; i++) {
-          container.read(dailyChallengeProvider(testUser.id).notifier).suspend();
+          container
+              .read(dailyChallengeProvider(testUser.id).notifier)
+              .suspend();
           await tester.pumpAndSettle();
 
-          final suspendedState =
-              container.read(dailyChallengeProvider(testUser.id));
+          final suspendedState = container.read(
+            dailyChallengeProvider(testUser.id),
+          );
           expect(suspendedState, isA<DailyChallengeStateSuspended>());
           expect(
             (suspendedState as DailyChallengeStateSuspended).startTime,
@@ -307,8 +304,9 @@ void main() {
           container.read(dailyChallengeProvider(testUser.id).notifier).resume();
           await tester.pumpAndSettle();
 
-          final resumedState =
-              container.read(dailyChallengeProvider(testUser.id));
+          final resumedState = container.read(
+            dailyChallengeProvider(testUser.id),
+          );
           expect(resumedState, isA<DailyChallengeStatePlaying>());
           expect(
             (resumedState as DailyChallengeStatePlaying).startTime,
@@ -322,43 +320,42 @@ void main() {
       },
     );
 
-    testWidgets(
-      'Leaderboard shows rankings after multiple completions',
-      (tester) async {
-        // Set up multiple completions
-        dailyChallengeRepo.reset();
+    testWidgets('Leaderboard shows rankings after multiple completions', (
+      tester,
+    ) async {
+      // Set up multiple completions
+      dailyChallengeRepo.reset();
 
-        for (int i = 1; i <= 5; i++) {
-          await dailyChallengeRepo.submitChallengeCompletion(
-            userId: 'user$i',
-            stars: 3,
-            completionTimeMs: 10000 * i,
-          );
-        }
-
-        // Get leaderboard
-        final leaderboard = await dailyChallengeRepo.getChallengeLeaderboard(
-          date: DateTime.now(),
-          limit: 100,
+      for (int i = 1; i <= 5; i++) {
+        await dailyChallengeRepo.submitChallengeCompletion(
+          userId: 'user$i',
+          stars: 3,
+          completionTimeMs: 10000 * i,
         );
+      }
 
-        expect(leaderboard.length, equals(5));
-        expect(leaderboard[0].userId, equals('user1')); // Fastest
-        expect(leaderboard[0].rank, equals(1));
-        expect(leaderboard[4].userId, equals('user5')); // Slowest
-        expect(leaderboard[4].rank, equals(5));
+      // Get leaderboard
+      final leaderboard = await dailyChallengeRepo.getChallengeLeaderboard(
+        date: DateTime.now(),
+        limit: 100,
+      );
 
-        // Verify sorted by time (ascending)
-        for (int i = 0; i < leaderboard.length - 1; i++) {
-          expect(
-            leaderboard[i].completionTime ?? 0,
-            lessThan(leaderboard[i + 1].completionTime ?? 0),
-          );
-        }
+      expect(leaderboard.length, equals(5));
+      expect(leaderboard[0].userId, equals('user1')); // Fastest
+      expect(leaderboard[0].rank, equals(1));
+      expect(leaderboard[4].userId, equals('user5')); // Slowest
+      expect(leaderboard[4].rank, equals(5));
 
-        print('Leaderboard correctly ranked by completion time ✓');
-      },
-    );
+      // Verify sorted by time (ascending)
+      for (int i = 0; i < leaderboard.length - 1; i++) {
+        expect(
+          leaderboard[i].completionTime ?? 0,
+          lessThan(leaderboard[i + 1].completionTime ?? 0),
+        );
+      }
+
+      print('Leaderboard correctly ranked by completion time ✓');
+    });
   });
 }
 
@@ -450,15 +447,17 @@ class MockDailyChallengeRepository implements DailyChallengeRepository {
 
     final entries = _completions.entries
         .where((e) => e.value.dateId == dateId)
-        .map((e) => LeaderboardEntry(
-              userId: e.value.userId,
-              username: e.value.userId, // Use userId as username
-              totalStars: e.value.stars,
-              rank: e.value.rank ?? 0,
-              updatedAt: e.value.completedAt,
-              completionTime: e.value.completionTimeMs,
-              stars: e.value.stars,
-            ))
+        .map(
+          (e) => LeaderboardEntry(
+            userId: e.value.userId,
+            username: e.value.userId, // Use userId as username
+            totalStars: e.value.stars,
+            rank: e.value.rank ?? 0,
+            updatedAt: e.value.completedAt,
+            completionTime: e.value.completionTimeMs,
+            stars: e.value.stars,
+          ),
+        )
         .toList();
 
     // Sort by stars (descending) then by time (ascending)

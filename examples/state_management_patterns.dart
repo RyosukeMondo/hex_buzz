@@ -64,21 +64,20 @@ class _GoodGameScreenState extends ConsumerState<GoodGameScreen> {
 
     final gameState = ref.watch(gameProvider);
     return Container(
-      child: gameState.isComplete
-        ? CompletionOverlay()
-        : GameGrid(),
+      child: gameState.isComplete ? CompletionOverlay() : GameGrid(),
     );
   }
 
   Future<void> submitScore(GameState state) async {
     // Submission logic with error handling
     try {
-      await ref.read(dailyChallengeRepositoryProvider)
-        .submitCompletion(
-          userId: 'user123',
-          stars: 3,
-          completionTimeMs: state.elapsedTime.inMilliseconds,
-        );
+      await ref
+          .read(dailyChallengeRepositoryProvider)
+          .submitCompletion(
+            userId: 'user123',
+            stars: 3,
+            completionTimeMs: state.elapsedTime.inMilliseconds,
+          );
     } catch (e) {
       // Handle error
       print('Failed to submit: $e');
@@ -92,7 +91,9 @@ class _GoodGameScreenState extends ConsumerState<GoodGameScreen> {
 
 // 1. Define events
 abstract class GameEvent {}
+
 class GameStartedEvent extends GameEvent {}
+
 class GameCompletedEvent extends GameEvent {
   final GameState state;
   GameCompletedEvent(this.state);
@@ -147,12 +148,13 @@ class BestGameScreen extends ConsumerWidget {
   }
 
   Future<void> submitScore(WidgetRef ref, GameState state) async {
-    await ref.read(dailyChallengeRepositoryProvider)
-      .submitCompletion(
-        userId: 'user123',
-        stars: 3,
-        completionTimeMs: state.elapsedTime.inMilliseconds,
-      );
+    await ref
+        .read(dailyChallengeRepositoryProvider)
+        .submitCompletion(
+          userId: 'user123',
+          stars: 3,
+          completionTimeMs: state.elapsedTime.inMilliseconds,
+        );
   }
 }
 
@@ -173,10 +175,7 @@ class GameStateWithPhase {
   final GamePhase phase;
   final bool isComplete;
 
-  const GameStateWithPhase({
-    required this.phase,
-    this.isComplete = false,
-  });
+  const GameStateWithPhase({required this.phase, this.isComplete = false});
 
   GameStateWithPhase copyWith({GamePhase? phase, bool? isComplete}) {
     return GameStateWithPhase(
@@ -187,9 +186,8 @@ class GameStateWithPhase {
 }
 
 class GameStateMachineNotifier extends StateNotifier<GameStateWithPhase> {
-  GameStateMachineNotifier() : super(
-    const GameStateWithPhase(phase: GamePhase.notStarted)
-  );
+  GameStateMachineNotifier()
+    : super(const GameStateWithPhase(phase: GamePhase.notStarted));
 
   void startGame() {
     if (state.phase != GamePhase.notStarted) {
@@ -202,10 +200,7 @@ class GameStateMachineNotifier extends StateNotifier<GameStateWithPhase> {
     if (state.phase != GamePhase.playing) {
       throw StateError('Cannot complete from ${state.phase}');
     }
-    state = state.copyWith(
-      phase: GamePhase.completed,
-      isComplete: true,
-    );
+    state = state.copyWith(phase: GamePhase.completed, isComplete: true);
   }
 
   Future<void> submitScore() async {
@@ -269,7 +264,9 @@ class DailyChallengeRepository {
   }
 }
 
-final dailyChallengeRepositoryProvider = Provider<DailyChallengeRepository>((ref) {
+final dailyChallengeRepositoryProvider = Provider<DailyChallengeRepository>((
+  ref,
+) {
   return DailyChallengeRepository();
 });
 
