@@ -13,8 +13,13 @@ import 'package:hex_buzz/domain/services/level_repository.dart';
 import 'package:hex_buzz/domain/services/progress_repository.dart';
 import 'package:hex_buzz/main.dart';
 import 'package:hex_buzz/presentation/providers/auth_provider.dart';
+import 'package:hex_buzz/presentation/providers/daily_challenge_provider.dart';
 import 'package:hex_buzz/presentation/providers/game_provider.dart';
+import 'package:hex_buzz/presentation/providers/notification_provider.dart';
 import 'package:hex_buzz/presentation/providers/progress_provider.dart';
+
+import 'presentation/screens/test_mocks.dart'
+    show MockDailyChallengeRepository, MockNotificationService;
 
 /// Creates a simple test level.
 Level _createTestLevel({int size = 2, String? id}) {
@@ -122,6 +127,12 @@ void main() {
           levelRepositoryProvider.overrideWithValue(_MockLevelRepository()),
           progressRepositoryProvider.overrideWithValue(
             _MockProgressRepository(),
+          ),
+          dailyChallengeRepositoryProvider.overrideWithValue(
+            MockDailyChallengeRepository(),
+          ),
+          notificationServiceProvider.overrideWithValue(
+            MockNotificationService(),
           ),
         ],
         child: const HexBuzzApp(),

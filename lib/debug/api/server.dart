@@ -93,55 +93,50 @@ class DebugApiServer {
 
   Handler _buildHandler() {
     final router = Router();
-
-    // Health check endpoint
     router.get('/api/health', _handleHealth);
+    _mountRoutes(router);
 
-    // Game routes
-    final gameRoutes = GameRoutes(engine: engine);
-    router.mount('/api/game/', gameRoutes.router.call);
-
-    // Level routes
-    final levelRoutes = LevelRoutes();
-    router.mount('/api/level/', levelRoutes.router.call);
-
-    // Progress routes (if repository is available)
-    if (progressRepository != null) {
-      final progressRoutes = ProgressRoutes(repository: progressRepository!);
-      router.mount('/api/progress/', progressRoutes.router.call);
-    }
-
-    // Auth routes (if repository is available)
-    if (authRepository != null) {
-      final authRoutes = AuthRoutes(repository: authRepository!);
-      router.mount('/api/auth/', authRoutes.router.call);
-    }
-
-    // Leaderboard routes (if repositories are available)
-    if (leaderboardRepository != null && authRepository != null) {
-      final leaderboardRoutes = LeaderboardRoutes(
-        repository: leaderboardRepository!,
-        authRepository: authRepository!,
-      );
-      router.mount('/api/leaderboard/', leaderboardRoutes.router.call);
-    }
-
-    // Daily challenge routes (if repositories are available)
-    if (dailyChallengeRepository != null && authRepository != null) {
-      final dailyChallengeRoutes = DailyChallengeRoutes(
-        repository: dailyChallengeRepository!,
-        authRepository: authRepository!,
-      );
-      router.mount('/api/daily-challenge/', dailyChallengeRoutes.router.call);
-    }
-
-    final pipeline = const Pipeline()
+    return const Pipeline()
         .addMiddleware(_corsMiddleware())
         .addMiddleware(_jsonMiddleware())
         .addMiddleware(_loggingMiddleware())
         .addHandler(router.call);
+  }
 
-    return pipeline;
+  void _mountRoutes(Router router) {
+    router.mount('/api/game/', GameRoutes(engine: engine).router.call);
+    router.mount('/api/level/', LevelRoutes().router.call);
+
+    if (progressRepository != null) {
+      router.mount(
+        '/api/progress/',
+        ProgressRoutes(repository: progressRepository!).router.call,
+      );
+    }
+    if (authRepository != null) {
+      router.mount(
+        '/api/auth/',
+        AuthRoutes(repository: authRepository!).router.call,
+      );
+    }
+    if (leaderboardRepository != null && authRepository != null) {
+      router.mount(
+        '/api/leaderboard/',
+        LeaderboardRoutes(
+          repository: leaderboardRepository!,
+          authRepository: authRepository!,
+        ).router.call,
+      );
+    }
+    if (dailyChallengeRepository != null && authRepository != null) {
+      router.mount(
+        '/api/daily-challenge/',
+        DailyChallengeRoutes(
+          repository: dailyChallengeRepository!,
+          authRepository: authRepository!,
+        ).router.call,
+      );
+    }
   }
 
   Response _handleHealth(Request request) {

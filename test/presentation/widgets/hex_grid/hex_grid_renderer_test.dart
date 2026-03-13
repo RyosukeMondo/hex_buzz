@@ -47,7 +47,9 @@ void main() {
       );
 
       expect(find.byType(HexGridRenderer), findsOneWidget);
-      expect(find.byType(CustomPaint), findsOneWidget);
+      // CustomPaint is used by HexGridRenderer and may also appear in
+      // ancestor widgets (Scaffold, etc.)
+      expect(find.byType(CustomPaint), findsWidgets);
     });
 
     testWidgets('renders with path', (tester) async {
@@ -169,7 +171,9 @@ void main() {
         ),
       );
 
-      expect(find.byType(RepaintBoundary), findsOneWidget);
+      // RepaintBoundary is used by HexGridRenderer and may also appear in
+      // ancestor widgets (Scaffold, etc.)
+      expect(find.byType(RepaintBoundary), findsWidgets);
     });
 
     test('HexGridPainter shouldRepaint returns true when level changes', () {

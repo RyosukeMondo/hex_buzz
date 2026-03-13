@@ -89,12 +89,12 @@ class FirebaseAuthRepository implements AuthRepository {
 
       // Sync to Firestore in background (non-blocking)
       // ignore: unawaited_futures
-      _syncUserProfile(firebaseUser).catchError((e) {
+      _syncUserProfile(firebaseUser).catchError((Object e) {
         // Log but don't fail - Firestore sync is not critical for login
         if (kDebugMode) {
           debugPrint('Firestore sync failed: $e');
         }
-        throw UnimplementedError();
+        return _mapFirebaseUserToDomainUser(firebaseUser);
       });
 
       return AuthSuccess(user);

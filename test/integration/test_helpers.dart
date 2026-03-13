@@ -8,15 +8,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hex_buzz/domain/models/auth_result.dart';
+import 'package:hex_buzz/domain/models/daily_challenge.dart';
+import 'package:hex_buzz/domain/models/daily_challenge_completion.dart';
 import 'package:hex_buzz/domain/models/hex_cell.dart';
+import 'package:hex_buzz/domain/models/leaderboard_entry.dart';
 import 'package:hex_buzz/domain/models/level.dart';
 import 'package:hex_buzz/domain/models/progress_state.dart';
 import 'package:hex_buzz/domain/models/user.dart';
 import 'package:hex_buzz/domain/services/auth_repository.dart';
+import 'package:hex_buzz/domain/services/daily_challenge_repository.dart';
 import 'package:hex_buzz/domain/services/level_repository.dart';
 import 'package:hex_buzz/domain/services/progress_repository.dart';
 import 'package:hex_buzz/main.dart';
 import 'package:hex_buzz/presentation/providers/auth_provider.dart';
+import 'package:hex_buzz/presentation/providers/daily_challenge_provider.dart';
 import 'package:hex_buzz/presentation/providers/game_provider.dart';
 import 'package:hex_buzz/presentation/providers/progress_provider.dart';
 import 'package:hex_buzz/presentation/screens/auth/auth_screen.dart';
@@ -189,6 +194,34 @@ Level createThreeCellLevel({required String id}) {
   return Level(id: id, size: 3, cells: cells, walls: {}, checkpointCount: 2);
 }
 
+/// Mock daily challenge repository for integration testing.
+class MockDailyChallengeRepository implements DailyChallengeRepository {
+  @override
+  Future<DailyChallenge?> getTodaysChallenge() async => null;
+
+  @override
+  Future<bool> submitChallengeCompletion({
+    required String userId,
+    required int stars,
+    required int completionTimeMs,
+  }) async => false;
+
+  @override
+  Future<List<LeaderboardEntry>> getChallengeLeaderboard({
+    required DateTime date,
+    int limit = 100,
+  }) async => [];
+
+  @override
+  Future<bool> hasCompletedToday(String userId) async => false;
+
+  @override
+  Future<DailyChallengeCompletion?> getCompletion({
+    required String userId,
+    required String dateId,
+  }) async => null;
+}
+
 /// Creates the full app with mock dependencies starting from FrontScreen.
 Widget createFullApp({
   required MockAuthRepository authRepo,
@@ -200,6 +233,9 @@ Widget createFullApp({
       authRepositoryProvider.overrideWithValue(authRepo),
       progressRepositoryProvider.overrideWithValue(progressRepo),
       levelRepositoryProvider.overrideWithValue(levelRepo),
+      dailyChallengeRepositoryProvider.overrideWithValue(
+        MockDailyChallengeRepository(),
+      ),
     ],
     child: MaterialApp(
       title: 'HexBuzz',

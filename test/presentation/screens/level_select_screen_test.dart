@@ -7,6 +7,7 @@ import 'package:hex_buzz/domain/models/progress_state.dart';
 import 'package:hex_buzz/domain/services/progress_repository.dart';
 import 'package:hex_buzz/main.dart';
 import 'package:hex_buzz/presentation/providers/auth_provider.dart';
+import 'package:hex_buzz/presentation/providers/daily_challenge_provider.dart';
 import 'package:hex_buzz/presentation/providers/game_provider.dart';
 import 'package:hex_buzz/presentation/providers/progress_provider.dart';
 import 'package:hex_buzz/presentation/screens/game/game_screen.dart';
@@ -59,6 +60,9 @@ void main() {
           authRepositoryProvider.overrideWithValue(mockAuthRepo),
           progressRepositoryProvider.overrideWithValue(mockProgressRepo),
           levelRepositoryProvider.overrideWithValue(mockLevelRepo),
+          dailyChallengeRepositoryProvider.overrideWithValue(
+            MockDailyChallengeRepository(),
+          ),
         ],
         child: MaterialApp(
           theme: HoneyTheme.lightTheme,
@@ -146,6 +150,9 @@ void main() {
               authRepositoryProvider.overrideWithValue(mockAuthRepo),
               progressRepositoryProvider.overrideWithValue(mockProgressRepo),
               levelRepositoryProvider.overrideWithValue(mockLevelRepo),
+              dailyChallengeRepositoryProvider.overrideWithValue(
+                MockDailyChallengeRepository(),
+              ),
             ],
             child: MaterialApp(
               theme: HoneyTheme.lightTheme,
@@ -306,6 +313,9 @@ void main() {
               authRepositoryProvider.overrideWithValue(mockAuthRepo),
               progressRepositoryProvider.overrideWithValue(slowRepo),
               levelRepositoryProvider.overrideWithValue(mockLevelRepo),
+              dailyChallengeRepositoryProvider.overrideWithValue(
+                MockDailyChallengeRepository(),
+              ),
             ],
             child: MaterialApp(
               theme: HoneyTheme.lightTheme,
@@ -336,6 +346,9 @@ void main() {
               authRepositoryProvider.overrideWithValue(mockAuthRepo),
               progressRepositoryProvider.overrideWithValue(errorRepo),
               levelRepositoryProvider.overrideWithValue(mockLevelRepo),
+              dailyChallengeRepositoryProvider.overrideWithValue(
+                MockDailyChallengeRepository(),
+              ),
             ],
             child: MaterialApp(
               theme: HoneyTheme.lightTheme,
@@ -358,6 +371,9 @@ void main() {
               authRepositoryProvider.overrideWithValue(mockAuthRepo),
               progressRepositoryProvider.overrideWithValue(errorRepo),
               levelRepositoryProvider.overrideWithValue(mockLevelRepo),
+              dailyChallengeRepositoryProvider.overrideWithValue(
+                MockDailyChallengeRepository(),
+              ),
             ],
             child: MaterialApp(
               theme: HoneyTheme.lightTheme,
@@ -492,6 +508,9 @@ void main() {
                 MockProgressRepository(progressState),
               ),
               levelRepositoryProvider.overrideWithValue(mockLevelRepo),
+              dailyChallengeRepositoryProvider.overrideWithValue(
+                MockDailyChallengeRepository(),
+              ),
             ],
             child: MaterialApp(
               theme: HoneyTheme.lightTheme,

@@ -1,9 +1,16 @@
+import 'dart:async';
+
 import 'package:hex_buzz/domain/models/auth_result.dart';
+import 'package:hex_buzz/domain/models/daily_challenge.dart';
+import 'package:hex_buzz/domain/models/daily_challenge_completion.dart';
+import 'package:hex_buzz/domain/models/leaderboard_entry.dart';
 import 'package:hex_buzz/domain/models/level.dart';
 import 'package:hex_buzz/domain/models/progress_state.dart';
 import 'package:hex_buzz/domain/models/user.dart';
 import 'package:hex_buzz/domain/services/auth_repository.dart';
+import 'package:hex_buzz/domain/services/daily_challenge_repository.dart';
 import 'package:hex_buzz/domain/services/level_repository.dart';
+import 'package:hex_buzz/domain/services/notification_service.dart';
 import 'package:hex_buzz/domain/services/progress_repository.dart';
 
 /// Mock auth repository for testing that returns a guest user.
@@ -94,4 +101,55 @@ class MockLevelRepository extends LevelRepository {
 
   @override
   Level? getRandomLevel(int size) => _levels.firstOrNull;
+}
+
+/// Mock daily challenge repository for testing.
+class MockDailyChallengeRepository implements DailyChallengeRepository {
+  @override
+  Future<DailyChallenge?> getTodaysChallenge() async => null;
+
+  @override
+  Future<bool> submitChallengeCompletion({
+    required String userId,
+    required int stars,
+    required int completionTimeMs,
+  }) async => false;
+
+  @override
+  Future<List<LeaderboardEntry>> getChallengeLeaderboard({
+    required DateTime date,
+    int limit = 100,
+  }) async => [];
+
+  @override
+  Future<bool> hasCompletedToday(String userId) async => false;
+
+  @override
+  Future<DailyChallengeCompletion?> getCompletion({
+    required String userId,
+    required String dateId,
+  }) async => null;
+}
+
+/// Mock notification service for testing.
+class MockNotificationService implements NotificationService {
+  final _controller = StreamController<Map<String, dynamic>>.broadcast();
+
+  @override
+  Future<bool> initialize() async => true;
+
+  @override
+  Future<String?> getDeviceToken() async => 'mock-token';
+
+  @override
+  Future<bool> subscribeToTopic(String topic) async => true;
+
+  @override
+  Future<bool> unsubscribeFromTopic(String topic) async => true;
+
+  @override
+  Stream<Map<String, dynamic>> get onMessageReceived => _controller.stream;
+
+  @override
+  Future<bool> requestPermission() async => true;
 }

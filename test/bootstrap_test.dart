@@ -10,8 +10,13 @@ import 'package:hex_buzz/domain/models/progress_state.dart';
 import 'package:hex_buzz/domain/services/level_repository.dart';
 import 'package:hex_buzz/main.dart';
 import 'package:hex_buzz/presentation/providers/auth_provider.dart';
+import 'package:hex_buzz/presentation/providers/daily_challenge_provider.dart';
 import 'package:hex_buzz/presentation/providers/game_provider.dart';
+import 'package:hex_buzz/presentation/providers/notification_provider.dart';
 import 'package:hex_buzz/presentation/providers/progress_provider.dart';
+
+import 'presentation/screens/test_mocks.dart'
+    show MockDailyChallengeRepository, MockNotificationService;
 
 /// Tests that validate the app bootstrap configuration in main.dart.
 ///
@@ -156,6 +161,12 @@ void main() {
             levelRepositoryProvider.overrideWithValue(levelRepository),
             progressRepositoryProvider.overrideWithValue(progressRepository),
             authRepositoryProvider.overrideWithValue(authRepository),
+            dailyChallengeRepositoryProvider.overrideWithValue(
+              MockDailyChallengeRepository(),
+            ),
+            notificationServiceProvider.overrideWithValue(
+              MockNotificationService(),
+            ),
           ],
           child: const HexBuzzApp(),
         ),

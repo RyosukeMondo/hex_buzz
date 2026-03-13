@@ -65,53 +65,47 @@ class GameEngine {
   /// Starts the timer on the first valid move.
   /// Records end time when win condition is met.
   MoveResult tryMove(HexCell target) {
-    // If game is already complete, reject move
     if (_state.isComplete) {
       return MoveResult.failure(_state, 'Game already complete');
     }
 
-    // Get the target cell from the level to ensure we have full cell info
     final targetCell = _state.level.getCell(target.q, target.r);
     if (targetCell == null) {
       return MoveResult.failure(_state, 'Target cell not in level');
     }
 
-    // Validate the move
     final validation = _validator.isValidMove(_state, targetCell);
     if (!validation.isValid) {
       return MoveResult.failure(_state, validation.reason ?? 'Invalid move');
     }
 
-    // Build the new path
-    final newPath = [..._state.path, targetCell];
+    _applyMove(targetCell);
+    return _checkWinAndReturn();
+  }
 
-    // Determine the new checkpoint number
+  void _applyMove(HexCell targetCell) {
+    final newPath = [..._state.path, targetCell];
     var newNextCheckpoint = _state.nextCheckpoint;
     if (targetCell.checkpoint == _state.nextCheckpoint) {
       newNextCheckpoint++;
     }
 
-    // Determine timing
     DateTime? newStartTime = _state.startTime;
-    DateTime? newEndTime = _state.endTime;
-
-    // Start timer on first move
     if (!_state.isStarted) {
       newStartTime = _clock();
     }
 
-    // Update state
     _state = _state.copyWith(
       path: newPath,
       nextCheckpoint: newNextCheckpoint,
       startTime: newStartTime,
     );
+  }
 
-    // Check for win condition
+  MoveResult _checkWinAndReturn() {
     final winCheck = _validator.checkWinCondition(_state);
     if (winCheck.isWin) {
-      newEndTime = _clock();
-      _state = _state.copyWith(endTime: newEndTime);
+      _state = _state.copyWith(endTime: _clock());
       DiagnosticLogger.logEvent(
         'game_won',
         data: {
@@ -123,7 +117,6 @@ class GameEngine {
       );
       return MoveResult.success(_state, isWin: true);
     }
-
     return MoveResult.success(_state);
   }
 

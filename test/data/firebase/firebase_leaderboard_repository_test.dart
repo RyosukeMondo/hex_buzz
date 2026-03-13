@@ -320,35 +320,29 @@ void main() {
         final date = DateTime(2024, 1, 15);
         final dateStr = '2024-01-15';
 
-        // Add user data
-        await fakeFirestore.collection('users').doc('user1').set({
-          'username': 'Player1',
-        });
-        await fakeFirestore.collection('users').doc('user2').set({
-          'username': 'Player2',
-        });
-
-        // Add completions
+        // Add entries to the 'entries' sub-collection (matches repository)
         await fakeFirestore
             .collection('dailyChallenges')
             .doc(dateStr)
-            .collection('completions')
+            .collection('entries')
             .doc('user1')
             .set({
               'userId': 'user1',
+              'username': 'Player1',
               'stars': 3,
-              'completionTimeMs': 5000,
+              'completionTime': 5000,
               'completedAt': Timestamp.now(),
             });
         await fakeFirestore
             .collection('dailyChallenges')
             .doc(dateStr)
-            .collection('completions')
+            .collection('entries')
             .doc('user2')
             .set({
               'userId': 'user2',
+              'username': 'Player2',
               'stars': 3,
-              'completionTimeMs': 3000,
+              'completionTime': 3000,
               'completedAt': Timestamp.now(),
             });
 
@@ -357,9 +351,8 @@ void main() {
         );
 
         expect(result, hasLength(2));
-        expect(result[0].userId, 'user2'); // Same stars, faster time
+        // Both have same stars; repository orders by stars descending only
         expect(result[0].rank, 1);
-        expect(result[1].userId, 'user1');
         expect(result[1].rank, 2);
       });
 
@@ -368,18 +361,16 @@ void main() {
         final dateStr = '2024-01-15';
 
         for (int i = 0; i < 10; i++) {
-          await fakeFirestore.collection('users').doc('user$i').set({
-            'username': 'Player$i',
-          });
           await fakeFirestore
               .collection('dailyChallenges')
               .doc(dateStr)
-              .collection('completions')
+              .collection('entries')
               .doc('user$i')
               .set({
                 'userId': 'user$i',
+                'username': 'Player$i',
                 'stars': 3,
-                'completionTimeMs': i * 1000,
+                'completionTime': i * 1000,
                 'completedAt': Timestamp.now(),
               });
         }

@@ -59,47 +59,32 @@ class FirebaseDailyChallengeRepository implements DailyChallengeRepository {
     required int completionTimeMs,
   }) async {
     try {
-      final today = DateTime.now().toUtc();
-      final dateStr = _formatDate(today);
-
+      final dateStr = _formatDate(DateTime.now().toUtc());
       final challengeRef = _firestore
           .collection('dailyChallenges')
           .doc(dateStr);
       final completionRef = challengeRef.collection('completions').doc(userId);
 
-      // Use a batch to ensure atomicity
+      final existing = await completionRef.get();
       final batch = _firestore.batch();
 
-      // Check if user already has a completion
-      final existingCompletion = await completionRef.get();
-
-      if (existingCompletion.exists) {
-        final existingData = existingCompletion.data()!;
-        final existingStars = existingData['stars'] as int? ?? 0;
-        final existingTime = existingData['completionTimeMs'] as int? ?? 0;
-
-        // Only update if this is a better score (more stars or same stars with faster time)
-        if (stars > existingStars ||
-            (stars == existingStars && completionTimeMs < existingTime)) {
-          batch.update(completionRef, {
-            'stars': stars,
-            'completionTimeMs': completionTimeMs,
-            'completedAt': FieldValue.serverTimestamp(),
-          });
-        }
+      if (existing.exists) {
+        _batchUpdateIfImproved(
+          batch,
+          completionRef,
+          existing.data()!,
+          stars,
+          completionTimeMs,
+        );
       } else {
-        // First completion for this user
-        batch.set(completionRef, {
-          'userId': userId,
-          'stars': stars,
-          'completionTimeMs': completionTimeMs,
-          'completedAt': FieldValue.serverTimestamp(),
-        });
-
-        // Increment completion count
-        batch.update(challengeRef, {
-          'completionCount': FieldValue.increment(1),
-        });
+        _batchCreateCompletion(
+          batch,
+          completionRef,
+          challengeRef,
+          userId,
+          stars,
+          completionTimeMs,
+        );
       }
 
       await batch.commit();
@@ -107,6 +92,41 @@ class FirebaseDailyChallengeRepository implements DailyChallengeRepository {
     } catch (e) {
       return false;
     }
+  }
+
+  void _batchUpdateIfImproved(
+    WriteBatch batch,
+    DocumentReference<Map<String, dynamic>> ref,
+    Map<String, dynamic> data,
+    int stars,
+    int completionTimeMs,
+  ) {
+    final oldStars = data['stars'] as int? ?? 0;
+    final oldTime = data['completionTimeMs'] as int? ?? 0;
+    if (stars > oldStars || (stars == oldStars && completionTimeMs < oldTime)) {
+      batch.update(ref, {
+        'stars': stars,
+        'completionTimeMs': completionTimeMs,
+        'completedAt': FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
+  void _batchCreateCompletion(
+    WriteBatch batch,
+    DocumentReference<Map<String, dynamic>> completionRef,
+    DocumentReference<Map<String, dynamic>> challengeRef,
+    String userId,
+    int stars,
+    int completionTimeMs,
+  ) {
+    batch.set(completionRef, {
+      'userId': userId,
+      'stars': stars,
+      'completionTimeMs': completionTimeMs,
+      'completedAt': FieldValue.serverTimestamp(),
+    });
+    batch.update(challengeRef, {'completionCount': FieldValue.increment(1)});
   }
 
   @override

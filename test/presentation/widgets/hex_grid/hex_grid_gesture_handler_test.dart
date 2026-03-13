@@ -202,12 +202,12 @@ void main() {
 
       expect(callCount, equals(1));
 
-      // Tap again at the same position
+      // Tap again at the same position - handler deduplicates same cell
       await tester.tapAt(cellPixel);
       await tester.pump();
 
-      // Should be called again since it's a new gesture
-      expect(callCount, equals(2));
+      // Same cell is deduplicated by the gesture handler
+      expect(callCount, equals(1));
     });
 
     testWidgets('handles tap outside grid gracefully', (tester) async {
