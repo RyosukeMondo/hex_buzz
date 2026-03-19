@@ -155,15 +155,22 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
       final entryRef = _challengeEntryRef(today, userId);
       final existingEntry = await entryRef.get();
 
-      if (!_isImprovement(existingEntry, stars, completionTimeMs)) {
-        return true; // Not an improvement; keep existing score
+      // One-attempt-per-day: if entry exists, return success without writing.
+      // Firestore security rules block updates to preserve completion integrity.
+      if (existingEntry.exists) {
+        DiagnosticLogger.logEvent(
+          'challenge_entry_already_exists',
+          data: {'userId': userId, 'date': today},
+          level: LogLevel.info,
+        );
+        return true;
       }
 
       final userData = await _fetchUserData(userId);
       if (userData == null) return false;
 
       await _writeEntry(entryRef, userId, userData, stars, completionTimeMs);
-      await _updateCompletionCount(today, isFirst: !existingEntry.exists);
+      await _updateCompletionCount(today, isFirst: true);
       _invalidateCache();
 
       DiagnosticLogger.logEvent(
@@ -191,19 +198,6 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
         .doc(dateStr)
         .collection('entries')
         .doc(userId);
-  }
-
-  bool _isImprovement(
-    DocumentSnapshot<Map<String, dynamic>> existing,
-    int stars,
-    int completionTimeMs,
-  ) {
-    if (!existing.exists) return true;
-    final data = existing.data()!;
-    final oldStars = data['stars'] as int? ?? 0;
-    final oldTime = data['completionTime'] as int? ?? 0;
-    return stars > oldStars ||
-        (stars == oldStars && completionTimeMs < oldTime);
   }
 
   Future<Map<String, dynamic>?> _fetchUserData(String userId) async {

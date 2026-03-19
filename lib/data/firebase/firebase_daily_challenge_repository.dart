@@ -102,11 +102,11 @@ class FirebaseDailyChallengeRepository implements DailyChallengeRepository {
     int completionTimeMs,
   ) {
     final oldStars = data['stars'] as int? ?? 0;
-    final oldTime = data['completionTimeMs'] as int? ?? 0;
+    final oldTime = data['completionTime'] as int? ?? 0;
     if (stars > oldStars || (stars == oldStars && completionTimeMs < oldTime)) {
       batch.update(ref, {
         'stars': stars,
-        'completionTimeMs': completionTimeMs,
+        'completionTime': completionTimeMs,
         'completedAt': FieldValue.serverTimestamp(),
       });
     }
@@ -123,7 +123,7 @@ class FirebaseDailyChallengeRepository implements DailyChallengeRepository {
     batch.set(completionRef, {
       'userId': userId,
       'stars': stars,
-      'completionTimeMs': completionTimeMs,
+      'completionTime': completionTimeMs,
       'completedAt': FieldValue.serverTimestamp(),
     });
     batch.update(challengeRef, {'completionCount': FieldValue.increment(1)});
@@ -142,7 +142,7 @@ class FirebaseDailyChallengeRepository implements DailyChallengeRepository {
           .doc(dateStr)
           .collection('completions')
           .orderBy('stars', descending: true)
-          .orderBy('completionTimeMs', descending: false)
+          .orderBy('completionTime', descending: false)
           .limit(limit)
           .get();
 
@@ -225,7 +225,7 @@ class FirebaseDailyChallengeRepository implements DailyChallengeRepository {
         userId: userId,
         dateId: dateId,
         stars: data['stars'] as int,
-        completionTimeMs: data['completionTimeMs'] as int,
+        completionTimeMs: data['completionTime'] as int,
         completedAt: (data['completedAt'] as Timestamp).toDate(),
         rank: data['rank'] as int?,
       );

@@ -36,7 +36,7 @@ describe("validateDailyChallengeCompletion", () => {
     const userId = "user123";
     const dateId = "2026-01-30";
     const stars = 3;
-    const completionTimeMs = 45000;
+    const completionTime = 45000;
 
     // Mock no existing completion
     mockFirestoreService.getDocument.mockResolvedValue(null);
@@ -50,21 +50,21 @@ describe("validateDailyChallengeCompletion", () => {
         userId: "user999",
         dateId,
         stars: 3,
-        completionTimeMs: 30000,
+        completionTime: 30000,
         completedAt: {},
       },
       {
         userId,
         dateId,
         stars,
-        completionTimeMs,
+        completionTime,
         completedAt: {},
       },
       {
         userId: "user888",
         dateId,
         stars: 2,
-        completionTimeMs: 20000,
+        completionTime: 20000,
         completedAt: {},
       },
     ];
@@ -74,7 +74,7 @@ describe("validateDailyChallengeCompletion", () => {
     const result = await validateDailyChallengeCompletionHandler(
       {
         auth: { uid: userId },
-        data: { dateId, stars, completionTimeMs },
+        data: { dateId, stars, completionTime },
       },
       mockFirestoreService
     );
@@ -98,7 +98,7 @@ describe("validateDailyChallengeCompletion", () => {
         userId,
         dateId,
         stars,
-        completionTimeMs,
+        completionTime,
       })
     );
 
@@ -106,7 +106,7 @@ describe("validateDailyChallengeCompletion", () => {
       `dailyChallenges/${dateId}/entries`,
       [
         { field: "stars", direction: "desc" },
-        { field: "completionTimeMs", direction: "asc" },
+        { field: "completionTime", direction: "asc" },
       ]
     );
   });
@@ -115,14 +115,14 @@ describe("validateDailyChallengeCompletion", () => {
     const userId = "user123";
     const dateId = "2026-01-30";
     const stars = 3;
-    const completionTimeMs = 45000;
+    const completionTime = 45000;
 
     // Mock existing completion
     const existingCompletion: DailyChallengeCompletion = {
       userId,
       dateId,
       stars: 2,
-      completionTimeMs: 60000,
+      completionTime: 60000,
       completedAt: {},
     };
     mockFirestoreService.getDocument.mockResolvedValue(existingCompletion);
@@ -132,7 +132,7 @@ describe("validateDailyChallengeCompletion", () => {
       validateDailyChallengeCompletionHandler(
         {
           auth: { uid: userId },
-          data: { dateId, stars, completionTimeMs },
+          data: { dateId, stars, completionTime },
         },
         mockFirestoreService
       )
@@ -146,12 +146,12 @@ describe("validateDailyChallengeCompletion", () => {
     const userId = "user123";
     const dateId = "2026-01-30";
     const stars = -1;
-    const completionTimeMs = 45000;
+    const completionTime = 45000;
 
     await expect(
       validateDailyChallengeCompletionHandler({
         auth: { uid: userId },
-        data: { dateId, stars, completionTimeMs },
+        data: { dateId, stars, completionTime },
       })
     ).rejects.toThrow("stars must be between 0 and 3");
   });
@@ -160,12 +160,12 @@ describe("validateDailyChallengeCompletion", () => {
     const userId = "user123";
     const dateId = "2026-01-30";
     const stars = 4;
-    const completionTimeMs = 45000;
+    const completionTime = 45000;
 
     await expect(
       validateDailyChallengeCompletionHandler({
         auth: { uid: userId },
-        data: { dateId, stars, completionTimeMs },
+        data: { dateId, stars, completionTime },
       })
     ).rejects.toThrow("stars must be between 0 and 3");
   });
@@ -174,14 +174,14 @@ describe("validateDailyChallengeCompletion", () => {
     const userId = "user123";
     const dateId = "2026-01-30";
     const stars = 3;
-    const completionTimeMs = 500;
+    const completionTime = 500;
 
     await expect(
       validateDailyChallengeCompletionHandler({
         auth: { uid: userId },
-        data: { dateId, stars, completionTimeMs },
+        data: { dateId, stars, completionTime },
       })
-    ).rejects.toThrow("completionTimeMs must be at least 1000ms");
+    ).rejects.toThrow("completionTime must be at least 1000ms");
   });
 
   it("should reject unauthenticated users", async () => {
@@ -191,7 +191,7 @@ describe("validateDailyChallengeCompletion", () => {
         data: {
           dateId: "2026-01-30",
           stars: 3,
-          completionTimeMs: 45000,
+          completionTime: 45000,
         },
       })
     ).rejects.toThrow("User must be authenticated");
@@ -201,7 +201,7 @@ describe("validateDailyChallengeCompletion", () => {
     const userId = "user123";
     const dateId = "2026-01-30";
     const stars = 2;
-    const completionTimeMs = 50000;
+    const completionTime = 50000;
 
     // Mock no existing completion
     mockFirestoreService.getDocument.mockResolvedValue(null);
@@ -209,18 +209,18 @@ describe("validateDailyChallengeCompletion", () => {
 
     // Mock queryDocuments to return 5 entries (user is 4th)
     const mockEntries: DailyChallengeCompletion[] = [
-      { userId: "user1", dateId, stars: 3, completionTimeMs: 30000, completedAt: {} },
-      { userId: "user2", dateId, stars: 3, completionTimeMs: 35000, completedAt: {} },
-      { userId: "user3", dateId, stars: 2, completionTimeMs: 40000, completedAt: {} },
-      { userId, dateId, stars, completionTimeMs, completedAt: {} },
-      { userId: "user5", dateId, stars: 1, completionTimeMs: 25000, completedAt: {} },
+      { userId: "user1", dateId, stars: 3, completionTime: 30000, completedAt: {} },
+      { userId: "user2", dateId, stars: 3, completionTime: 35000, completedAt: {} },
+      { userId: "user3", dateId, stars: 2, completionTime: 40000, completedAt: {} },
+      { userId, dateId, stars, completionTime, completedAt: {} },
+      { userId: "user5", dateId, stars: 1, completionTime: 25000, completedAt: {} },
     ];
     mockFirestoreService.queryDocuments.mockResolvedValue(mockEntries);
 
     const result = await validateDailyChallengeCompletionHandler(
       {
         auth: { uid: userId },
-        data: { dateId, stars, completionTimeMs },
+        data: { dateId, stars, completionTime },
       },
       mockFirestoreService
     );
@@ -232,6 +232,38 @@ describe("validateDailyChallengeCompletion", () => {
     });
   });
 
+  it("should save completion with 'completionTime' field (not 'completionTimeMs')", async () => {
+    const userId = "user123";
+    const dateId = "2026-01-30";
+    const stars = 3;
+    const completionTime = 45000;
+
+    mockFirestoreService.getDocument.mockResolvedValue(null);
+    mockFirestoreService.setDocument.mockResolvedValue(undefined);
+    mockFirestoreService.queryDocuments.mockResolvedValue([
+      { userId, dateId, stars, completionTime, completedAt: {} },
+    ]);
+
+    await validateDailyChallengeCompletionHandler(
+      {
+        auth: { uid: userId },
+        data: { dateId, stars, completionTime },
+      },
+      mockFirestoreService
+    );
+
+    // Verify the saved document uses 'completionTime' field name
+    const savedDoc = mockFirestoreService.setDocument.mock.calls[0][2];
+    expect(savedDoc).toHaveProperty("completionTime", 45000);
+    expect(savedDoc).not.toHaveProperty("completionTimeMs");
+
+    // Verify leaderboard query uses 'completionTime' field name
+    const queryArgs = mockFirestoreService.queryDocuments.mock.calls[0][1];
+    const timeField = queryArgs.find((f: any) => f.field === "completionTime");
+    expect(timeField).toBeDefined();
+    expect(queryArgs.find((f: any) => f.field === "completionTimeMs")).toBeUndefined();
+  });
+
   it("should validate required fields", async () => {
     const userId = "user123";
 
@@ -239,7 +271,7 @@ describe("validateDailyChallengeCompletion", () => {
     await expect(
       validateDailyChallengeCompletionHandler({
         auth: { uid: userId },
-        data: { stars: 3, completionTimeMs: 45000 } as any,
+        data: { stars: 3, completionTime: 45000 } as any,
       })
     ).rejects.toThrow("dateId is required");
 
@@ -247,16 +279,16 @@ describe("validateDailyChallengeCompletion", () => {
     await expect(
       validateDailyChallengeCompletionHandler({
         auth: { uid: userId },
-        data: { dateId: "2026-01-30", completionTimeMs: 45000 } as any,
+        data: { dateId: "2026-01-30", completionTime: 45000 } as any,
       })
     ).rejects.toThrow("stars is required");
 
-    // Missing completionTimeMs
+    // Missing completionTime
     await expect(
       validateDailyChallengeCompletionHandler({
         auth: { uid: userId },
         data: { dateId: "2026-01-30", stars: 3 } as any,
       })
-    ).rejects.toThrow("completionTimeMs is required");
+    ).rejects.toThrow("completionTime is required");
   });
 });

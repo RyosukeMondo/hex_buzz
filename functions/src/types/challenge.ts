@@ -46,7 +46,7 @@ export interface DailyChallengeCompletion {
   userId: string;
   dateId: string;
   stars: number;
-  completionTimeMs: number;
+  completionTime: number;
   completedAt: any; // Firestore Timestamp
   rank?: number;
 }

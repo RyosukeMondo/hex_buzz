@@ -187,7 +187,7 @@ export const manualSendNotification = functions
 export async function validateDailyChallengeCompletionHandler(
   request: {
     auth?: { uid: string } | null;
-    data: { dateId?: string; stars?: number; completionTimeMs?: number };
+    data: { dateId?: string; stars?: number; completionTime?: number };
   },
   firestoreService: FirestoreService = firestore
 ) {
@@ -198,13 +198,13 @@ export async function validateDailyChallengeCompletionHandler(
     }
 
     const userId = request.auth.uid;
-    const { dateId, stars, completionTimeMs } = request.data;
+    const { dateId, stars, completionTime } = request.data;
 
     Logger.info("daily_challenge_completion_validation_started", {
       userId,
       dateId,
       stars,
-      completionTimeMs,
+      completionTime,
     });
 
     // 2. Validate input parameters
@@ -212,22 +212,22 @@ export async function validateDailyChallengeCompletionHandler(
     Validator.isString(dateId, "dateId");
     Validator.required(stars, "stars");
     Validator.isNumber(stars, "stars");
-    Validator.required(completionTimeMs, "completionTimeMs");
-    Validator.isNumber(completionTimeMs, "completionTimeMs");
+    Validator.required(completionTime, "completionTime");
+    Validator.isNumber(completionTime, "completionTime");
 
     // After validation, we know these are defined
     const validatedDateId = dateId as string;
     const validatedStars = stars as number;
-    const validatedCompletionTimeMs = completionTimeMs as number;
+    const validatedCompletionTime = completionTime as number;
 
     // Additional range validations
     Validator.inRange(validatedStars, 0, 3, "stars");
 
     // Validate completion time is reasonable (> 1 second)
-    if (validatedCompletionTimeMs < 1000) {
+    if (validatedCompletionTime < 1000) {
       throw new HttpsError(
         "invalid-argument",
-        "completionTimeMs must be at least 1000ms"
+        "completionTime must be at least 1000ms"
       );
     }
 
@@ -249,7 +249,7 @@ export async function validateDailyChallengeCompletionHandler(
       userId,
       dateId: validatedDateId,
       stars: validatedStars,
-      completionTimeMs: validatedCompletionTimeMs,
+      completionTime: validatedCompletionTime,
       completedAt: FieldValue.serverTimestamp(),
     };
 
@@ -260,12 +260,12 @@ export async function validateDailyChallengeCompletionHandler(
     );
 
     // 5. Calculate rank by querying leaderboard
-    // Query entries ordered by stars DESC, completionTimeMs ASC
+    // Query entries ordered by stars DESC, completionTime ASC
     const entries = await firestoreService.queryDocuments<DailyChallengeCompletion>(
       `dailyChallenges/${validatedDateId}/entries`,
       [
         { field: "stars", direction: "desc" },
-        { field: "completionTimeMs", direction: "asc" },
+        { field: "completionTime", direction: "asc" },
       ]
     );
 
@@ -277,7 +277,7 @@ export async function validateDailyChallengeCompletionHandler(
       userId,
       dateId: validatedDateId,
       stars: validatedStars,
-      completionTimeMs: validatedCompletionTimeMs,
+      completionTime: validatedCompletionTime,
       rank,
       totalPlayers,
     });

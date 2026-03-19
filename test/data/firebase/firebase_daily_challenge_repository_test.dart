@@ -133,7 +133,7 @@ void main() {
         expect(completion.exists, isTrue);
         expect(completion.data()!['userId'], 'user1');
         expect(completion.data()!['stars'], 3);
-        expect(completion.data()!['completionTimeMs'], 5000);
+        expect(completion.data()!['completionTime'], 5000);
       });
 
       test('increments completion count for new user', () async {
@@ -196,7 +196,7 @@ void main() {
             .set({
               'userId': 'user1',
               'stars': 2,
-              'completionTimeMs': 5000,
+              'completionTime': 5000,
               'completedAt': Timestamp.now(),
             });
 
@@ -214,7 +214,7 @@ void main() {
             .get();
 
         expect(completion.data()!['stars'], 3);
-        expect(completion.data()!['completionTimeMs'], 6000);
+        expect(completion.data()!['completionTime'], 6000);
       });
 
       test('updates completion when same stars but faster time', () async {
@@ -244,7 +244,7 @@ void main() {
             .set({
               'userId': 'user1',
               'stars': 3,
-              'completionTimeMs': 6000,
+              'completionTime': 6000,
               'completedAt': Timestamp.now(),
             });
 
@@ -261,7 +261,7 @@ void main() {
             .doc('user1')
             .get();
 
-        expect(completion.data()!['completionTimeMs'], 4000);
+        expect(completion.data()!['completionTime'], 4000);
       });
 
       test('does not update when new score is worse', () async {
@@ -291,7 +291,7 @@ void main() {
             .set({
               'userId': 'user1',
               'stars': 3,
-              'completionTimeMs': 5000,
+              'completionTime': 5000,
               'completedAt': Timestamp.now(),
             });
 
@@ -309,7 +309,7 @@ void main() {
             .get();
 
         expect(completion.data()!['stars'], 3); // Unchanged
-        expect(completion.data()!['completionTimeMs'], 5000); // Unchanged
+        expect(completion.data()!['completionTime'], 5000); // Unchanged
       });
 
       test('does not increment count for existing user improvement', () async {
@@ -339,7 +339,7 @@ void main() {
             .set({
               'userId': 'user1',
               'stars': 2,
-              'completionTimeMs': 6000,
+              'completionTime': 6000,
               'completedAt': Timestamp.now(),
             });
 
@@ -388,7 +388,7 @@ void main() {
             .set({
               'userId': 'user1',
               'stars': 3,
-              'completionTimeMs': 5000,
+              'completionTime': 5000,
               'completedAt': Timestamp.now(),
             });
         await fakeFirestore
@@ -399,7 +399,7 @@ void main() {
             .set({
               'userId': 'user2',
               'stars': 2,
-              'completionTimeMs': 3000,
+              'completionTime': 3000,
               'completedAt': Timestamp.now(),
             });
         await fakeFirestore
@@ -410,7 +410,7 @@ void main() {
             .set({
               'userId': 'user3',
               'stars': 3,
-              'completionTimeMs': 4000,
+              'completionTime': 4000,
               'completedAt': Timestamp.now(),
             });
 
@@ -441,7 +441,7 @@ void main() {
               .set({
                 'userId': 'user$i',
                 'stars': 3,
-                'completionTimeMs': i * 1000,
+                'completionTime': i * 1000,
                 'completedAt': Timestamp.now(),
               });
         }
@@ -466,7 +466,7 @@ void main() {
             .set({
               'userId': 'user1',
               'stars': 3,
-              'completionTimeMs': 5000,
+              'completionTime': 5000,
               'completedAt': Timestamp.now(),
             });
 
@@ -500,7 +500,7 @@ void main() {
             .set({
               'userId': 'user1',
               'stars': 3,
-              'completionTimeMs': 5000,
+              'completionTime': 5000,
               'completedAt': Timestamp.now(),
             });
 

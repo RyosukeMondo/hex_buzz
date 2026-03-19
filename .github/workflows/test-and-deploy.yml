@@ -164,7 +164,7 @@ jobs:
 
       - name: Build Flutter web
         run: |
-          flutter build web --release --web-renderer canvaskit
+          flutter build web --release
           # Copy legal documents to build
           bash scripts/prepare-hosting.sh
 

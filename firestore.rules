@@ -70,8 +70,8 @@ service cloud.firestore {
           && request.resource.data.stars is int
           && request.resource.data.stars >= 0
           && request.resource.data.stars <= 3
-          && request.resource.data.completionTimeMs is int
-          && request.resource.data.completionTimeMs > 1000
+          && request.resource.data.completionTime is int
+          && request.resource.data.completionTime > 1000
           && hasValidTimestamp('completedAt');
 
         // Prevent updates and deletes to ensure completion integrity

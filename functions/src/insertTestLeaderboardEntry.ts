@@ -26,7 +26,7 @@ export const insertTestLeaderboardEntry = functions
         userId: testUserId,
         username: "Test Player",
         stars: 3,
-        completionTimeMs: 45000,
+        completionTime: 45000,
         completedAt: today.toISOString(),
       };
 

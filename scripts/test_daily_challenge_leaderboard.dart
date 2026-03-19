@@ -69,7 +69,7 @@ Future<void> main() async {
     'userId': testUserId,
     'username': testUsername,
     'stars': testStars,
-    'completionTimeMs': testTimeMs,
+    'completionTime': testTimeMs,
     'completedAt': today.toIso8601String(),
   };
 
@@ -93,7 +93,7 @@ Future<void> main() async {
   final leaderboardQuery = challengeRef
       .collection('completions')
       .orderBy('stars', descending: true)
-      .orderBy('completionTimeMs', descending: false);
+      .orderBy('completionTime', descending: false);
 
   final leaderboardSnapshot = await leaderboardQuery.get();
 
@@ -110,7 +110,7 @@ Future<void> main() async {
     final doc = leaderboardSnapshot.docs[i];
     final data = doc.data();
     print(
-      '   ${i + 1}. ${data['username']} - ${data['stars']} stars (${data['completionTimeMs']}ms)',
+      '   ${i + 1}. ${data['username']} - ${data['stars']} stars (${data['completionTime']}ms)',
     );
   }
   print('');

@@ -119,7 +119,7 @@ if [ "$DEPLOY_TARGET" == "hosting" ] || [ "$DEPLOY_TARGET" == "all" ]; then
         echo "Web hosting will deploy existing build/web content"
     else
         flutter pub get
-        flutter build web --release --web-renderer canvaskit
+        flutter build web --release
 
         # Prepare hosting content (copy legal docs)
         if [ -f "scripts/prepare-hosting.sh" ]; then

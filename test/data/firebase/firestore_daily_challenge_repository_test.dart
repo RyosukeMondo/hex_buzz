@@ -183,38 +183,46 @@ void main() {
         expect(data['totalStars'], 0);
       });
 
-      test('updates existing entry when score improves', () async {
-        final today = getTodayDateString();
-        await createTestUser(fakeFirestore, 'user1');
-        await createDailyChallenge(fakeFirestore, today, completionCount: 1);
-        await createChallengeEntry(
-          fakeFirestore,
-          today,
-          'user1',
-          stars: 2,
-          completionTime: 10000,
-        );
+      test(
+        'preserves existing entry on duplicate submission (one-attempt-per-day)',
+        () async {
+          final today = getTodayDateString();
+          await createTestUser(fakeFirestore, 'user1');
+          await createDailyChallenge(fakeFirestore, today, completionCount: 1);
+          await createChallengeEntry(
+            fakeFirestore,
+            today,
+            'user1',
+            stars: 2,
+            completionTime: 10000,
+          );
 
-        final result = await repository.submitChallengeCompletion(
-          userId: 'user1',
-          stars: 3,
-          completionTimeMs: 5000,
-        );
+          // Even with better score, existing entry should be preserved
+          final result = await repository.submitChallengeCompletion(
+            userId: 'user1',
+            stars: 3,
+            completionTimeMs: 5000,
+          );
 
-        expect(result, isTrue);
-        final entry = await fakeFirestore
-            .collection('dailyChallenges')
-            .doc(today)
-            .collection('entries')
-            .doc('user1')
-            .get();
+          expect(result, isTrue);
+          final entry = await fakeFirestore
+              .collection('dailyChallenges')
+              .doc(today)
+              .collection('entries')
+              .doc('user1')
+              .get();
 
-        final data = entry.data()!;
-        expect(data['stars'], 3);
-        expect(data['completionTime'], 5000);
-      });
+          final data = entry.data()!;
+          expect(data['stars'], 2, reason: 'Original stars preserved');
+          expect(
+            data['completionTime'],
+            10000,
+            reason: 'Original time preserved',
+          );
+        },
+      );
 
-      test('does not update when new score is not better', () async {
+      test('preserves existing entry even with worse score', () async {
         final today = getTodayDateString();
         await createTestUser(fakeFirestore, 'user1');
         await createDailyChallenge(fakeFirestore, today, completionCount: 1);
@@ -240,10 +248,14 @@ void main() {
             .doc('user1')
             .get();
 
-        expect(entry.data()!['completionTime'], 5000);
+        expect(
+          entry.data()!['completionTime'],
+          5000,
+          reason: 'Original time preserved',
+        );
       });
 
-      test('updates when time improves with same stars', () async {
+      test('preserves existing entry even with faster time', () async {
         final today = getTodayDateString();
         await createTestUser(fakeFirestore, 'user1');
         await createDailyChallenge(fakeFirestore, today, completionCount: 1);
@@ -269,7 +281,11 @@ void main() {
             .doc('user1')
             .get();
 
-        expect(entry.data()!['completionTime'], 5000);
+        expect(
+          entry.data()!['completionTime'],
+          8000,
+          reason: 'Original time preserved (one-attempt-per-day)',
+        );
       });
 
       test('invalidates cache after submission', () async {
