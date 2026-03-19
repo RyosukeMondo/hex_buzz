@@ -10,6 +10,17 @@ echo "Running pre-commit checks..."
 PROJECT_ROOT="$(git rev-parse --show-toplevel)"
 cd "$PROJECT_ROOT"
 
+# Early exit: skip all Dart checks when no Dart files are staged
+STAGED_DART_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.dart$' || true)
+if [ -z "$STAGED_DART_FILES" ]; then
+    echo "No Dart files staged. Skipping Dart checks."
+    echo ""
+    echo "================================================"
+    echo "✓ All pre-commit checks passed!"
+    echo "================================================"
+    exit 0
+fi
+
 # Step 1: Check dart format
 echo ""
 echo "==> Checking dart format..."
