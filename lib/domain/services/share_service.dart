@@ -20,7 +20,7 @@ class ShareService {
   }) {
     final starEmojis = _buildStarEmojis(stars);
     final timeStr = _formatDuration(time);
-    return 'HexBuzz \ud83d\udc1d $mode $starEmojis $timeStr #HexBuzz';
+    return 'HexBuzz \ud83d\udc1d $mode $starEmojis $timeStr\nhttps://mondo-ai-studio.xvps.jp/hex_buzz/\n#HexBuzz';
   }
 
   /// Builds a string of star emojis based on count.

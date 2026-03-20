@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/l10n_provider.dart';
 import '../../../main.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/tutorial_provider.dart';
 import '../../theme/honey_theme.dart';
 import '../../widgets/assets/game_assets.dart';
 
@@ -53,6 +54,13 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
   }
 
   void _handleTap() {
+    // First-time users go to tutorial
+    final tutorialState = ref.read(tutorialProvider);
+    if (!tutorialState.hasCompletedTutorial) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.tutorial);
+      return;
+    }
+
     final authState = ref.read(authProvider);
     final isLoggedIn = authState.valueOrNull != null;
 

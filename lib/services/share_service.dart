@@ -32,7 +32,7 @@ class ShareService {
     return '🐝 I completed today\'s HexBuzz challenge in $formattedTime! '
         '$stars${completion.stars}/3\n\n'
         'Can you beat my time?\n\n'
-        'https://hexbuzz.app/daily/$dateId';
+        'https://mondo-ai-studio.xvps.jp/hex_buzz/$dateId';
   }
 
   /// Shares the completion to Twitter/X.
@@ -77,7 +77,7 @@ class ShareService {
     DailyChallengeCompletion completion,
     String dateId,
   ) async {
-    final challengeUrl = 'https://hexbuzz.app/daily/$dateId';
+    final challengeUrl = 'https://mondo-ai-studio.xvps.jp/hex_buzz/$dateId';
     final quote = _generateShareText(completion, dateId);
 
     final url = Uri.https('www.facebook.com', '/sharer/sharer.php', {
