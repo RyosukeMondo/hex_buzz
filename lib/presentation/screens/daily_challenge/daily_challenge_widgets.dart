@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/daily_challenge_completion.dart';
+import '../../../services/share_service.dart';
 import '../../theme/honey_theme.dart';
+import '../../widgets/daily_leaderboard.dart';
+import '../../widgets/misskey_instance_picker.dart';
+import '../../widgets/share_button.dart';
 
-/// Displays challenge completion results (stars, time, rank).
+/// Displays challenge completion results (stars, time, rank) with share buttons.
 class ChallengeCompletionView extends StatelessWidget {
   final DailyChallengeCompletion completion;
   final VoidCallback onBack;
@@ -16,41 +20,42 @@ class ChallengeCompletionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(HoneyTheme.spacingXl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.emoji_events,
-              size: HoneyTheme.iconSizeXl,
-              color: HoneyTheme.honeyGold,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(HoneyTheme.spacingXl),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.emoji_events,
+            size: HoneyTheme.iconSizeXl,
+            color: HoneyTheme.honeyGold,
+          ),
+          const SizedBox(height: HoneyTheme.spacingLg),
+          const Text(
+            'Challenge Complete!',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: HoneyTheme.spacingMd),
+          _CompletionStats(completion: completion),
+          const SizedBox(height: HoneyTheme.spacingXl),
+          _ShareSection(completion: completion),
+          const SizedBox(height: HoneyTheme.spacingXl),
+          DailyLeaderboard(dateId: completion.dateId),
+          const SizedBox(height: HoneyTheme.spacingLg),
+          ElevatedButton(
+            onPressed: onBack,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: HoneyTheme.honeyGold,
+              foregroundColor: HoneyTheme.textPrimary,
             ),
-            const SizedBox(height: HoneyTheme.spacingLg),
-            const Text(
-              'Challenge Complete!',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: HoneyTheme.spacingMd),
-            _CompletionStats(completion: completion),
-            const SizedBox(height: HoneyTheme.spacingXl),
-            ElevatedButton(
-              onPressed: onBack,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HoneyTheme.honeyGold,
-                foregroundColor: HoneyTheme.textPrimary,
-              ),
-              child: const Text('Back to Menu'),
-            ),
-          ],
-        ),
+            child: const Text('Back to Menu'),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Displays "already completed today" message with results.
+/// Displays "already completed today" with results, share buttons, and leaderboard.
 class AlreadyCompletedView extends StatelessWidget {
   final DailyChallengeCompletion completion;
   final VoidCallback onBack;
@@ -63,47 +68,42 @@ class AlreadyCompletedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(HoneyTheme.spacingXl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.check_circle_outline,
-              size: HoneyTheme.iconSizeXl,
-              color: HoneyTheme.honeyGold,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(HoneyTheme.spacingXl),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.check_circle_outline,
+            size: HoneyTheme.iconSizeXl,
+            color: HoneyTheme.honeyGold,
+          ),
+          const SizedBox(height: HoneyTheme.spacingLg),
+          const Text(
+            'Today\'s Result',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: HoneyTheme.spacingMd),
+          _CompletionStats(completion: completion),
+          const SizedBox(height: HoneyTheme.spacingXl),
+          _ShareSection(completion: completion),
+          const SizedBox(height: HoneyTheme.spacingXl),
+          DailyLeaderboard(dateId: completion.dateId),
+          const SizedBox(height: HoneyTheme.spacingLg),
+          const Text(
+            'Come back tomorrow for a new challenge!',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+          ),
+          const SizedBox(height: HoneyTheme.spacingLg),
+          ElevatedButton(
+            onPressed: onBack,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: HoneyTheme.honeyGold,
+              foregroundColor: HoneyTheme.textPrimary,
             ),
-            const SizedBox(height: HoneyTheme.spacingLg),
-            const Text(
-              'Already Completed',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: HoneyTheme.spacingMd),
-            const Text(
-              'You\'ve already completed today\'s challenge!',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: HoneyTheme.spacingMd),
-            _CompletionStats(completion: completion),
-            const SizedBox(height: HoneyTheme.spacingXl),
-            const Text(
-              'Come back tomorrow for a new challenge!',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
-            ),
-            const SizedBox(height: HoneyTheme.spacingLg),
-            ElevatedButton(
-              onPressed: onBack,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HoneyTheme.honeyGold,
-                foregroundColor: HoneyTheme.textPrimary,
-              ),
-              child: const Text('Back to Menu'),
-            ),
-          ],
-        ),
+            child: const Text('Back to Menu'),
+          ),
+        ],
       ),
     );
   }
@@ -233,6 +233,67 @@ class ChallengeStatsCard extends StatelessWidget {
 // ---------------------------------------------------------------------------
 // Private helper widgets
 // ---------------------------------------------------------------------------
+
+class _ShareSection extends StatelessWidget {
+  final DailyChallengeCompletion completion;
+  final ShareService _shareService = ShareService();
+
+  _ShareSection({required this.completion});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text(
+          'Share your result:',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: HoneyTheme.spacingMd),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            ShareButton.twitter(
+              onTap: () => _share(context, 'twitter'),
+            ),
+            ShareButton.misskey(
+              onTap: () => _shareMisskey(context),
+            ),
+            ShareButton.facebook(
+              onTap: () => _share(context, 'facebook'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _share(BuildContext context, String platform) async {
+    final dateId = completion.dateId;
+    final success = switch (platform) {
+      'twitter' => await _shareService.shareToTwitter(completion, dateId),
+      'facebook' => await _shareService.shareToFacebook(completion, dateId),
+      _ => false,
+    };
+    if (!success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to share to $platform')),
+      );
+    }
+  }
+
+  Future<void> _shareMisskey(BuildContext context) async {
+    final instance = await MisskeyInstancePicker.show(context);
+    if (instance == null || !context.mounted) return;
+    final success = await _shareService.shareToMisskey(
+      completion, completion.dateId, instance,
+    );
+    if (!success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to share to Misskey')),
+      );
+    }
+  }
+}
 
 class _CompletionStats extends StatelessWidget {
   final DailyChallengeCompletion completion;
