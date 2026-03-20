@@ -5,9 +5,12 @@ import 'package:hex_buzz/domain/models/user.dart';
 import 'package:hex_buzz/domain/services/auth_repository.dart';
 import 'package:hex_buzz/main.dart';
 import 'package:hex_buzz/presentation/providers/auth_provider.dart';
+import 'package:hex_buzz/presentation/providers/notification_provider.dart';
+import 'package:hex_buzz/presentation/providers/tutorial_provider.dart';
 import 'package:hex_buzz/presentation/screens/front/front_screen.dart';
 import 'package:hex_buzz/presentation/theme/honey_theme.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -15,8 +18,13 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late MockAuthRepository mockAuthRepository;
+  late SharedPreferences sharedPreferences;
 
-  setUp(() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({
+      'tutorial_completed': true,
+    });
+    sharedPreferences = await SharedPreferences.getInstance();
     mockAuthRepository = MockAuthRepository();
     when(
       () => mockAuthRepository.authStateChanges(),
@@ -29,7 +37,13 @@ void main() {
     ).thenAnswer((_) async => currentUser);
 
     return ProviderScope(
-      overrides: [authRepositoryProvider.overrideWithValue(mockAuthRepository)],
+      overrides: [
+        authRepositoryProvider.overrideWithValue(mockAuthRepository),
+        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+        tutorialProvider.overrideWith(
+          () => TutorialNotifier(),
+        ),
+      ],
       child: MaterialApp(
         theme: HoneyTheme.lightTheme,
         initialRoute: AppRoutes.front,
@@ -37,6 +51,8 @@ void main() {
           AppRoutes.front: (_) => const FrontScreen(),
           AppRoutes.auth: (_) => const _MockAuthScreen(),
           AppRoutes.levels: (_) => const _MockLevelSelectScreen(),
+          AppRoutes.tutorial: (_) => const _MockAuthScreen(),
+          AppRoutes.whatsNew: (_) => const _MockAuthScreen(),
         },
       ),
     );
@@ -218,6 +234,10 @@ void main() {
           ProviderScope(
             overrides: [
               authRepositoryProvider.overrideWithValue(mockAuthRepository),
+              sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+              tutorialProvider.overrideWith(
+                () => TutorialNotifier(),
+              ),
             ],
             child: MaterialApp(
               theme: HoneyTheme.lightTheme,
@@ -226,6 +246,8 @@ void main() {
                 AppRoutes.front: (_) => const FrontScreen(),
                 AppRoutes.auth: (_) => const _MockAuthScreen(),
                 AppRoutes.levels: (_) => const _MockLevelSelectScreen(),
+                AppRoutes.tutorial: (_) => const _MockAuthScreen(),
+                AppRoutes.whatsNew: (_) => const _MockAuthScreen(),
               },
             ),
           ),

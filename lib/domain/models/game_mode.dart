@@ -5,4 +5,7 @@ enum GameMode {
 
   /// Practice mode - unlimited retries, no leaderboard submission.
   practice,
+
+  /// Timed challenge mode - solve as many puzzles as possible before time runs out.
+  timed,
 }

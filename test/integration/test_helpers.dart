@@ -23,12 +23,14 @@ import 'package:hex_buzz/main.dart';
 import 'package:hex_buzz/presentation/providers/auth_provider.dart';
 import 'package:hex_buzz/presentation/providers/daily_challenge_provider.dart';
 import 'package:hex_buzz/presentation/providers/game_provider.dart';
+import 'package:hex_buzz/presentation/providers/notification_provider.dart';
 import 'package:hex_buzz/presentation/providers/progress_provider.dart';
 import 'package:hex_buzz/presentation/screens/auth/auth_screen.dart';
 import 'package:hex_buzz/presentation/screens/front/front_screen.dart';
 import 'package:hex_buzz/presentation/screens/game/game_screen.dart';
 import 'package:hex_buzz/presentation/screens/level_select/level_select_screen.dart';
 import 'package:hex_buzz/presentation/theme/honey_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Mock auth repository that supports registration, login, logout, and guest mode.
 class MockAuthRepository implements AuthRepository {
@@ -223,10 +225,13 @@ class MockDailyChallengeRepository implements DailyChallengeRepository {
 }
 
 /// Creates the full app with mock dependencies starting from FrontScreen.
+///
+/// Requires [initMockPrefs] to be called in setUp before use.
 Widget createFullApp({
   required MockAuthRepository authRepo,
   required MockProgressRepository progressRepo,
   required MockLevelRepository levelRepo,
+  required SharedPreferences prefs,
 }) {
   return ProviderScope(
     overrides: [
@@ -236,6 +241,7 @@ Widget createFullApp({
       dailyChallengeRepositoryProvider.overrideWithValue(
         MockDailyChallengeRepository(),
       ),
+      sharedPreferencesProvider.overrideWithValue(prefs),
     ],
     child: MaterialApp(
       title: 'HexBuzz',
@@ -256,6 +262,11 @@ Widget createFullApp({
           case AppRoutes.game:
             final levelIndex = settings.arguments as int?;
             page = GameScreen(levelIndex: levelIndex);
+          case AppRoutes.tutorial:
+            page = const AuthScreen();
+          case AppRoutes.whatsNew:
+            // Auto-pop so `.then()` callback fires immediately
+            page = const _AutoPopScreen();
           default:
             page = const FrontScreen();
         }
@@ -271,6 +282,27 @@ Future<void> pumpFrames(WidgetTester tester, {int frames = 10}) async {
   for (var i = 0; i < frames; i++) {
     await tester.pump(const Duration(milliseconds: 50));
   }
+}
+
+/// A screen that auto-pops on first frame, useful for What's New in tests.
+class _AutoPopScreen extends StatefulWidget {
+  const _AutoPopScreen();
+
+  @override
+  State<_AutoPopScreen> createState() => _AutoPopScreenState();
+}
+
+class _AutoPopScreenState extends State<_AutoPopScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const Scaffold();
 }
 
 /// Waits for Riverpod async providers to initialize.

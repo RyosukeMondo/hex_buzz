@@ -1,41 +1,36 @@
-import 'dart:ui';
-
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'app_initializer.dart';
 import 'core/logging/diagnostic_logger.dart';
 import 'core/logging/logger.dart';
-import 'data/firebase/firebase_auth_repository.dart';
-import 'data/firebase/firestore_progress_repository.dart';
-import 'data/hybrid_auth_repository.dart';
-import 'data/local/local_guest_auth_repository.dart';
-import 'firebase_options.dart';
-import 'data/firebase/firestore_daily_challenge_repository.dart';
-import 'data/firebase/firestore_leaderboard_repository.dart';
-import 'data/local/local_progress_repository.dart';
-import 'debug/api/server.dart';
-import 'domain/data/test_level.dart';
-import 'domain/models/game_mode.dart';
-import 'domain/services/game_engine.dart';
-import 'domain/services/level_repository.dart';
-import 'domain/services/notification_service.dart';
-import 'presentation/providers/auth_provider.dart';
-import 'presentation/providers/daily_challenge_provider.dart';
-import 'presentation/providers/leaderboard_provider.dart';
-import 'presentation/providers/game_provider.dart';
+import 'domain/services/timed_challenge_service.dart';
 import 'presentation/providers/notification_provider.dart';
-import 'presentation/providers/progress_provider.dart';
+import 'presentation/providers/theme_provider.dart';
+import 'presentation/screens/achievements/achievement_screen.dart';
 import 'presentation/screens/auth/auth_screen.dart';
 import 'presentation/screens/daily_challenge/daily_challenge_screen.dart';
 import 'presentation/screens/front/front_screen.dart';
 import 'presentation/screens/game/game_screen.dart';
 import 'presentation/screens/leaderboard/leaderboard_screen.dart';
+import 'presentation/screens/editor/level_editor_screen.dart';
+import 'presentation/screens/friends/friends_screen.dart';
+import 'presentation/screens/editor/my_levels_screen.dart';
+import 'presentation/screens/level_packs/level_packs_screen.dart';
+import 'presentation/screens/level_packs/pack_levels_screen.dart';
 import 'presentation/screens/level_select/level_select_screen.dart';
+import 'presentation/screens/store/store_screen.dart';
+import 'presentation/screens/timed_challenge/timed_challenge_menu_screen.dart';
+import 'presentation/screens/timed_challenge/timed_challenge_screen.dart';
+import 'presentation/screens/settings/app_info_screen.dart';
+import 'presentation/screens/settings/notification_settings_screen.dart';
+import 'presentation/screens/settings/privacy_policy_screen.dart';
+import 'presentation/screens/settings/settings_screen.dart';
+import 'presentation/screens/settings/terms_screen.dart';
+import 'presentation/screens/whats_new/whats_new_screen.dart';
+import 'presentation/screens/tutorial/tutorial_screen.dart';
 import 'presentation/theme/honey_theme.dart';
 import 'platform/windows/window_config.dart';
 
@@ -47,6 +42,22 @@ class AppRoutes {
   static const String game = '/game';
   static const String dailyChallenge = '/daily-challenge';
   static const String leaderboard = '/leaderboard';
+  static const String tutorial = '/tutorial';
+  static const String achievements = '/achievements';
+  static const String levelPacks = '/level-packs';
+  static const String packLevels = '/pack-levels';
+  static const String friends = '/friends';
+  static const String editor = '/editor';
+  static const String myLevels = '/my-levels';
+  static const String store = '/store';
+  static const String timedChallengeMenu = '/timed-challenge-menu';
+  static const String timedChallenge = '/timed-challenge';
+  static const String settings = '/settings';
+  static const String appInfo = '/app-info';
+  static const String notificationSettings = '/notification-settings';
+  static const String privacyPolicy = '/privacy-policy';
+  static const String terms = '/terms';
+  static const String whatsNew = '/whats-new';
 
   AppRoutes._();
 }
@@ -62,191 +73,24 @@ const bool _enableApiFromEnv = bool.fromEnvironment(
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await WindowConfig.initialize();
-  await _initializeFirebaseCore();
-  final sharedPreferences = await SharedPreferences.getInstance();
+  await initializeFirebaseCore();
+  final prefs = await SharedPreferences.getInstance();
 
-  // Initialize all repositories
-  final levelRepository = await _initializeLevelRepository();
-  final localProgressRepository = await _initializeProgressRepository();
-  final dailyChallengeRepository = _initializeFirebaseRepositories();
-  final leaderboardRepository = FirestoreLeaderboardRepository();
-  final authRepository = await _initializeAuthRepository(
-    localProgressRepository,
+  final overrides = await buildProviderOverrides(
+    prefs: prefs,
+    enableApi: _enableApiFromEnv,
   );
-
-  // Initialize notification service (without user ID initially)
-  final notificationService = createNotificationService();
-
-  // Start debug API server if enabled
-  DebugApiServer? apiServer;
-  if (kDebugMode && _enableApiFromEnv) {
-    apiServer = await _startDebugApiServer();
-  }
 
   runApp(
     ProviderScope(
-      overrides: [
-        levelRepositoryProvider.overrideWithValue(levelRepository),
-        progressRepositoryProvider.overrideWithValue(localProgressRepository),
-        authRepositoryProvider.overrideWithValue(authRepository),
-        dailyChallengeRepositoryProvider.overrideWithValue(
-          dailyChallengeRepository,
-        ),
-        leaderboardRepositoryProvider.overrideWithValue(leaderboardRepository),
-        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
-        notificationServiceProvider.overrideWithValue(notificationService),
-        if (apiServer != null)
-          debugApiServerProvider.overrideWithValue(apiServer),
-      ],
+      overrides: overrides,
       child: const HexBuzzApp(),
     ),
   );
 
   // Initialize notification service after app is running
-  _initializeNotificationService(notificationService, sharedPreferences);
-}
-
-/// Initializes Firebase, Crashlytics, Performance, and DiagnosticLogger.
-Future<void> _initializeFirebaseCore() async {
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  if (kDebugMode) debugPrint('Firebase initialized');
-
-  DiagnosticLogger.init();
-
-  final performance = FirebasePerformance.instance;
-  await performance.setPerformanceCollectionEnabled(true);
-
-  if (!kDebugMode) {
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-    PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
-    };
-  }
-}
-
-/// Initializes and pre-loads the level repository.
-Future<LevelRepository> _initializeLevelRepository() async {
-  final repository = LevelRepository();
-  try {
-    await repository.load();
-    if (kDebugMode) {
-      debugPrint('Loaded pre-generated levels:');
-      for (final size in repository.availableSizes) {
-        debugPrint('  Size $size: ${repository.getLevelCount(size)} levels');
-      }
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('Failed to load pre-generated levels: $e');
-      debugPrint('Will use dynamic generation as fallback.');
-    }
-  }
-  return repository;
-}
-
-/// Initializes local progress repository.
-Future<LocalProgressRepository> _initializeProgressRepository() async {
-  final prefs = await SharedPreferences.getInstance();
-  final progressRepo = LocalProgressRepository(prefs);
-  if (kDebugMode) debugPrint('Progress repository initialized');
-  return progressRepo;
-}
-
-/// Initializes hybrid auth repository with migration support.
-Future<HybridAuthRepository> _initializeAuthRepository(
-  LocalProgressRepository localProgress,
-) async {
-  final prefs = await SharedPreferences.getInstance();
-  final firebaseRepo = FirebaseAuthRepository();
-  final guestRepo = LocalGuestAuthRepository(prefs: prefs);
-  final firestoreProgress = FirestoreProgressRepository();
-
-  final authRepo = HybridAuthRepository(
-    firebaseRepo: firebaseRepo,
-    guestRepo: guestRepo,
-    localProgress: localProgress,
-    firestoreProgress: firestoreProgress,
-  );
-
-  if (kDebugMode) {
-    debugPrint('Hybrid auth repository initialized with migration support');
-  }
-  return authRepo;
-}
-
-/// Initializes Firebase daily challenge repository.
-FirestoreDailyChallengeRepository _initializeFirebaseRepositories() {
-  final dailyChallenge = FirestoreDailyChallengeRepository();
-  if (kDebugMode) debugPrint('Firebase repository initialized');
-  return dailyChallenge;
-}
-
-/// Starts the debug API server on port 8080.
-///
-/// Creates a dedicated [GameEngine] instance for API interactions.
-/// Only available in debug builds.
-Future<DebugApiServer> _startDebugApiServer() async {
-  final level = getTestLevel();
-  final engine = GameEngine(level: level, mode: GameMode.practice);
-
-  final server = await startServer(8080, engine);
-
-  if (kDebugMode) {
-    debugPrint('Debug API server started at http://localhost:8080');
-    debugPrint('Available endpoints:');
-    debugPrint('  GET  /api/health - Health check');
-    debugPrint('  GET  /api/game/state - Get current game state');
-    debugPrint('  POST /api/game/move - Make a move {q, r}');
-    debugPrint('  POST /api/game/reset - Reset the game');
-    debugPrint('  POST /api/level/validate - Validate a level');
-  }
-
-  return server;
-}
-
-/// Provider for the debug API server (available only in debug mode with ENABLE_API).
-final debugApiServerProvider = Provider<DebugApiServer?>((ref) => null);
-
-/// Initializes the notification service and subscribes to user-enabled topics.
-///
-/// This function is called after the app starts to set up push notification
-/// handling. It initializes the notification service, requests permissions,
-/// and subscribes to topics based on user preferences stored in SharedPreferences.
-void _initializeNotificationService(
-  NotificationService notificationService,
-  SharedPreferences prefs,
-) async {
-  try {
-    // Request permission and initialize
-    final hasPermission = await notificationService.requestPermission();
-    if (!hasPermission) {
-      if (kDebugMode) {
-        debugPrint(
-          'Notification permission not granted, skipping initialization',
-        );
-      }
-      return;
-    }
-
-    final initialized = await notificationService.initialize();
-    if (!initialized) {
-      if (kDebugMode) debugPrint('Failed to initialize notification service');
-      return;
-    }
-
-    if (kDebugMode) debugPrint('Notification service initialized');
-
-    // Subscribe to enabled topics based on user preferences
-    await initializeNotificationSubscriptions(notificationService, prefs);
-
-    // Note: Notification navigation is handled by HexBuzzApp's navigatorKey
-    // The stream handler will be set up in HexBuzzApp.initState()
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('Error initializing notification service: $e');
-    }
-  }
+  final notification = createNotificationService();
+  startPostLaunchServices(notification, prefs);
 }
 
 class HexBuzzApp extends ConsumerStatefulWidget {
@@ -266,13 +110,10 @@ class _HexBuzzAppState extends ConsumerState<HexBuzzApp> {
   }
 
   /// Sets up handlers for incoming notifications.
-  ///
-  /// Listens to the notification service stream and handles navigation
-  /// and UI display based on notification type.
   void _setupNotificationHandlers() {
-    final notificationService = ref.read(notificationServiceProvider);
+    final svc = ref.read(notificationServiceProvider);
 
-    notificationService.onMessageReceived.listen((message) {
+    svc.onMessageReceived.listen((message) {
       if (kDebugMode) {
         debugPrint('Notification received: $message');
       }
@@ -282,9 +123,6 @@ class _HexBuzzAppState extends ConsumerState<HexBuzzApp> {
   }
 
   /// Handles a received notification message.
-  ///
-  /// Shows a snackbar for foreground notifications and navigates
-  /// based on the notification type and data.
   void _handleNotificationMessage(Map<String, dynamic> message) {
     final context = _navigatorKey.currentContext;
     if (context == null) return;
@@ -361,10 +199,13 @@ class _HexBuzzAppState extends ConsumerState<HexBuzzApp> {
 
   @override
   Widget build(BuildContext context) {
+    final themePref = ref.watch(themeProvider);
     return MaterialApp(
       navigatorKey: _navigatorKey,
       title: 'HexBuzz',
       theme: HoneyTheme.lightTheme,
+      darkTheme: HoneyTheme.darkTheme,
+      themeMode: themeModeFromPreference(themePref),
       initialRoute: AppRoutes.front,
       onGenerateRoute: _generateRoute,
     );
@@ -401,6 +242,76 @@ class _HexBuzzAppState extends ConsumerState<HexBuzzApp> {
 
       case AppRoutes.leaderboard:
         return _buildRoute(const LeaderboardScreen(), settings, isForward);
+
+      case AppRoutes.tutorial:
+        return _buildRoute(const TutorialScreen(), settings, isForward);
+
+      case AppRoutes.achievements:
+        return _buildRoute(const AchievementScreen(), settings, isForward);
+
+      case AppRoutes.settings:
+        return _buildRoute(const SettingsScreen(), settings, isForward);
+
+      case AppRoutes.appInfo:
+        return _buildRoute(const AppInfoScreen(), settings, isForward);
+
+      case AppRoutes.notificationSettings:
+        return _buildRoute(
+          const NotificationSettingsScreen(),
+          settings,
+          isForward,
+        );
+
+      case AppRoutes.privacyPolicy:
+        return _buildRoute(
+          const PrivacyPolicyScreen(),
+          settings,
+          isForward,
+        );
+
+      case AppRoutes.terms:
+        return _buildRoute(const TermsScreen(), settings, isForward);
+
+      case AppRoutes.whatsNew:
+        return _buildRoute(const WhatsNewScreen(), settings, isForward);
+
+      case AppRoutes.levelPacks:
+        return _buildRoute(const LevelPacksScreen(), settings, isForward);
+
+      case AppRoutes.packLevels:
+        final packId = settings.arguments as String;
+        return _buildRoute(
+          PackLevelsScreen(packId: packId),
+          settings,
+          isForward,
+        );
+
+      case AppRoutes.friends:
+        return _buildRoute(const FriendsScreen(), settings, isForward);
+
+      case AppRoutes.editor:
+        return _buildRoute(const LevelEditorScreen(), settings, isForward);
+
+      case AppRoutes.myLevels:
+        return _buildRoute(const MyLevelsScreen(), settings, isForward);
+
+      case AppRoutes.store:
+        return _buildRoute(const StoreScreen(), settings, isForward);
+
+      case AppRoutes.timedChallengeMenu:
+        return _buildRoute(
+          const TimedChallengeMenuScreen(),
+          settings,
+          isForward,
+        );
+
+      case AppRoutes.timedChallenge:
+        final config = settings.arguments as TimedChallengeConfig;
+        return _buildRoute(
+          TimedChallengeScreen(config: config),
+          settings,
+          isForward,
+        );
 
       default:
         return _buildRoute(const FrontScreen(), settings, isForward);

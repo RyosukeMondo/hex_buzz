@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
+import '../../../core/l10n/app_strings.dart';
+import '../../../core/l10n/strings_en.dart';
 import '../../theme/honey_theme.dart';
 import '../assets/game_assets.dart';
 
@@ -34,6 +37,9 @@ class CompletionOverlay extends StatefulWidget {
   /// Set to false when on the last level.
   final bool hasNextLevel;
 
+  /// Localized strings. Falls back to English when not provided.
+  final AppStrings? localizedStrings;
+
   const CompletionOverlay({
     super.key,
     required this.stars,
@@ -43,6 +49,7 @@ class CompletionOverlay extends StatefulWidget {
     this.onLevelSelect,
     this.onViewLeaderboard,
     this.hasNextLevel = true,
+    this.localizedStrings,
   }) : assert(stars >= 0 && stars <= 3, 'Stars must be between 0 and 3');
 
   @override
@@ -51,6 +58,8 @@ class CompletionOverlay extends StatefulWidget {
 
 class _CompletionOverlayState extends State<CompletionOverlay>
     with TickerProviderStateMixin {
+  AppStrings get _s => widget.localizedStrings ?? stringsEn;
+
   late AnimationController _cardController;
   late Animation<double> _cardScale;
   late Animation<double> _cardOpacity;
@@ -197,8 +206,20 @@ class _CompletionOverlayState extends State<CompletionOverlay>
 
     // Start animations on first build (moved from didChangeDependencies)
     if (!_animationsStarted) {
+      // Announce level completion for screen readers
+      final view = View.of(context);
+      final minutes = widget.completionTime.inMinutes;
+      final seconds = widget.completionTime.inSeconds % 60;
+      final timeStr = minutes > 0
+          ? '$minutes minutes $seconds seconds'
+          : '$seconds seconds';
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
+          SemanticsService.sendAnnouncement(
+            view,
+            'Level completed! ${widget.stars} of 3 stars earned in $timeStr',
+            TextDirection.ltr,
+          );
           _startAnimations();
         }
       });
@@ -273,7 +294,7 @@ class _CompletionOverlayState extends State<CompletionOverlay>
         ),
         const SizedBox(height: 8),
         Text(
-          'Level Complete!',
+          _s.levelComplete,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: HoneyTheme.textPrimary,
@@ -332,7 +353,7 @@ class _CompletionOverlayState extends State<CompletionOverlay>
   Widget _buildTimeDisplay(BuildContext context) {
     return Column(
       children: [
-        Text('Time', style: Theme.of(context).textTheme.titleSmall),
+        Text(_s.time, style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 4),
         Text(
           _formatDuration(widget.completionTime),
@@ -360,7 +381,7 @@ class _CompletionOverlayState extends State<CompletionOverlay>
               child: FilledButton.icon(
                 onPressed: widget.onNextLevel,
                 icon: const Icon(Icons.arrow_forward),
-                label: const Text('Next Level'),
+                label: Text(_s.nextLevel),
                 style: FilledButton.styleFrom(
                   backgroundColor: HoneyTheme.honeyGold,
                   foregroundColor: HoneyTheme.textOnPrimary,
@@ -377,7 +398,7 @@ class _CompletionOverlayState extends State<CompletionOverlay>
               child: FilledButton.icon(
                 onPressed: widget.onViewLeaderboard,
                 icon: const Icon(Icons.leaderboard),
-                label: const Text('View Leaderboard'),
+                label: Text(_s.viewLeaderboard),
                 style: FilledButton.styleFrom(
                   backgroundColor: HoneyTheme.deepHoney,
                   foregroundColor: Colors.white,
@@ -394,7 +415,7 @@ class _CompletionOverlayState extends State<CompletionOverlay>
                 child: OutlinedButton.icon(
                   onPressed: widget.onReplay,
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Replay'),
+                  label: Text(_s.replay),
                 ),
               ),
               const SizedBox(width: 12),
@@ -402,7 +423,7 @@ class _CompletionOverlayState extends State<CompletionOverlay>
                 child: OutlinedButton.icon(
                   onPressed: widget.onLevelSelect,
                   icon: const Icon(Icons.grid_view),
-                  label: const Text('Levels'),
+                  label: Text(_s.levels),
                 ),
               ),
             ],

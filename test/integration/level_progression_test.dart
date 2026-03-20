@@ -27,12 +27,16 @@ import 'package:hex_buzz/main.dart';
 import 'package:hex_buzz/presentation/providers/auth_provider.dart';
 import 'package:hex_buzz/presentation/providers/daily_challenge_provider.dart';
 import 'package:hex_buzz/presentation/providers/game_provider.dart';
+import 'package:hex_buzz/presentation/providers/notification_provider.dart';
 import 'package:hex_buzz/presentation/providers/progress_provider.dart';
 import 'package:hex_buzz/presentation/screens/game/game_screen.dart';
 import 'package:hex_buzz/presentation/screens/level_select/level_select_screen.dart';
 import 'package:hex_buzz/presentation/theme/honey_theme.dart';
 import 'package:hex_buzz/presentation/widgets/completion_overlay/completion_overlay.dart';
 import 'package:hex_buzz/presentation/widgets/level_cell/level_cell_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../presentation/screens/test_mocks.dart' show MockNotificationService;
 
 /// Mock auth repository for testing that returns a guest user.
 class TestAuthRepository implements AuthRepository {
@@ -195,8 +199,15 @@ void main() {
   late TestProgressRepository progressRepo;
   late TestLevelRepository levelRepo;
   late List<Level> testLevels;
+  late SharedPreferences prefs;
 
-  setUp(() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({
+      'tutorial_completed': true,
+      'last_seen_version': '1.0.0',
+    });
+    prefs = await SharedPreferences.getInstance();
+
     // Create multiple simple test levels
     testLevels = [
       createSimpleLevel(id: 'level-0'),
@@ -217,6 +228,10 @@ void main() {
         dailyChallengeRepositoryProvider.overrideWithValue(
           _MockDailyChallengeRepository(),
         ),
+        notificationServiceProvider.overrideWithValue(
+          MockNotificationService(),
+        ),
+        sharedPreferencesProvider.overrideWithValue(prefs),
       ],
       child: MaterialApp(
         title: 'HexBuzz',

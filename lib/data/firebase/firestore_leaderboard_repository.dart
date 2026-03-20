@@ -246,27 +246,32 @@ class FirestoreLeaderboardRepository implements LeaderboardRepository {
         .orderBy('updatedAt', descending: true)
         .limit(limit)
         .snapshots()
-        .map((snapshot) {
-          final entries = <LeaderboardEntry>[];
-          for (var i = 0; i < snapshot.docs.length; i++) {
-            final doc = snapshot.docs[i];
-            final data = doc.data();
+        .map(_snapshotToEntries);
+  }
 
-            entries.add(
-              LeaderboardEntry(
-                userId: doc.id,
-                username: data['username'] as String? ?? 'Unknown',
-                avatarUrl: data['avatarUrl'] as String?,
-                totalStars: data['totalStars'] as int? ?? 0,
-                rank: i + 1,
-                updatedAt:
-                    (data['updatedAt'] as Timestamp?)?.toDate() ??
-                    DateTime.now(),
-              ),
-            );
-          }
-          return entries;
-        });
+  List<LeaderboardEntry> _snapshotToEntries(
+    QuerySnapshot<Map<String, dynamic>> snapshot,
+  ) {
+    return [
+      for (var i = 0; i < snapshot.docs.length; i++)
+        _docToEntry(snapshot.docs[i], i + 1),
+    ];
+  }
+
+  LeaderboardEntry _docToEntry(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+    int rank,
+  ) {
+    final data = doc.data();
+    return LeaderboardEntry(
+      userId: doc.id,
+      username: data['username'] as String? ?? 'Unknown',
+      avatarUrl: data['avatarUrl'] as String?,
+      totalStars: data['totalStars'] as int? ?? 0,
+      rank: rank,
+      updatedAt:
+          (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
   }
 
   /// Gets cached data if available and not expired.

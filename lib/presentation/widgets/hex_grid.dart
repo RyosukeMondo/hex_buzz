@@ -18,3 +18,4 @@ export 'hex_grid/hex_grid_layout.dart';
 export 'hex_grid/hex_grid_renderer.dart';
 export 'hex_grid/hex_grid_theme.dart';
 export 'hex_grid/hex_grid_widget.dart';
+export 'hex_grid/hint_highlight_overlay.dart';

@@ -167,6 +167,7 @@ void main() {
             notificationServiceProvider.overrideWithValue(
               MockNotificationService(),
             ),
+            sharedPreferencesProvider.overrideWithValue(prefs),
           ],
           child: const HexBuzzApp(),
         ),

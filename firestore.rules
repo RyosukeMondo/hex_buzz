@@ -99,5 +99,76 @@ service cloud.firestore {
       // Update and delete not allowed
       allow update, delete: if false;
     }
+
+    // Friends collection - friend relations per user
+    match /friends/{userId} {
+      // Allow read of the parent document if needed
+      allow read: if isOwner(userId);
+      allow write: if false;
+
+      // Friend relations subcollection
+      match /relations/{friendId} {
+        // Only the document owner can read their own friend relations
+        allow read: if isOwner(userId);
+
+        // Owner can create friend relations
+        allow create: if isOwner(userId)
+          && request.resource.data.status is string
+          && request.resource.data.initiatedBy is string;
+
+        // Owner can update (accept/reject) friend relations
+        allow update: if isOwner(userId)
+          && request.resource.data.status is string;
+
+        // Owner can delete friend relations (unfriend)
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // Achievements collection - per-user achievement records
+    match /achievements/{userId} {
+      // Anyone authenticated can read achievements (for profile viewing)
+      allow read: if isAuthenticated();
+
+      // Only Cloud Functions write achievements
+      allow write: if false;
+
+      // Individual achievement documents
+      match /{achievementId} {
+        // Anyone authenticated can read (for viewing friend achievements)
+        allow read: if isAuthenticated();
+
+        // Only Cloud Functions write achievements
+        // (onAchievementUnlocked callable runs with admin privileges)
+        allow write: if false;
+      }
+    }
+
+    // Timed challenge scores collection
+    match /timedChallengeScores/{configId} {
+      // Allow read of the parent document
+      allow read: if isAuthenticated();
+      allow write: if false;
+
+      // Score entries subcollection
+      match /entries/{userId} {
+        // Authenticated users can read all entries (for leaderboard)
+        allow read: if isAuthenticated();
+
+        // Only Cloud Functions write scores
+        // (submitTimedChallengeScore callable runs with admin privileges)
+        allow write: if false;
+      }
+    }
+
+    // Shared levels collection - user-created levels
+    match /sharedLevels/{levelId} {
+      // Authenticated users can read any shared level
+      allow read: if isAuthenticated();
+
+      // Only Cloud Functions write shared levels
+      // (publishLevel callable runs with admin privileges)
+      allow write: if false;
+    }
   }
 }

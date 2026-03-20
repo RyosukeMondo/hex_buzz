@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/l10n/l10n_provider.dart';
 import '../../../core/logging/diagnostic_logger.dart';
 import '../../../core/logging/logger.dart';
 import '../../../domain/models/daily_challenge.dart';
 import '../../../domain/models/game_mode.dart';
+import '../../../domain/models/game_state.dart';
 import '../../../domain/models/hex_cell.dart';
+import '../../../domain/services/haptic_service.dart';
 import '../../../domain/services/star_calculator.dart';
 import '../../../main.dart';
 import '../../../platform/windows/keyboard_shortcuts.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/daily_challenge_provider.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/haptic_provider.dart';
 import '../../widgets/completion_overlay/completion_overlay.dart';
 import '../../widgets/daily_challenge_completion_dialog.dart';
 import '../../widgets/hex_grid.dart';
@@ -182,7 +186,7 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
     }
   }
 
-  void _onGameStateChanged(dynamic previous, dynamic next) {
+  void _onGameStateChanged(GameState? previous, GameState next) {
     if (next.isComplete && !_hasSubmitted) {
       DiagnosticLogger.logEvent(
         'game_completed',
@@ -192,9 +196,17 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
         },
         level: LogLevel.info,
       );
+      ref.read(hapticServiceProvider).trigger(HapticType.completion);
       _hasSubmitted = true;
       widget.onScoreSubmitted();
       _submitScore();
+    }
+
+    // Detect checkpoint reached: nextCheckpoint advanced between states.
+    if (previous != null &&
+        !next.isComplete &&
+        next.nextCheckpoint > previous.nextCheckpoint) {
+      ref.read(hapticServiceProvider).trigger(HapticType.checkpoint);
     }
   }
 
@@ -209,7 +221,9 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
       onUndo: () {
         // Undo last move (Ctrl+Z)
         final notifier = ref.read(gameProvider.notifier);
-        notifier.undo();
+        if (notifier.undo()) {
+          ref.read(hapticServiceProvider).trigger(HapticType.undo);
+        }
       },
       onBack: () {
         // Navigate back to level select (Escape)
@@ -224,7 +238,10 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
             // Reset button
             IconButton(
               icon: const Icon(Icons.refresh),
-              onPressed: () => ref.read(gameProvider.notifier).reset(),
+              onPressed: () {
+                ref.read(hapticServiceProvider).trigger(HapticType.buttonTap);
+                ref.read(gameProvider.notifier).reset();
+              },
               tooltip: 'Reset (same level)',
             ),
             // New level button (only in practice mode, not daily challenge)
@@ -301,7 +318,10 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
             _buildProgressIndicator(context, visitedCount, cellCount),
             const SizedBox(width: 16),
             OutlinedButton.icon(
-              onPressed: () => notifier.reset(),
+              onPressed: () {
+                ref.read(hapticServiceProvider).trigger(HapticType.buttonTap);
+                notifier.reset();
+              },
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Retry'),
             ),
@@ -309,7 +329,12 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
             if (widget.levelIndex == null && !widget.isDailyChallenge) ...[
               const SizedBox(width: 8),
               FilledButton.icon(
-                onPressed: () => notifier.generateNewLevel(),
+                onPressed: () {
+                  ref
+                      .read(hapticServiceProvider)
+                      .trigger(HapticType.buttonTap);
+                  notifier.generateNewLevel();
+                },
                 icon: const Icon(Icons.skip_next, size: 18),
                 label: const Text('Next'),
               ),
@@ -356,18 +381,23 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
   void _handleCellEntered(WidgetRef ref, HexCell cell) {
     final notifier = ref.read(gameProvider.notifier);
     final gameState = ref.read(gameProvider);
+    final haptic = ref.read(hapticServiceProvider);
 
-    // Check if moving back to previous cell (undo)
+    // Check if moving back to previous cell (undo via drag)
     if (gameState.path.length >= 2) {
       final previousCell = gameState.path[gameState.path.length - 2];
       if (cell.q == previousCell.q && cell.r == previousCell.r) {
-        notifier.undo();
+        if (notifier.undo()) {
+          haptic.trigger(HapticType.undo);
+        }
         return;
       }
     }
 
     // Try to move forward
-    notifier.tryMove(cell);
+    if (notifier.tryMove(cell)) {
+      haptic.trigger(HapticType.cellTap);
+    }
   }
 
   Widget _buildCompletionOverlay(BuildContext context, WidgetRef ref) {
@@ -383,6 +413,7 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
       stars: stars,
       completionTime: elapsedTime,
       hasNextLevel: hasNextLevel && !widget.isDailyChallenge,
+      localizedStrings: ref.strings,
       onNextLevel: hasNextLevel && !widget.isDailyChallenge
           ? () => _goToNextLevel(context, widget.levelIndex)
           : null,

@@ -16,6 +16,7 @@ import 'package:hex_buzz/presentation/screens/game/game_screen.dart';
 import 'package:hex_buzz/presentation/screens/level_select/level_select_screen.dart';
 import 'package:hex_buzz/presentation/widgets/completion_overlay/completion_overlay.dart';
 import 'package:hex_buzz/presentation/widgets/level_cell/level_cell_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'test_helpers.dart';
 
@@ -25,9 +26,17 @@ void main() {
   late MockAuthRepository authRepo;
   late MockProgressRepository progressRepo;
   late MockLevelRepository levelRepo;
+  late SharedPreferences prefs;
   late List<Level> testLevels;
 
-  setUp(() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({
+      'tutorial_completed': true,
+      'last_seen_version': '1.0.0',
+    });
+    prefs = await SharedPreferences.getInstance();
+    // Ensure What's New doesn't interfere with navigation
+    await prefs.setString('last_seen_version', '1.0.0');
     testLevels = [
       createSimpleLevel(id: 'level-0'),
       createSimpleLevel(id: 'level-1'),
@@ -44,6 +53,7 @@ void main() {
     authRepo: authRepo,
     progressRepo: progressRepo,
     levelRepo: levelRepo,
+    prefs: prefs,
   );
 
   group('Full User Journey E2E', () {
@@ -56,13 +66,13 @@ void main() {
 
       // Front screen
       expect(find.byType(FrontScreen), findsOneWidget);
-      await tester.tap(find.byType(GestureDetector).first);
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tap to Start'));
+      await pumpFrames(tester, frames: 20);
 
       // Auth screen - play as guest
       expect(find.byType(AuthScreen), findsOneWidget);
       await tester.tap(find.text('Play as Guest'));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       // Level select
       expect(find.byType(LevelSelectScreen), findsOneWidget);
@@ -70,7 +80,7 @@ void main() {
 
       // Play level 1
       await tester.tap(find.byType(LevelCellWidget).first);
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
       expect(find.byType(GameScreen), findsOneWidget);
 
       final container = ProviderScope.containerOf(
@@ -80,7 +90,7 @@ void main() {
       final level = container.read(gameProvider).level;
       gameNotifier.tryMove(level.startCell);
       gameNotifier.tryMove(level.endCell);
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       // Completion
       expect(find.byType(CompletionOverlay), findsOneWidget);
@@ -90,7 +100,7 @@ void main() {
 
       // Back to levels, verify Level 2 unlocked
       await tester.tap(find.text('Levels'));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
       final cells = tester
           .widgetList<LevelCellWidget>(find.byType(LevelCellWidget))
           .toList();
@@ -102,10 +112,10 @@ void main() {
       await pumpFrames(tester);
       expect(find.byType(FrontScreen), findsOneWidget);
 
-      await tester.tap(find.byType(GestureDetector).first);
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tap to Start'));
+      await pumpFrames(tester, frames: 20);
       await tester.tap(find.text('Play as Guest'));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       // Verify progress persisted for guest user
       final persistedCells = tester
@@ -123,17 +133,17 @@ void main() {
       await tester.pumpWidget(buildApp());
       await waitForProviders(tester);
 
-      await tester.tap(find.byType(GestureDetector).first);
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tap to Start'));
+      await pumpFrames(tester, frames: 20);
       await tester.tap(find.textContaining('Guest'));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       expect(find.byType(LevelSelectScreen), findsOneWidget);
       print('  - Playing as guest');
 
       // Complete level
       await tester.tap(find.byType(LevelCellWidget).first);
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameScreen)),
@@ -142,7 +152,7 @@ void main() {
       final level = container.read(gameProvider).level;
       gameNotifier.tryMove(level.startCell);
       gameNotifier.tryMove(level.endCell);
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       // Verify guest progress
       final authState = container.read(authProvider).valueOrNull;
@@ -152,7 +162,7 @@ void main() {
       print('  - Guest progress saved');
 
       await tester.tap(find.text('Levels'));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
       final cells = tester
           .widgetList<LevelCellWidget>(find.byType(LevelCellWidget))
           .toList();
@@ -166,13 +176,13 @@ void main() {
       await waitForProviders(tester);
 
       // Guest flow
-      await tester.tap(find.byType(GestureDetector).first);
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tap to Start'));
+      await pumpFrames(tester, frames: 20);
       await tester.tap(find.textContaining('Guest'));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       await tester.tap(find.byType(LevelCellWidget).first);
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       var container = ProviderScope.containerOf(
         tester.element(find.byType(GameScreen)),
@@ -181,21 +191,21 @@ void main() {
       var level = container.read(gameProvider).level;
       gameNotifier.tryMove(level.startCell);
       gameNotifier.tryMove(level.endCell);
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       final guestId = container.read(authProvider).valueOrNull!.id;
 
       // Logout
       await tester.tap(find.text('Levels'));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
       await tester.tap(find.byIcon(Icons.logout));
       await pumpFrames(tester);
 
       // Sign in with Google (simulated)
-      await tester.tap(find.byType(GestureDetector).first);
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tap to Start'));
+      await pumpFrames(tester, frames: 20);
       await tester.tap(find.text('Sign in with Google'));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       // Verify isolation
       final cells = tester
@@ -214,13 +224,13 @@ void main() {
       await tester.pumpWidget(buildApp());
       await waitForProviders(tester);
 
-      await tester.tap(find.byType(GestureDetector).first);
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tap to Start'));
+      await pumpFrames(tester, frames: 20);
       await tester.tap(find.textContaining('Guest'));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       await tester.tap(find.byType(LevelCellWidget).first);
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameScreen)),
@@ -229,14 +239,14 @@ void main() {
       final level = container.read(gameProvider).level;
       gameNotifier.tryMove(level.startCell);
       gameNotifier.tryMove(level.endCell);
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       await tester.tap(find.text('Next Level'));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
       expect(find.text('Level 2'), findsOneWidget);
 
       Navigator.of(tester.element(find.byType(GameScreen))).pop();
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       final cells = tester
           .widgetList<LevelCellWidget>(find.byType(LevelCellWidget))
@@ -250,14 +260,14 @@ void main() {
       await tester.pumpWidget(buildApp());
       await waitForProviders(tester);
 
-      await tester.tap(find.byType(GestureDetector).first);
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tap to Start'));
+      await pumpFrames(tester, frames: 20);
       await tester.tap(find.textContaining('Guest'));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       // Complete level 1
       await tester.tap(find.byType(LevelCellWidget).first);
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
       var container = ProviderScope.containerOf(
         tester.element(find.byType(GameScreen)),
       );
@@ -265,11 +275,11 @@ void main() {
       var level = container.read(gameProvider).level;
       gameNotifier.tryMove(level.startCell);
       gameNotifier.tryMove(level.endCell);
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       // Immediately complete level 2
       await tester.tap(find.text('Next Level'));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
       container = ProviderScope.containerOf(
         tester.element(find.byType(GameScreen)),
       );
@@ -277,10 +287,10 @@ void main() {
       level = container.read(gameProvider).level;
       gameNotifier.tryMove(level.startCell);
       gameNotifier.tryMove(level.endCell);
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       await tester.tap(find.text('Levels'));
-      await tester.pumpAndSettle();
+      await pumpFrames(tester, frames: 20);
 
       final cells = tester
           .widgetList<LevelCellWidget>(find.byType(LevelCellWidget))

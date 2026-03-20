@@ -23,6 +23,29 @@ export {
   updateLeaderboardOnCompletion,
 } from "./functions/leaderboard";
 
+// Export friend notification functions
+export {
+  onFriendRequestCreated,
+  onFriendRequestAccepted,
+} from "./functions/friends";
+
+// Export achievement functions
+export {
+  onAchievementUnlocked,
+} from "./functions/achievements";
+
+// Export timed challenge functions
+export {
+  submitTimedChallengeScore,
+  getTimedChallengeLeaderboard,
+} from "./functions/timedChallenge";
+
+// Export level sharing functions
+export {
+  publishLevel,
+  getSharedLevel,
+} from "./functions/levelSharing";
+
 // Export diagnostic functions
 export {
   apiDiagnostics,

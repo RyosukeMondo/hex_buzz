@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/l10n/l10n_provider.dart';
 import '../../../main.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/honey_theme.dart';
@@ -90,8 +91,10 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
       });
     }
 
+    final s = ref.strings;
+
     return Semantics(
-      label: 'HexBuzz welcome screen. Tap anywhere to start.',
+      label: '${s.appTitle} welcome screen. ${s.tapToStart}.',
       button: true,
       child: GestureDetector(
         onTap: _handleTap,
@@ -208,10 +211,12 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
   }
 
   Widget _buildTitle() {
+    final s = ref.strings;
+
     return Column(
       children: [
         Text(
-          'HexBuzz',
+          s.appTitle,
           style: Theme.of(context).textTheme.displayMedium?.copyWith(
             color: HoneyTheme.honeyGoldDark,
             fontWeight: FontWeight.bold,
@@ -227,7 +232,7 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
         ),
         const SizedBox(height: HoneyTheme.spacingSm),
         Text(
-          'One Path Challenge',
+          s.onePathChallenge,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             color: HoneyTheme.textSecondary,
             fontWeight: FontWeight.w500,
@@ -239,6 +244,8 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
   }
 
   Widget _buildTapPrompt() {
+    final s = ref.strings;
+
     final content = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -249,7 +256,7 @@ class _FrontScreenState extends ConsumerState<FrontScreen>
         ),
         const SizedBox(width: HoneyTheme.spacingSm),
         Text(
-          'Tap to Start',
+          s.tapToStart,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             color: HoneyTheme.deepHoney,
             fontWeight: FontWeight.w600,

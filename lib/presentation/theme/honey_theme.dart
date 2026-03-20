@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+export 'honeycomb_decorations.dart';
+
 /// Centralized honey/bee theme styling for HexBuzz.
 ///
 /// Color palette based on requirements:
@@ -58,6 +60,32 @@ class HoneyTheme {
 
   // Lock icon color - darkened for better contrast on cream backgrounds
   static const Color lockColor = Color(0xFF757575);
+
+  // ============================================
+  // Dark Mode Colors
+  // ============================================
+  // Warm dark palette - avoids cold/blue tones to match honey aesthetic.
+
+  /// Dark background with a warm undertone.
+  static const Color darkBackground = Color(0xFF1A1410);
+
+  /// Slightly lighter surface for cards/containers in dark mode.
+  static const Color darkSurface = Color(0xFF241E18);
+
+  /// Elevated surface for cards in dark mode.
+  static const Color darkSurfaceContainer = Color(0xFF2E2620);
+
+  /// Primary text on dark backgrounds.
+  static const Color darkTextPrimary = Color(0xFFFFF3E0);
+
+  /// Secondary text on dark backgrounds.
+  static const Color darkTextSecondary = Color(0xFFD7CCC8);
+
+  /// Honeycomb cell unvisited color in dark mode.
+  static const Color darkCellUnvisited = Color(0xFF2E2620);
+
+  /// Honeycomb cell border in dark mode.
+  static const Color darkCellBorder = Color(0xFF5D4037);
 
   // ============================================
   // Spacing Constants
@@ -297,72 +325,174 @@ class HoneyTheme {
       ),
     );
   }
-}
 
-/// Custom decorations for honeycomb-style UI elements.
-class HoneycombDecorations {
-  HoneycombDecorations._();
-
-  /// Decoration for level cells in the selection grid.
-  static BoxDecoration levelCell({
-    required bool isUnlocked,
-    required bool isCompleted,
-  }) {
-    return BoxDecoration(
-      color: isUnlocked
-          ? (isCompleted ? HoneyTheme.honeyGoldLight : HoneyTheme.warmCream)
-          : HoneyTheme.warmCreamDark.withValues(alpha: 0.5),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(
-        color: isUnlocked ? HoneyTheme.honeyGold : HoneyTheme.lockColor,
-        width: isUnlocked ? 2 : 1,
+  /// Dark theme for the app.
+  ///
+  /// Uses a warm, honeyed dark palette. Retains honey gold as primary
+  /// to keep brand identity while providing comfortable dark-mode contrast.
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: honeyGold,
+        brightness: Brightness.dark,
+        primary: honeyGold,
+        onPrimary: textOnPrimary,
+        primaryContainer: brownAccentDark,
+        onPrimaryContainer: honeyGoldLight,
+        secondary: deepHoneyLight,
+        onSecondary: Colors.white,
+        secondaryContainer: brownAccent,
+        onSecondaryContainer: honeyGoldLight,
+        tertiary: brownAccentLight,
+        onTertiary: Colors.white,
+        tertiaryContainer: brownAccentDark,
+        onTertiaryContainer: warmCreamDark,
+        surface: darkBackground,
+        onSurface: darkTextPrimary,
+        surfaceContainerHighest: darkSurfaceContainer,
+        error: Colors.red.shade400,
+        onError: Colors.white,
       ),
-      boxShadow: isUnlocked
-          ? [
-              BoxShadow(
-                color: HoneyTheme.honeyGold.withValues(alpha: 0.3),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ]
-          : null,
-    );
-  }
-
-  /// Decoration for completion overlay card.
-  static BoxDecoration completionCard() {
-    return BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: HoneyTheme.honeyGold, width: 3),
-      boxShadow: [
-        BoxShadow(
-          color: HoneyTheme.brownAccent.withValues(alpha: 0.2),
-          blurRadius: 16,
-          offset: const Offset(0, 8),
+      scaffoldBackgroundColor: darkBackground,
+      appBarTheme: AppBarTheme(
+        backgroundColor: darkSurface,
+        foregroundColor: honeyGold,
+        elevation: 0,
+        centerTitle: true,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: honeyGold),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: honeyGold,
+          foregroundColor: textOnPrimary,
+          elevation: 2,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
         ),
-      ],
-    );
-  }
-
-  /// Gradient for honey-drip effect on path.
-  static LinearGradient pathGradient() {
-    return const LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [HoneyTheme.honeyGoldLight, HoneyTheme.deepHoney],
-    );
-  }
-
-  /// Decoration for star display container.
-  static BoxDecoration starContainer() {
-    return BoxDecoration(
-      color: HoneyTheme.warmCream,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: HoneyTheme.honeyGold.withValues(alpha: 0.5),
-        width: 1,
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: honeyGoldLight,
+          side: const BorderSide(color: honeyGold, width: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: honeyGoldLight),
+      ),
+      cardTheme: CardThemeData(
+        color: darkSurface,
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: honeyGold.withValues(alpha: 0.2),
+            width: 1,
+          ),
+        ),
+      ),
+      iconTheme: const IconThemeData(color: honeyGold),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return honeyGold;
+          return darkTextSecondary;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return honeyGold.withValues(alpha: 0.4);
+          }
+          return darkSurfaceContainer;
+        }),
+      ),
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
+          color: darkTextPrimary,
+          fontWeight: FontWeight.bold,
+        ),
+        displayMedium: TextStyle(
+          color: darkTextPrimary,
+          fontWeight: FontWeight.bold,
+        ),
+        displaySmall: TextStyle(
+          color: darkTextPrimary,
+          fontWeight: FontWeight.bold,
+        ),
+        headlineLarge: TextStyle(
+          color: darkTextPrimary,
+          fontWeight: FontWeight.bold,
+        ),
+        headlineMedium: TextStyle(
+          color: darkTextPrimary,
+          fontWeight: FontWeight.w600,
+        ),
+        headlineSmall: TextStyle(
+          color: darkTextPrimary,
+          fontWeight: FontWeight.w600,
+        ),
+        titleLarge: TextStyle(
+          color: darkTextPrimary,
+          fontWeight: FontWeight.w600,
+        ),
+        titleMedium: TextStyle(
+          color: darkTextPrimary,
+          fontWeight: FontWeight.w500,
+        ),
+        titleSmall: TextStyle(
+          color: darkTextSecondary,
+          fontWeight: FontWeight.w500,
+        ),
+        bodyLarge: TextStyle(color: darkTextPrimary),
+        bodyMedium: TextStyle(color: darkTextPrimary),
+        bodySmall: TextStyle(color: darkTextSecondary),
+        labelLarge: TextStyle(
+          color: darkTextPrimary,
+          fontWeight: FontWeight.w500,
+        ),
+        labelMedium: TextStyle(color: darkTextPrimary),
+        labelSmall: TextStyle(color: darkTextSecondary),
       ),
     );
+  }
+
+  /// Returns whether the current context is in dark mode.
+  static bool isDark(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
+  /// Returns the appropriate card/surface background color for the theme.
+  static Color cardColor(BuildContext context) {
+    return isDark(context) ? darkSurface : Colors.white;
+  }
+
+  /// Returns the appropriate scaffold background color for the theme.
+  static Color backgroundColor(BuildContext context) {
+    return Theme.of(context).scaffoldBackgroundColor;
+  }
+
+  /// Returns the appropriate primary text color for the theme.
+  static Color primaryTextColor(BuildContext context) {
+    return isDark(context) ? darkTextPrimary : textPrimary;
+  }
+
+  /// Returns the appropriate secondary text color for the theme.
+  static Color secondaryTextColor(BuildContext context) {
+    return isDark(context) ? darkTextSecondary : textSecondary;
+  }
+
+  /// Returns the appropriate cell unvisited color for the theme.
+  static Color cellUnvisitedColor(BuildContext context) {
+    return isDark(context) ? darkCellUnvisited : cellUnvisited;
+  }
+
+  /// Returns the appropriate cell border color for the theme.
+  static Color cellBorderColor(BuildContext context) {
+    return isDark(context) ? darkCellBorder : cellBorder;
   }
 }

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart' hide Router;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_router/shelf_router.dart';
@@ -14,6 +16,7 @@ import '../../domain/services/leaderboard_repository.dart';
 import '../../domain/services/progress_repository.dart';
 import 'routes/auth_routes.dart';
 import 'routes/daily_challenge_routes.dart';
+import 'routes/diagnostic_routes.dart';
 import 'routes/game_routes.dart';
 import 'routes/leaderboard_routes.dart';
 import 'routes/level_routes.dart';
@@ -30,6 +33,8 @@ class DebugApiServer {
     this.authRepository,
     this.leaderboardRepository,
     this.dailyChallengeRepository,
+    this.navigatorKey,
+    this.ref,
     this.port = 8080,
     Logger? logger,
   }) : _logger = logger ?? LoggerFactory.create('api-server');
@@ -48,6 +53,12 @@ class DebugApiServer {
 
   /// Optional daily challenge repository for daily challenge API endpoints.
   final DailyChallengeRepository? dailyChallengeRepository;
+
+  /// Navigator key for accessing the widget tree in diagnostic endpoints.
+  final GlobalKey<NavigatorState>? navigatorKey;
+
+  /// Widget ref for accessing provider states in diagnostic endpoints.
+  final WidgetRef? ref;
 
   /// The port to listen on.
   final int port;
@@ -134,6 +145,15 @@ class DebugApiServer {
         DailyChallengeRoutes(
           repository: dailyChallengeRepository!,
           authRepository: authRepository!,
+        ).router.call,
+      );
+    }
+    if (navigatorKey != null) {
+      router.mount(
+        '/api/debug/',
+        DiagnosticRoutes(
+          navigatorKey: navigatorKey!,
+          ref: ref,
         ).router.call,
       );
     }
@@ -239,6 +259,8 @@ Future<DebugApiServer> startServer(
   AuthRepository? authRepository,
   LeaderboardRepository? leaderboardRepository,
   DailyChallengeRepository? dailyChallengeRepository,
+  GlobalKey<NavigatorState>? navigatorKey,
+  WidgetRef? ref,
 }) async {
   final server = DebugApiServer(
     engine: engine,
@@ -247,6 +269,8 @@ Future<DebugApiServer> startServer(
     authRepository: authRepository,
     leaderboardRepository: leaderboardRepository,
     dailyChallengeRepository: dailyChallengeRepository,
+    navigatorKey: navigatorKey,
+    ref: ref,
   );
   await server.start();
   return server;

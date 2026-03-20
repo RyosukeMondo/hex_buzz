@@ -7,6 +7,7 @@ import 'hex_grid_gesture_handler.dart';
 import 'hex_grid_layout.dart';
 import 'hex_grid_renderer.dart';
 import 'hex_grid_theme.dart';
+import 'hint_highlight_overlay.dart';
 
 /// Interactive hexagonal grid widget that composes cells, walls, and path.
 ///
@@ -16,6 +17,7 @@ import 'hex_grid_theme.dart';
 /// - Visual rendering (HexGridRenderer)
 /// - Cell animations (HexGridAnimator)
 /// - Theming (HexGridTheme)
+/// - Hint highlight overlay (optional pulsing golden glow)
 class HexGridWidget extends StatefulWidget {
   final Level level;
   final List<HexCell> path;
@@ -23,6 +25,9 @@ class HexGridWidget extends StatefulWidget {
   final CellCallback? onCellEntered;
   final VoidCallback? onDragStart;
   final VoidCallback? onDragEnd;
+
+  /// Optional cell to highlight with a pulsing hint glow.
+  final HexCell? hintCell;
 
   const HexGridWidget({
     super.key,
@@ -32,6 +37,7 @@ class HexGridWidget extends StatefulWidget {
     this.onCellEntered,
     this.onDragStart,
     this.onDragEnd,
+    this.hintCell,
   });
 
   @override
@@ -93,6 +99,13 @@ class _HexGridWidgetState extends State<HexGridWidget> {
                 theme: _theme,
                 animator: _animator,
               ),
+              // Hint highlight overlay: pulsing golden glow on hinted cell
+              if (widget.hintCell != null)
+                HintHighlightOverlay(
+                  hintCell: widget.hintCell!,
+                  cellSize: layout.cellSize,
+                  origin: layout.origin,
+                ),
             ],
           ),
         );

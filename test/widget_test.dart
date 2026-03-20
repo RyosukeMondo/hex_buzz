@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:hex_buzz/domain/models/auth_result.dart';
 import 'package:hex_buzz/domain/models/hex_cell.dart';
@@ -120,6 +121,12 @@ class _MockLevelRepository extends LevelRepository {
 
 void main() {
   testWidgets('App launches with front screen', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({
+      'tutorial_completed': true,
+      'last_seen_version': '1.0.0',
+    });
+    final prefs = await SharedPreferences.getInstance();
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -134,6 +141,7 @@ void main() {
           notificationServiceProvider.overrideWithValue(
             MockNotificationService(),
           ),
+          sharedPreferencesProvider.overrideWithValue(prefs),
         ],
         child: const HexBuzzApp(),
       ),

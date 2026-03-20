@@ -13,13 +13,19 @@ void main() {
       expect(GameMode.practice.name, 'practice');
     });
 
-    test('has exactly 2 modes', () {
-      expect(GameMode.values.length, 2);
+    test('has timed mode', () {
+      expect(GameMode.timed, isNotNull);
+      expect(GameMode.timed.name, 'timed');
+    });
+
+    test('has exactly 3 modes', () {
+      expect(GameMode.values.length, 3);
     });
 
     test('can be parsed from name', () {
       expect(GameMode.values.byName('daily'), GameMode.daily);
       expect(GameMode.values.byName('practice'), GameMode.practice);
+      expect(GameMode.values.byName('timed'), GameMode.timed);
     });
   });
 }

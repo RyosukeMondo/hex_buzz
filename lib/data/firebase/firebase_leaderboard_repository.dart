@@ -254,34 +254,41 @@ class FirebaseLeaderboardRepository implements LeaderboardRepository {
         .orderBy('updatedAt', descending: false)
         .limit(limit)
         .snapshots()
-        .map((snapshot) {
-          final entries = <LeaderboardEntry>[];
-          int rank = 1;
+        .map(_parseLeaderboardSnapshot);
+  }
 
-          for (var doc in snapshot.docs) {
-            try {
-              final data = doc.data();
-              // Convert Timestamp to ISO string
-              final updatedAt = data['updatedAt'];
-              final updatedAtStr = updatedAt is Timestamp
-                  ? updatedAt.toDate().toIso8601String()
-                  : updatedAt?.toString() ?? DateTime.now().toIso8601String();
+  List<LeaderboardEntry> _parseLeaderboardSnapshot(
+    QuerySnapshot<Map<String, dynamic>> snapshot,
+  ) {
+    final entries = <LeaderboardEntry>[];
+    int rank = 1;
 
-              final entry = LeaderboardEntry.fromJson({
-                ...data,
-                'updatedAt': updatedAtStr,
-                'rank': rank,
-              });
-              entries.add(entry);
-              rank++;
-            } catch (e) {
-              // Skip invalid entries
-              continue;
-            }
-          }
+    for (var doc in snapshot.docs) {
+      final entry = _parseDocToEntry(doc.data(), rank);
+      if (entry != null) {
+        entries.add(entry);
+        rank++;
+      }
+    }
 
-          return entries;
-        });
+    return entries;
+  }
+
+  LeaderboardEntry? _parseDocToEntry(Map<String, dynamic> data, int rank) {
+    try {
+      final updatedAt = data['updatedAt'];
+      final updatedAtStr = updatedAt is Timestamp
+          ? updatedAt.toDate().toIso8601String()
+          : updatedAt?.toString() ?? DateTime.now().toIso8601String();
+
+      return LeaderboardEntry.fromJson({
+        ...data,
+        'updatedAt': updatedAtStr,
+        'rank': rank,
+      });
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Formats a DateTime as YYYY-MM-DD for consistent date storage.

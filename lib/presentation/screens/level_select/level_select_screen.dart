@@ -6,6 +6,7 @@ import '../../../domain/models/progress_state.dart';
 import '../../../domain/models/user.dart';
 import '../../../main.dart';
 import '../../../platform/windows/keyboard_shortcuts.dart';
+import '../../providers/achievement_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/daily_challenge_provider.dart';
 import '../../providers/game_provider.dart';
@@ -162,7 +163,13 @@ class LevelSelectScreen extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(width: isLoggedIn ? 40 : 0),
+            IconButton(
+              onPressed: () =>
+                  Navigator.of(context).pushNamed(AppRoutes.settings),
+              icon: const Icon(Icons.settings),
+              color: HoneyTheme.textPrimary,
+              tooltip: 'Settings',
+            ),
             Expanded(
               child: Text(
                 'HexBuzz',
@@ -184,69 +191,168 @@ class LevelSelectScreen extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: HoneyTheme.spacingMd),
-        _buildNavigationButtons(context, dailyChallengeState),
+        _buildNavigationChips(context, dailyChallengeState),
       ],
     );
   }
 
-  Widget _buildNavigationButtons(
+  Widget _buildNavigationChips(
     BuildContext context,
     DailyChallengeState? dailyChallengeState,
   ) {
-    // Show badge if there's an uncompleted daily challenge
-    final showBadge = dailyChallengeState is DailyChallengeStateNotStarted;
+    final showDailyBadge =
+        dailyChallengeState is DailyChallengeStateNotStarted;
+    final nav = Navigator.of(context);
+    const gap = SizedBox(width: HoneyTheme.spacingSm);
 
-    return Center(
-      child: _buildNavButton(
-        context,
-        label: 'Daily Challenge',
-        icon: Icons.event,
-        showBadge: showBadge,
-        onPressed: () =>
-            Navigator.of(context).pushNamed(AppRoutes.dailyChallenge),
+    return ShaderMask(
+      shaderCallback: (bounds) => const LinearGradient(
+        colors: [Colors.transparent, Colors.white, Colors.white, Colors.transparent],
+        stops: [0.0, 0.03, 0.97, 1.0],
+      ).createShader(bounds),
+      blendMode: BlendMode.dstIn,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(
+          horizontal: HoneyTheme.spacingMd,
+          vertical: HoneyTheme.spacingXs,
+        ),
+        child: Row(
+          children: [
+            _buildChip(context, label: 'Daily', icon: Icons.event,
+              showBadge: showDailyBadge,
+              onPressed: () => nav.pushNamed(AppRoutes.dailyChallenge)),
+            gap,
+            _buildChip(context, label: 'Packs', icon: Icons.collections_bookmark,
+              onPressed: () => nav.pushNamed(AppRoutes.levelPacks)),
+            gap,
+            _buildChip(context, label: 'Timed', icon: Icons.timer,
+              onPressed: () => nav.pushNamed(AppRoutes.timedChallengeMenu)),
+            gap,
+            _buildAchievementsChip(context),
+            gap,
+            _buildChip(context, label: 'Friends', icon: Icons.people,
+              onPressed: () => nav.pushNamed(AppRoutes.friends)),
+            gap,
+            _buildChip(context, label: 'Create', icon: Icons.edit,
+              onPressed: () => nav.pushNamed(AppRoutes.myLevels)),
+            gap,
+            _buildChip(context, label: 'Store', icon: Icons.shopping_cart,
+              onPressed: () => nav.pushNamed(AppRoutes.store)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNavButton(
+  Widget _buildAchievementsChip(BuildContext context) {
+    return Consumer(builder: (context, ref, _) {
+      final count = ref.watch(achievementProvider).valueOrNull?.unlockedCount ?? 0;
+      return _buildChip(context, label: 'Achievements', icon: Icons.emoji_events,
+        badgeCount: count,
+        onPressed: () => Navigator.of(context).pushNamed(AppRoutes.achievements));
+    });
+  }
+
+  Widget _buildChip(
     BuildContext context, {
     required String label,
     required IconData icon,
     required VoidCallback onPressed,
     bool showBadge = false,
+    int? badgeCount,
   }) {
-    final button = ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 18),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: HoneyTheme.brownAccent,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(
-          horizontal: HoneyTheme.spacingMd,
-          vertical: HoneyTheme.spacingSm,
+    final hasBadge = showBadge || (badgeCount != null && badgeCount > 0);
+
+    final chip = Semantics(
+      label: label,
+      button: true,
+      child: Tooltip(
+        message: label,
+        child: Material(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(HoneyTheme.radiusLg),
+            side: const BorderSide(color: HoneyTheme.honeyGold, width: 1.5),
+          ),
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(HoneyTheme.radiusLg),
+            splashColor: HoneyTheme.honeyGoldLight.withValues(alpha: 0.4),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ExcludeSemantics(
+                      child: Icon(
+                        icon,
+                        size: HoneyTheme.iconSizeSm,
+                        color: HoneyTheme.brownAccent,
+                      ),
+                    ),
+                    const SizedBox(width: HoneyTheme.spacingXs),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: HoneyTheme.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
 
-    if (!showBadge) return button;
+    if (!hasBadge) return chip;
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        button,
+        chip,
         Positioned(
           right: -4,
           top: -4,
-          child: Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-              color: Colors.red,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 1.5),
-            ),
+          child: ExcludeSemantics(
+            child: badgeCount != null && badgeCount > 0
+              ? Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: HoneyTheme.honeyGold,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: Text(
+                    '$badgeCount',
+                    style: const TextStyle(
+                      color: HoneyTheme.textPrimary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              : Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                ),
           ),
         ),
       ],
