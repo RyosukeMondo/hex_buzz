@@ -29,7 +29,7 @@ class LocalLevelPackRepository implements LevelPackRepository {
 
   @override
   Future<List<LevelPack>> getAvailablePacks() async {
-    _ensurePacksGenerated();
+    await _ensurePacksGenerated();
     return LevelPackDefinitions.allPacks
         .map((meta) => _cachedPacks[meta.id]!)
         .toList();
@@ -37,7 +37,7 @@ class LocalLevelPackRepository implements LevelPackRepository {
 
   @override
   Future<LevelPack?> getPack(String packId) async {
-    _ensurePacksGenerated();
+    await _ensurePacksGenerated();
     return _cachedPacks[packId];
   }
 
@@ -72,12 +72,14 @@ class LocalLevelPackRepository implements LevelPackRepository {
 
   /// Generates all packs if not already done.
   ///
-  /// This is called lazily on first access. Each pack's levels are
-  /// generated using deterministic seeds for reproducibility.
-  void _ensurePacksGenerated() {
+  /// Yields between each pack to prevent blocking the UI thread,
+  /// which is critical on web where all Dart runs on the main thread.
+  Future<void> _ensurePacksGenerated() async {
     if (_packsGenerated) return;
 
     for (final meta in LevelPackDefinitions.allPacks) {
+      // Yield to let UI render between expensive generations
+      await Future<void>.delayed(Duration.zero);
       final levels = _generator.generatePack(meta);
       _cachedPacks[meta.id] = LevelPack(
         id: meta.id,
