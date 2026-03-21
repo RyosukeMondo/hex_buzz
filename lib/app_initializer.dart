@@ -37,8 +37,14 @@ Future<void> initializeFirebaseCore() async {
 
   DiagnosticLogger.init();
 
-  final performance = FirebasePerformance.instance;
-  await performance.setPerformanceCollectionEnabled(true);
+  // Disable Performance Monitoring on web — Firebase Installations
+  // fails with 400 on web builds and causes cascading errors.
+  try {
+    final performance = FirebasePerformance.instance;
+    await performance.setPerformanceCollectionEnabled(!kIsWeb);
+  } catch (e) {
+    if (kDebugMode) debugPrint('Firebase Performance init skipped: $e');
+  }
 
   if (!kDebugMode) {
     FlutterError.onError =

@@ -74,7 +74,11 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
       data: {'path': 'dailyChallenges/$today'},
       level: LogLevel.info,
     );
-    final doc = await _firestore.collection('dailyChallenges').doc(today).get();
+    final doc = await _firestore
+        .collection('dailyChallenges')
+        .doc(today)
+        .get()
+        .timeout(const Duration(seconds: 10));
 
     if (!doc.exists) {
       DiagnosticLogger.logEvent(
@@ -153,7 +157,7 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
       );
 
       final entryRef = _challengeEntryRef(today, userId);
-      final existingEntry = await entryRef.get();
+      final existingEntry = await entryRef.get().timeout(const Duration(seconds: 10));
 
       // One-attempt-per-day: if entry exists, return success without writing.
       // Firestore security rules block updates to preserve completion integrity.
@@ -201,7 +205,7 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
   }
 
   Future<Map<String, dynamic>?> _fetchUserData(String userId) async {
-    final doc = await _firestore.collection('users').doc(userId).get();
+    final doc = await _firestore.collection('users').doc(userId).get().timeout(const Duration(seconds: 10));
     if (!doc.exists) {
       DiagnosticLogger.logEvent(
         'user_not_found_for_challenge',
@@ -263,7 +267,7 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
           .orderBy('completionTime', descending: false)
           .limit(limit);
 
-      final snapshot = await query.get();
+      final snapshot = await query.get().timeout(const Duration(seconds: 10));
 
       // Convert documents to LeaderboardEntry objects
       final entries = <LeaderboardEntry>[];
@@ -302,7 +306,7 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
           .doc(today)
           .collection('entries')
           .doc(userId)
-          .get();
+          .get().timeout(const Duration(seconds: 10));
 
       return doc.exists;
     } catch (e) {
@@ -327,7 +331,7 @@ class FirestoreDailyChallengeRepository implements DailyChallengeRepository {
           .doc(dateId)
           .collection('entries')
           .doc(userId)
-          .get();
+          .get().timeout(const Duration(seconds: 10));
 
       if (!doc.exists) {
         DiagnosticLogger.logEvent(
