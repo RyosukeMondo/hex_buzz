@@ -1,11 +1,15 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/logging/diagnostic_logger.dart';
 import '../../core/logging/logger.dart';
+import '../../domain/models/daily_challenge.dart';
 import '../../domain/models/daily_challenge_completion.dart';
 import '../../domain/models/daily_challenge_state.dart' as domain;
 import '../../domain/models/hex_cell.dart';
 import '../../domain/services/daily_challenge_repository.dart';
+import '../../domain/services/level_generator.dart';
 
 /// Provider for the daily challenge repository (dependency injection point).
 ///
@@ -52,13 +56,8 @@ class DailyChallengeNotifier extends StateNotifier<domain.DailyChallengeState> {
 
       state = const domain.DailyChallengeStateLoading();
 
-      final challenge = await _repository.getTodaysChallenge();
-      if (challenge == null) {
-        state = const domain.DailyChallengeStateError(
-          'No daily challenge available for today',
-        );
-        return;
-      }
+      var challenge = await _repository.getTodaysChallenge();
+      challenge ??= _generateLocalChallenge();
 
       // Check for existing completion
       final completion = await _repository.getCompletion(
@@ -83,12 +82,47 @@ class DailyChallengeNotifier extends StateNotifier<domain.DailyChallengeState> {
       }
     } catch (e, stackTrace) {
       DiagnosticLogger.logError(
-        'Error loading challenge',
+        'Error loading challenge, falling back to local',
         error: e,
         stackTrace: stackTrace,
       );
-      state = domain.DailyChallengeStateError(e.toString());
+      // Fallback: generate a local challenge so the user always has one
+      try {
+        final challenge = _generateLocalChallenge();
+        state = domain.DailyChallengeStateNotStarted(challenge);
+      } catch (_) {
+        state = domain.DailyChallengeStateError(e.toString());
+      }
     }
+  }
+
+  /// Generates a deterministic local challenge based on today's date.
+  ///
+  /// Uses the date string as a seed so all users get the same puzzle.
+  DailyChallenge _generateLocalChallenge() {
+    final now = DateTime.now().toUtc();
+    final dateId = '${now.year}-${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+    final seed = dateId.hashCode;
+    final generator = LevelGenerator(random: Random(seed));
+    final result = generator.generate(4); // 4x4 grid for daily
+
+    final level = result.success
+        ? result.level!
+        : LevelGenerator(random: Random(seed + 1)).generate(3).level!;
+
+    DiagnosticLogger.logEvent(
+      'Generated local daily challenge',
+      data: {'dateId': dateId, 'size': level.size},
+      level: LogLevel.info,
+    );
+
+    return DailyChallenge(
+      id: dateId,
+      date: DateTime(now.year, now.month, now.day),
+      level: level,
+      completionCount: 0,
+    );
   }
 
   /// Starts the challenge.
