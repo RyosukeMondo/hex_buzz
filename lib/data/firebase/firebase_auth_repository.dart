@@ -74,16 +74,6 @@ class FirebaseAuthRepository implements AuthRepository {
       provider.addScope('email');
       provider.addScope('profile');
 
-      if (kIsWeb) {
-        // Web: use redirect flow (avoids COOP popup issues).
-        // signInWithRedirect navigates away; when the browser returns,
-        // authStateChanges fires automatically with the signed-in user.
-        await _firebaseAuth.signInWithRedirect(provider);
-        // This line is only reached if redirect fails synchronously.
-        return const AuthFailure('Redirecting to Google...');
-      }
-
-      // Mobile: use popup
       final userCredential = await _firebaseAuth.signInWithPopup(provider);
 
       final firebaseUser = userCredential.user;
