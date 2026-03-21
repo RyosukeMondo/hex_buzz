@@ -128,7 +128,8 @@ class FirebaseAuthRepository implements AuthRepository {
       final doc = await _firestore
           .collection('users')
           .doc(firebaseUser.uid)
-          .get();
+          .get()
+          .timeout(const Duration(seconds: 5));
 
       if (doc.exists && doc.data() != null) {
         return domain.User.fromJson(doc.data()!);
@@ -150,7 +151,7 @@ class FirebaseAuthRepository implements AuthRepository {
     final userRef = _firestore.collection('users').doc(firebaseUser.uid);
 
     try {
-      final doc = await userRef.get();
+      final doc = await userRef.get().timeout(const Duration(seconds: 5));
       final now = DateTime.now();
 
       if (doc.exists && doc.data() != null) {

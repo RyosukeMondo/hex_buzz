@@ -70,8 +70,15 @@ class HybridAuthRepository implements AuthRepository {
       level: LogLevel.debug,
     );
 
-    // Check Firebase first (higher priority)
-    final firebaseUser = await _firebaseRepo.getCurrentUser();
+    // Check Firebase first (higher priority, with timeout)
+    domain.User? firebaseUser;
+    try {
+      firebaseUser = await _firebaseRepo
+          .getCurrentUser()
+          .timeout(const Duration(seconds: 5));
+    } catch (_) {
+      // Firebase timed out
+    }
     if (firebaseUser != null) {
       DiagnosticLogger.logEvent(
         'firebase_user_found',
@@ -134,9 +141,9 @@ class HybridAuthRepository implements AuthRepository {
       _currentUser = result.user;
       _authStateController.add(result.user);
 
-      // If there was guest data, migrate it
+      // Migrate guest data in background (non-blocking)
       if (guestUser != null) {
-        await _migrateGuestDataToFirebase(guestUser, result.user);
+        _migrateGuestDataToFirebase(guestUser, result.user);
       }
     }
 
@@ -168,13 +175,19 @@ class HybridAuthRepository implements AuthRepository {
       return _currentUser;
     }
 
-    // Check Firebase first
-    final firebaseUser = await _firebaseRepo.getCurrentUser();
-    if (firebaseUser != null) {
-      _activeRepo = _firebaseRepo;
-      _currentUser = firebaseUser;
-      _authStateController.add(firebaseUser);
-      return firebaseUser;
+    // Check Firebase first (with timeout to prevent hanging)
+    try {
+      final firebaseUser = await _firebaseRepo
+          .getCurrentUser()
+          .timeout(const Duration(seconds: 5));
+      if (firebaseUser != null) {
+        _activeRepo = _firebaseRepo;
+        _currentUser = firebaseUser;
+        _authStateController.add(firebaseUser);
+        return firebaseUser;
+      }
+    } catch (_) {
+      // Firebase timed out — continue to guest check
     }
 
     // Check guest
