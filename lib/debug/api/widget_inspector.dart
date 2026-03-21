@@ -112,11 +112,10 @@ class WidgetTreeInspector {
     return routeName ?? 'unknown';
   }
 
-  /// Lists all registered routes by inspecting the navigator.
+  /// Lists all registered routes from AppRoutes.
   ///
-  /// Returns route names from the navigator history stack.
+  /// Returns all route names defined in the application.
   List<String> getRegisteredRoutes() {
-    // Static list based on AppRoutes - can be extended at runtime
     return const [
       '/',
       '/auth',
@@ -124,6 +123,22 @@ class WidgetTreeInspector {
       '/game',
       '/daily-challenge',
       '/leaderboard',
+      '/tutorial',
+      '/achievements',
+      '/level-packs',
+      '/pack-levels',
+      '/friends',
+      '/editor',
+      '/my-levels',
+      '/store',
+      '/timed-challenge-menu',
+      '/timed-challenge',
+      '/settings',
+      '/app-info',
+      '/notification-settings',
+      '/privacy-policy',
+      '/terms',
+      '/whats-new',
     ];
   }
 

@@ -20,6 +20,7 @@ import 'routes/diagnostic_routes.dart';
 import 'routes/game_routes.dart';
 import 'routes/leaderboard_routes.dart';
 import 'routes/level_routes.dart';
+import 'routes/log_routes.dart';
 import 'routes/progress_routes.dart';
 
 /// Debug REST API server for AI agent interaction.
@@ -157,6 +158,7 @@ class DebugApiServer {
         ).router.call,
       );
     }
+    router.mount('/api/logs/', LogRoutes().router.call);
   }
 
   Response _handleHealth(Request request) {

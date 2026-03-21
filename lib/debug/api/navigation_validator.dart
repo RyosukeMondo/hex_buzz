@@ -8,6 +8,8 @@ import 'models/diagnostic_models.dart';
 /// errors, and support back navigation.
 class NavigationValidator {
   /// All known route paths in the application.
+  ///
+  /// Mirrors every `static const String` in [AppRoutes] from main.dart.
   static const List<String> _knownRoutes = [
     '/',
     '/auth',
@@ -15,6 +17,22 @@ class NavigationValidator {
     '/game',
     '/daily-challenge',
     '/leaderboard',
+    '/tutorial',
+    '/achievements',
+    '/level-packs',
+    '/pack-levels',
+    '/friends',
+    '/editor',
+    '/my-levels',
+    '/store',
+    '/timed-challenge-menu',
+    '/timed-challenge',
+    '/settings',
+    '/app-info',
+    '/notification-settings',
+    '/privacy-policy',
+    '/terms',
+    '/whats-new',
   ];
 
   /// Tests all known routes for reachability.
