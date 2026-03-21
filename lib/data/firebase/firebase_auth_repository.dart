@@ -70,27 +70,32 @@ class FirebaseAuthRepository implements AuthRepository {
   @override
   Future<AuthResult> signInWithGoogle() async {
     try {
-      // Use Firebase Auth popup directly (faster, no COOP issues)
       final provider = firebase_auth.GoogleAuthProvider();
       provider.addScope('email');
       provider.addScope('profile');
 
-      // Sign in with popup
-      final firebase_auth.UserCredential userCredential = await _firebaseAuth
-          .signInWithPopup(provider);
+      if (kIsWeb) {
+        // Web: use redirect flow (avoids COOP popup issues).
+        // signInWithRedirect navigates away; when the browser returns,
+        // authStateChanges fires automatically with the signed-in user.
+        await _firebaseAuth.signInWithRedirect(provider);
+        // This line is only reached if redirect fails synchronously.
+        return const AuthFailure('Redirecting to Google...');
+      }
+
+      // Mobile: use popup
+      final userCredential = await _firebaseAuth.signInWithPopup(provider);
 
       final firebaseUser = userCredential.user;
       if (firebaseUser == null) {
         return const AuthFailure('Authentication failed: no user returned');
       }
 
-      // Return user immediately from Firebase Auth (fast)
       final user = _mapFirebaseUserToDomainUser(firebaseUser);
 
       // Sync to Firestore in background (non-blocking)
       // ignore: unawaited_futures
       _syncUserProfile(firebaseUser).catchError((Object e) {
-        // Log but don't fail - Firestore sync is not critical for login
         if (kDebugMode) {
           debugPrint('Firestore sync failed: $e');
         }
