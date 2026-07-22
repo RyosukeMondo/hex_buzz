@@ -77,8 +77,15 @@ class LevelGenerator {
   /// Maximum attempts before giving up on a single configuration
   static const _maxAttempts = 50;
 
-  /// Maximum solutions to count (for performance)
-  static const _maxSolutionCount = 1000;
+  /// Cap for the initial solution-count probe on a wall-less grid.
+  ///
+  /// Only needs to distinguish 0 (unsolvable) / 1 (already unique) / many
+  /// solutions, so 2 is sufficient — matches the maxCount used everywhere
+  /// else `countSolutions` is called. A higher bound here forces the DFS to
+  /// exhaustively enumerate full-grid Hamiltonian paths, which is
+  /// combinatorially expensive on an open (wall-less) grid and can make
+  /// generation hang for pathological random seeds.
+  static const _maxSolutionCount = 2;
 
   LevelGenerator({Random? random, LevelValidator? validator})
     : _random = random ?? Random(),

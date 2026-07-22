@@ -46,6 +46,17 @@ class ValidationResult {
 class LevelValidator {
   const LevelValidator();
 
+  /// Hard cap on DFS node expansions per [countSolutions] call.
+  ///
+  /// Enumerating full-grid Hamiltonian paths is combinatorially expensive on
+  /// grids with few walls (e.g. the wall-less starting grid during level
+  /// generation), and can otherwise run for an unbounded time regardless of
+  /// [maxCount] — finding even the first solution can require exploring a
+  /// huge number of dead-end branches. This bounds worst-case search cost;
+  /// callers must treat a count of 0 as "unsolvable or too expensive to
+  /// determine" rather than a hard guarantee of unsolvability.
+  static const _maxDfsNodesVisited = 300000;
+
   /// Validates that a level is solvable.
   ///
   /// A level is solvable if there exists a Hamiltonian path from the start
@@ -98,6 +109,7 @@ class LevelValidator {
     final visited = <(int, int)>{(startCell.q, startCell.r)};
     final totalCells = level.cells.length;
     final solutions = <List<HexCell>>[];
+    final budget = _DfsBudget(_maxDfsNodesVisited);
 
     _countDfs(
       level,
@@ -108,6 +120,7 @@ class LevelValidator {
       endCell,
       solutions,
       maxCount,
+      budget,
     );
 
     return SolutionCountResult(
@@ -158,9 +171,13 @@ class LevelValidator {
     HexCell endCell,
     List<List<HexCell>> solutions,
     int maxCount,
+    _DfsBudget budget,
   ) {
     // Stop if we've found enough solutions
     if (solutions.length >= maxCount) return;
+
+    // Stop if we've exhausted the node budget (see _maxDfsNodesVisited)
+    if (!budget.consume()) return;
 
     // Check if we've visited all cells
     if (path.length == totalCells) {
@@ -210,13 +227,29 @@ class LevelValidator {
         endCell,
         solutions,
         maxCount,
+        budget,
       );
 
       // Backtrack
       path.removeLast();
       visited.remove(coords);
+
+      if (budget.exhausted) return;
     }
   }
+}
+
+/// Mutable node-expansion counter shared across a single [countSolutions]
+/// DFS traversal, bounding worst-case search cost.
+class _DfsBudget {
+  int _remaining;
+
+  _DfsBudget(this._remaining);
+
+  bool get exhausted => _remaining <= 0;
+
+  /// Consumes one unit of budget; returns false once exhausted.
+  bool consume() => _remaining-- > 0;
 }
 
 /// Result of solution counting.
