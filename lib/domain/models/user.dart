@@ -89,11 +89,15 @@ class User {
   }
 
   /// Creates a User from JSON data.
+  ///
+  /// Handles both ISO8601 strings and Firestore Timestamp objects for
+  /// date fields, so this works whether data comes from local storage
+  /// or directly from Firestore documents.
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'] as String,
       username: json['username'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: _parseDateTime(json['createdAt']) ?? DateTime.now(),
       isGuest: json['isGuest'] as bool? ?? false,
       uid: json['uid'] as String?,
       email: json['email'] as String?,
@@ -101,10 +105,24 @@ class User {
       photoURL: json['photoURL'] as String?,
       totalStars: json['totalStars'] as int? ?? 0,
       rank: json['rank'] as int?,
-      lastLoginAt: json['lastLoginAt'] != null
-          ? DateTime.parse(json['lastLoginAt'] as String)
-          : null,
+      lastLoginAt: _parseDateTime(json['lastLoginAt']),
     );
+  }
+
+  /// Parses a DateTime from a value that may be a String, a Firestore
+  /// Timestamp (which has a `toDate()` method), or null.
+  static DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    // Handle Firestore Timestamp objects (has toDate() method)
+    // Using dynamic dispatch to avoid coupling domain model to Firebase.
+    try {
+      // ignore: avoid_dynamic_calls
+      return (value as dynamic).toDate() as DateTime;
+    } catch (_) {
+      return null;
+    }
   }
 
   @override

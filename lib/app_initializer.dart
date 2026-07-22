@@ -71,7 +71,7 @@ Future<List<Override>> buildProviderOverrides({
 }
 
 /// Starts post-launch services like notification subscriptions.
-void startPostLaunchServices(
+Future<void> startPostLaunchServices(
   NotificationService notification,
   SharedPreferences prefs,
 ) async {

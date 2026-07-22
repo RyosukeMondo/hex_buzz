@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/analytics/analytics_event.dart';
 import '../../../domain/models/game_mode.dart';
+import '../../../domain/models/game_state.dart';
 import '../../../domain/models/hex_cell.dart';
+import '../../../domain/models/timed_challenge_state.dart';
 import '../../../domain/services/timed_challenge_service.dart';
 import '../../../main.dart';
 import '../../../platform/windows/keyboard_shortcuts.dart';
@@ -128,7 +130,7 @@ class _TimedChallengeScreenState extends ConsumerState<TimedChallengeScreen> {
 
   Widget _buildTimerBar(
     BuildContext context,
-    dynamic challengeState,
+    TimedChallengeState challengeState,
   ) {
     final remaining = challengeState.timeRemainingMs;
     final total = widget.config.timeLimit.inMilliseconds;
@@ -193,7 +195,7 @@ class _TimedChallengeScreenState extends ConsumerState<TimedChallengeScreen> {
 
   Widget _buildStatsBar(
     BuildContext context,
-    dynamic challengeState,
+    TimedChallengeState challengeState,
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -275,7 +277,7 @@ class _TimedChallengeScreenState extends ConsumerState<TimedChallengeScreen> {
     );
   }
 
-  Widget _buildGameArea(dynamic gameState) {
+  Widget _buildGameArea(GameState gameState) {
     final visitedCells = gameState.path.toSet();
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -290,7 +292,7 @@ class _TimedChallengeScreenState extends ConsumerState<TimedChallengeScreen> {
 
   Widget _buildBottomControls(
     BuildContext context,
-    dynamic challengeState,
+    TimedChallengeState challengeState,
   ) {
     if (!challengeState.isActive || challengeState.isGameOver) {
       return const SizedBox.shrink();

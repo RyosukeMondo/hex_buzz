@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -102,6 +104,7 @@ class HexBuzzApp extends ConsumerStatefulWidget {
 
 class _HexBuzzAppState extends ConsumerState<HexBuzzApp> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  StreamSubscription<Map<String, dynamic>>? _notificationSubscription;
 
   @override
   void initState() {
@@ -109,11 +112,17 @@ class _HexBuzzAppState extends ConsumerState<HexBuzzApp> {
     _setupNotificationHandlers();
   }
 
+  @override
+  void dispose() {
+    _notificationSubscription?.cancel();
+    super.dispose();
+  }
+
   /// Sets up handlers for incoming notifications.
   void _setupNotificationHandlers() {
     final svc = ref.read(notificationServiceProvider);
 
-    svc.onMessageReceived.listen((message) {
+    _notificationSubscription = svc.onMessageReceived.listen((message) {
       if (kDebugMode) {
         debugPrint('Notification received: $message');
       }
@@ -279,7 +288,10 @@ class _HexBuzzAppState extends ConsumerState<HexBuzzApp> {
         return _buildRoute(const LevelPacksScreen(), settings, isForward);
 
       case AppRoutes.packLevels:
-        final packId = settings.arguments as String;
+        final packId = settings.arguments as String?;
+        if (packId == null) {
+          return _buildRoute(const FrontScreen(), settings, isForward);
+        }
         return _buildRoute(
           PackLevelsScreen(packId: packId),
           settings,
@@ -306,7 +318,14 @@ class _HexBuzzAppState extends ConsumerState<HexBuzzApp> {
         );
 
       case AppRoutes.timedChallenge:
-        final config = settings.arguments as TimedChallengeConfig;
+        final config = settings.arguments as TimedChallengeConfig?;
+        if (config == null) {
+          return _buildRoute(
+            const TimedChallengeMenuScreen(),
+            settings,
+            isForward,
+          );
+        }
         return _buildRoute(
           TimedChallengeScreen(config: config),
           settings,

@@ -32,6 +32,9 @@ class DailyChallengeCompletion {
   });
 
   /// Creates a DailyChallengeCompletion from JSON data.
+  ///
+  /// Handles both ISO8601 strings and Firestore Timestamp objects for
+  /// the `completedAt` field.
   factory DailyChallengeCompletion.fromJson(Map<String, dynamic> json) {
     return DailyChallengeCompletion(
       userId: json['userId'] as String,
@@ -39,11 +42,24 @@ class DailyChallengeCompletion {
       stars: json['stars'] as int,
       completionTimeMs:
           (json['completionTimeMs'] ?? json['completionTime']) as int,
-      completedAt: json['completedAt'] is DateTime
-          ? json['completedAt'] as DateTime
-          : DateTime.parse(json['completedAt'] as String),
+      completedAt: _parseDateTime(json['completedAt']) ?? DateTime.now(),
       rank: json['rank'] as int?,
     );
+  }
+
+  /// Parses a DateTime from a value that may be a String, a Firestore
+  /// Timestamp (which has a `toDate()` method), DateTime, or null.
+  static DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    // Handle Firestore Timestamp objects (has toDate() method)
+    try {
+      // ignore: avoid_dynamic_calls
+      return (value as dynamic).toDate() as DateTime;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Serializes the completion to JSON.

@@ -286,7 +286,7 @@ class _GameScreenContentState extends ConsumerState<_GameScreenContent> {
 
   Widget _buildGameGrid(
     WidgetRef ref,
-    dynamic gameState,
+    GameState gameState,
     Set<HexCell> visitedCells,
   ) {
     return Padding(
